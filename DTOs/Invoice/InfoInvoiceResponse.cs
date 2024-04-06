@@ -1,6 +1,6 @@
 ﻿namespace Finantech.DTOs.Invoice
 {
-    public class InfoInvoiceRequest
+    public class InfoInvoiceResponse
     {
         public int Id { get; set; }
         public double TotalAmount { get; set; }
