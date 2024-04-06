@@ -8,8 +8,8 @@ namespace Finantech.Models.MapConfig
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-            builder.Property(c => c.Name).HasMaxLength(45);
-            builder.Property(c => c.Icon).HasMaxLength(45);
+            builder.Property(c => c.Name).HasMaxLength(60);
+            builder.Property(c => c.Icon).HasMaxLength(100);
             builder.Property(c => c.BillType).HasMaxLength(45);
             builder.Property(c => c.CreatedAt).HasColumnType("datetime");
             builder.Property(c => c.UpdatedAt).HasColumnType("datetime");
