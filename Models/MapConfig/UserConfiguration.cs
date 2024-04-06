@@ -9,7 +9,7 @@ namespace Finantech.Models.MapConfig
         public void Configure(EntityTypeBuilder<User> builder)
         {
             builder.Property(u => u.Name).IsRequired().HasMaxLength(100);
-            builder.Property(u => u.Email).IsRequired().HasMaxLength(45);
+            builder.Property(u => u.Email).IsRequired().HasMaxLength(60);
             builder.Property(u => u.PasswordHash).HasMaxLength(60);
             builder.Property(u => u.EmailConfirmed).HasColumnType("tinyint");
             builder.Property(u => u.CreatedAt).HasColumnType("date");
