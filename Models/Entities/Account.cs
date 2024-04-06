@@ -7,7 +7,7 @@
         public string Description { get; set; }
         public string Bank { get; set; }
         public string Type { get; set; }
-        public string ÁccountType { get; set; }
+        public string AccountType { get; set; }
         public string Color { get; set; }
         public int UserId { get; set; }
         public DateTime CreatedAt { get; set; }
