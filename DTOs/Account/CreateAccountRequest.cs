@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Finantech.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace Finantech.DTOs.Account
 {
@@ -13,11 +14,8 @@ namespace Finantech.DTOs.Account
         [Required(ErrorMessage = "Campo 'Bank' não informado.")]
         public string Bank { get; set; }
 
-        [Required(ErrorMessage = "Campo 'Type' não informado.")]
-        public string Type { get; set; }
-
         [Required(ErrorMessage = "Campo 'AccountType' não informado.")]
-        public string AccountType { get; set; }
+        public AccountTypeEnum AccountType { get; set; }
 
         public string Color { get; set; }
     }

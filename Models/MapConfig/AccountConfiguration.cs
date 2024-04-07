@@ -12,7 +12,6 @@ namespace Finantech.Models.MapConfig
             builder.Property(a => a.Balance).HasColumnType("decimal(10,2)");
             builder.Property(a => a.Description).HasMaxLength(100);
             builder.Property(a => a.Bank).HasMaxLength(45);
-            builder.Property(a => a.Type).HasMaxLength(45);
             builder.Property(a => a.Color).HasMaxLength(45);
             builder.Property(ce => ce.CreatedAt).HasColumnType("datetime");
             builder.Property(ce => ce.UpdatedAt).HasColumnType("datetime");

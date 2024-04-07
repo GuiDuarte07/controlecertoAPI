@@ -1,4 +1,6 @@
-﻿namespace Finantech.Models.Entities
+﻿using Finantech.Enums;
+
+namespace Finantech.Models.Entities
 {
     public class Account
     {
@@ -6,8 +8,7 @@
         public double Balance { get; set; }
         public string Description { get; set; }
         public string Bank { get; set; }
-        public string Type { get; set; }
-        public string AccountType { get; set; }
+        public AccountTypeEnum AccountType { get; set; }
         public string Color { get; set; }
         public int UserId { get; set; }
         public DateTime CreatedAt { get; set; }
