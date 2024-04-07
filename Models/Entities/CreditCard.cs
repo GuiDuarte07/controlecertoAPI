@@ -7,7 +7,6 @@
         public double Limit { get; set; }
         public string Description { get; set; }
         public string CardBrand { get; set; }
-        public string CreditType { get; set; }
         public Account AccountId { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

@@ -15,7 +15,5 @@ namespace Finantech.DTOs.CreditCard
         public string Description { get; set; }
 
         public string CardBrand { get; set; }
-
-        public string CreditType { get; set; }
     }
 }
