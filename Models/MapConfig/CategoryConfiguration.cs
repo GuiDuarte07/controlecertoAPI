@@ -10,7 +10,7 @@ namespace Finantech.Models.MapConfig
         {
             builder.Property(c => c.Name).HasMaxLength(60);
             builder.Property(c => c.Icon).HasMaxLength(100);
-            builder.Property(c => c.BillType).HasMaxLength(45);
+            builder.Property(c => c.Color).HasMaxLength(10);
             builder.Property(c => c.CreatedAt).HasColumnType("datetime");
             builder.Property(c => c.UpdatedAt).HasColumnType("datetime");
 

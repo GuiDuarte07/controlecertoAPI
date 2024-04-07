@@ -9,8 +9,8 @@ namespace Finantech.Models.MapConfig
         public void Configure(EntityTypeBuilder<CategoryDefault> builder)
         {
             builder.Property(cd => cd.Name).HasMaxLength(45);
+            builder.Property(c => c.Color).HasMaxLength(10);
             builder.Property(cd => cd.Icon).HasMaxLength(45);
-            builder.Property(cd => cd.BillType).HasMaxLength(45);
         }
     }
 }

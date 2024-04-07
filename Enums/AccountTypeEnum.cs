@@ -2,10 +2,10 @@
 {
     public enum AccountTypeEnum
     {
-        Checking = 0,
-        Savings = 1,
-        Credit = 2,
-        Investment = 3,
-        Other = 4
+        CHECKING = 0,
+        SAVINGS = 1,
+        CREDIT = 2,
+        INVESTMENT = 3,
+        OTHER = 4
     }
 }
