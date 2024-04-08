@@ -15,5 +15,8 @@ namespace Finantech.DTOs.CreditCard
 
         [Required(ErrorMessage = "Campo 'CardBrand' não informado.")]
         public string CardBrand { get; set; }
+
+        [Required(ErrorMessage = "Campo 'AccountId' não informado.")]
+        public int AccountId { get; set; }
     }
 }

@@ -20,5 +20,8 @@ namespace Finantech.DTOs.Income
 
         [MaxLength(100, ErrorMessage = "Campo 'Description' pode conter até 100 caracteres")]
         public string? Description { get; set; }
+
+        [Required(ErrorMessage = "Campo 'AccountId' não informado.")]
+        public int AccountId { get; set; }
     }
 }

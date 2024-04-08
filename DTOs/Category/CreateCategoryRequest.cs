@@ -11,5 +11,8 @@ namespace Finantech.DTOs.Category
         public string Icon { get; set; }
         [Required(ErrorMessage = "Campo 'BillType' não informado.")]
         public string BillType { get; set; }
+
+        [Required(ErrorMessage = "Campo 'UserId' não informado.")]
+        public int UserId { get; set; }
     }
 }
