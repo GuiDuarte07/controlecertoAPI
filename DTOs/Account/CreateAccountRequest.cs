@@ -9,7 +9,7 @@ namespace Finantech.DTOs.Account
         public double Balance { get; set; }
 
         [MaxLength(100, ErrorMessage = "Campo 'Description' pode conter até 100 caracteres")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [Required(ErrorMessage = "Campo 'Bank' não informado.")]
         public string Bank { get; set; }
