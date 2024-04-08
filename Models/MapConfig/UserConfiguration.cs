@@ -12,8 +12,8 @@ namespace Finantech.Models.MapConfig
             builder.Property(u => u.Email).IsRequired().HasMaxLength(60);
             builder.Property(u => u.PasswordHash).HasMaxLength(60);
             builder.Property(u => u.EmailConfirmed).HasColumnType("tinyint");
-            builder.Property(u => u.CreatedAt).HasColumnType("date");
-            builder.Property(u => u.UpdatedAt).HasColumnType("date");
+            builder.Property(u => u.CreatedAt).HasColumnType("datetime");
+            builder.Property(u => u.UpdatedAt).HasColumnType("datetime");
 
             builder.HasMany(u => u.Accounts)
                 .WithOne(a => a.User)
