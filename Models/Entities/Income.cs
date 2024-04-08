@@ -1,11 +1,13 @@
-﻿namespace Finantech.Models.Entities
+﻿using Finantech.Enums;
+
+namespace Finantech.Models.Entities
 {
     public class Income
     {
         public int Id { get; set; }
         public string Description { get; set; }
         public double? Amount { get; set; }
-        public string IncomeType { get; set; }
+        public IncomeTypeEnum IncomeType { get; set; }
         public DateTime PurchaseDate { get; set; }
         public string Origin { get; set; }
         public DateTime? CreatedAt { get; set; }
