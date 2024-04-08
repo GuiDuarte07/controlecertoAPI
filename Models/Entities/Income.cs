@@ -10,7 +10,7 @@ namespace Finantech.Models.Entities
         public IncomeTypeEnum IncomeType { get; set; }
         public DateTime PurchaseDate { get; set; }
         public string Origin { get; set; }
-        public DateTime? CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
         public int AccountId { get; set; }
         public int CategoryId { get; set; }

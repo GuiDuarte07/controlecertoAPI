@@ -8,7 +8,8 @@
         public string Description { get; set; }
         public string CardBrand { get; set; }
         public Account AccountId { get; set; }
-        public DateTime? CreatedAt { get; set; }
+        public DateTime? 
+
         public DateTime? UpdatedAt { get; set; }
         public Account Account { get; set; }
         public ICollection<Invoice> Invoices { get; set; }

@@ -8,7 +8,7 @@
         public string PurchaseDate { get; set; }
         public int AccountDestinyId { get; set; }
         public int AccountOriginId { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; }
 
         public Account AccountDestiny { get; set; }

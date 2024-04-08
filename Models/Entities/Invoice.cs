@@ -8,7 +8,7 @@
         public bool? IsPaid { get; set; }
         public DateTime? ClosingDate { get; set; }
         public DateTime? DueDate { get; set; }
-        public DateTime? CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
         public int CreditCardId { get; set; }
 

@@ -8,7 +8,7 @@
         public DateTime? PurchaseDate { get; set; }
         public int? InstallmentNumber { get; set; }
         public string Destination { get; set; }
-        public DateTime? CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
         public int CreditPurchaseId { get; set; }
         public int AccountId { get; set; }
