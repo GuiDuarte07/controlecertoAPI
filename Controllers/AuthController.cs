@@ -14,7 +14,7 @@ namespace Finantech.Controllers
         public async Task<ActionResult> Authenticate([FromBody] LoginRequest data)
         {
 
-            var user = await _authService.AuthenticateAsync(data.Email, data.Password);
+            var user = await _authService.Authenticate(data.Email, data.Password);
 
             if (!user)
             {
