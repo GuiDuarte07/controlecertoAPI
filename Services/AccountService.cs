@@ -75,6 +75,42 @@ namespace Finantech.Services
 
             return allTransactions;
         }
-    }
+
+        public async Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPagination(int userId, int? accountId, int pageNumber, int pageSize)
+        {
+            // Calcula o índice inicial com base no número da página e no tamanho da página
+            int startIndex = (pageNumber - 1) * pageSize;
+
+            IQueryable<InfoTransactionResponse> transactionsQuery = _appDbContext.Expenses
+                .Where(e => e.Account.UserId == userId)
+                .Select(e => new InfoTransactionResponse(e));
+
+            IQueryable<InfoTransactionResponse> incomesQuery = _appDbContext.Incomes
+                .Where(i => i.Account.UserId == userId)
+                .Select(i => new InfoTransactionResponse(i));
+
+            IQueryable<InfoTransactionResponse> creditExpensesQuery = _appDbContext.CreditExpenses
+                .Where(ce => ce.Account.UserId == userId)
+                .Select(ce => new InfoTransactionResponse(ce));
+
+            // Se accountId for especificado, filtra as transações pela conta
+            if (accountId.HasValue)
+            {
+                transactionsQuery = transactionsQuery.Where(t => t.AccountId == accountId);
+                incomesQuery = incomesQuery.Where(t => t.AccountId == accountId);
+                creditExpensesQuery = creditExpensesQuery.Where(t => t.AccountId == accountId);
+            }
+
+            // Concatena todas as transações
+            var allTransactions = await transactionsQuery
+                .Concat(incomesQuery)
+                .Concat(creditExpensesQuery)
+                .OrderByDescending(t => t.PurchaseDate) // Ordena as transações pela data de compra em ordem decrescente
+                .Skip(startIndex) // Pula os registros correspondentes às páginas anteriores
+                .Take(pageSize) // Obtém a quantidade de registros correspondente ao tamanho da página
+                .ToListAsync();
+
+            return allTransactions;
+        }
     }
 }
