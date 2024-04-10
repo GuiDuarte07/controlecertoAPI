@@ -1,4 +1,5 @@
-﻿using Finantech.DTOs.User;
+﻿using Finantech.DTOs.Auth;
+using Finantech.DTOs.User;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
@@ -24,9 +25,8 @@ namespace Finantech.Services
             _hashService = hashService;
         }
 
-        public InfoUserResponse? Authenticate(string email, string password)
+        public LoginResponse? Authenticate(string email, string password)
         {
-            // FAZER O HASH
             string passwordHash = _hashService.HashPassword(password);
 
             var user = _appDbContext.Users.FirstOrDefault(user => user.Email == email);
@@ -37,9 +37,16 @@ namespace Finantech.Services
             }
 
             // FAZER O MAP
-            var userResponse = new InfoUserResponse();
+            var userResponse = new InfoUserResponse { 
+                Email = user.Email, 
+                EmailConfirmed = user.EmailConfirmed, 
+                Id = user.Id, 
+                Name = user.Name
+            };
 
-            return userResponse;
+            var token = GenerateToken(user);
+
+            return new LoginResponse { User = userResponse, token = token };
         }
 
         public string GenerateToken(User user)

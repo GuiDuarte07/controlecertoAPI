@@ -1,4 +1,5 @@
 ﻿using Finantech.Models.Entities;
+using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -9,21 +10,27 @@ namespace Finantech.Controllers
     [Route("[controller]")]
     public class AuthController : ControllerBase
     {
+        private readonly IAuthService _authService;
+
+        public AuthController(IAuthService authService)
+        {
+            _authService = authService;
+        }
+
+
         [AllowAnonymous]
         [HttpPost()]
-        public async Task<ActionResult> Authenticate([FromBody] LoginRequest data)
+        public ActionResult Authenticate([FromBody] LoginRequest data)
         {
 
-            var user = await _authService.Authenticate(data.Email, data.Password);
+            var authInfo = _authService.Authenticate(data.Email, data.Password);
 
-            if (!user)
+            if (authInfo == null)
             {
                 return Unauthorized("Credenciais inválidas.");
             }
 
-            var token = _authService.GenerateToken(user);
-
-            return Ok(token);
+            return Ok(authInfo);
 
             
         }

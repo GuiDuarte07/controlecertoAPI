@@ -14,6 +14,7 @@ namespace Finantech.Models.DTOs
         public string? Destination { get; set; }
         public Category Category { get; set; }
         public TransactionTypeEnum TransactionType { get; set; }
+        public int AccountId { get; set; }
 
         // Construtor para Expense
         public InfoTransactionResponse(Expense expense)
@@ -25,6 +26,7 @@ namespace Finantech.Models.DTOs
             Destination = expense.Destination;
             Category = expense.Category;
             TransactionType = TransactionTypeEnum.EXPENSE;
+            AccountId = expense.AccountId;
         }
 
         // Construtor para Income
@@ -37,6 +39,7 @@ namespace Finantech.Models.DTOs
             Origin = income.Origin;
             Category = income.Category;
             TransactionType = TransactionTypeEnum.INCOME;
+            AccountId = income.AccountId;
         }
 
         // Construtor para CreditExpense
@@ -49,6 +52,7 @@ namespace Finantech.Models.DTOs
             Destination = creditExpense.Destination;
             Category = creditExpense.Category;
             TransactionType = TransactionTypeEnum.CREDITEXPENSE;
+            AccountId = creditExpense.AccountId;
         }
     }
 }
