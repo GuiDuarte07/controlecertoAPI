@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Finantech.DTOs.Account;
+using Finantech.Enums;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.DTOs;
 using Finantech.Models.Entities;
@@ -93,7 +94,6 @@ namespace Finantech.Services
                 .Where(ce => ce.Account.UserId == userId)
                 .Select(ce => new InfoTransactionResponse(ce));
 
-            // Se accountId for especificado, filtra as transações pela conta
             if (accountId.HasValue)
             {
                 transactionsQuery = transactionsQuery.Where(t => t.AccountId == accountId);
@@ -101,7 +101,6 @@ namespace Finantech.Services
                 creditExpensesQuery = creditExpensesQuery.Where(t => t.AccountId == accountId);
             }
 
-            // Concatena todas as transações
             var allTransactions = await transactionsQuery
                 .Concat(incomesQuery)
                 .Concat(creditExpensesQuery)
@@ -111,6 +110,25 @@ namespace Finantech.Services
                 .ToListAsync();
 
             return allTransactions;
+        }
+
+        public async Task<InfoAccountResponse> UpdateAccount(UpdateAccountRequest request)
+        {
+            var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == request.Id) ?? throw new Exception("Conta não encontrada.");
+
+            if (request.Description != null)
+                account.Description = request.Description;
+            if (request.Bank != null)
+                account.Bank = request.Bank;
+            if (request.AccountType != null)
+                account.AccountType = (AccountTypeEnum)request.AccountType;
+            if (request.Color != null)
+                account.Color = request.Color;
+
+            var updatedAccount = _appDbContext.Accounts.Update(account);
+            await _appDbContext.SaveChangesAsync();
+
+            return _mapper.Map<InfoAccountResponse>(updatedAccount);
         }
     }
 }

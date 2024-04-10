@@ -7,5 +7,6 @@ namespace Finantech.Services.Interfaces
     {
         public Task<InfoAccountResponse> CreateAccountAsync(CreateAccountRequest accountRequest);
         public Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPagination(int userId, int? accountId, int pageNumber, int pageSize);
+        public Task<InfoAccountResponse> UpdateAccount(UpdateAccountRequest request);
     }
 }
