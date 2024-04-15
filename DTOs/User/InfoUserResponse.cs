@@ -1,4 +1,6 @@
-﻿namespace Finantech.DTOs.User
+﻿using Finantech.DTOs.Account;
+
+namespace Finantech.DTOs.User
 {
     public class InfoUserResponse
     {
@@ -6,5 +8,7 @@
         public string Name { get; set; }
         public string Email { get; set; }
         public bool EmailConfirmed { get; set; }
+
+        public ICollection<InfoAccountResponse> Accounts { get; set; }
     }
 }
