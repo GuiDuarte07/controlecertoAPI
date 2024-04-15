@@ -36,7 +36,16 @@ namespace Finantech.Services
             return infoAccount;
         }
 
-        public async Task<ICollection<InfoTransactionResponse>> GetMonthTransactions(int userId, int? accountId)
+        public async Task<ICollection<InfoAccountResponse>> GetAccountsByUserIdAsync(int userId)
+        {
+            var accounts = await _appDbContext.Accounts.Where(a => a.UserId == userId).ToListAsync();
+
+            var accountsInfo = _mapper.Map<List<InfoAccountResponse>>(accounts);
+
+            return accountsInfo;
+        }
+
+        public async Task<ICollection<InfoTransactionResponse>> GetMonthTransactionsAsync(int userId, int? accountId)
         {
             var firstDayOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
 
@@ -77,7 +86,7 @@ namespace Finantech.Services
             return allTransactions;
         }
 
-        public async Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPagination(int userId, int? accountId, int pageNumber, int pageSize)
+        public async Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPaginationAsync(int pageNumber, int pageSize, int userId, int? accountId)
         {
             // Calcula o índice inicial com base no número da página e no tamanho da página
             int startIndex = (pageNumber - 1) * pageSize;
@@ -112,7 +121,7 @@ namespace Finantech.Services
             return allTransactions;
         }
 
-        public async Task<InfoAccountResponse> UpdateAccount(UpdateAccountRequest request)
+        public async Task<InfoAccountResponse> UpdateAccountAsync(UpdateAccountRequest request)
         {
             var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == request.Id) ?? throw new Exception("Conta não encontrada.");
 
