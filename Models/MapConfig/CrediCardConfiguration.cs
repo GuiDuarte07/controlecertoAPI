@@ -15,7 +15,7 @@ namespace Finantech.Models.MapConfig
             builder.Property(cc => cc.CreatedAt).HasColumnType("datetime");
             builder.Property(cc => cc.UpdatedAt).HasColumnType("datetime");
 
-            builder.HasKey(cc => cc.Number);
+            builder.HasKey(cc => cc.Id);
             builder.HasIndex(u => u.Number).IsUnique();
 
             builder.HasOne(cc => cc.Account)

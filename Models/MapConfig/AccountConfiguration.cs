@@ -8,7 +8,7 @@ namespace Finantech.Models.MapConfig
     {
         public void Configure(EntityTypeBuilder<Account> builder)
         {
-            builder.HasKey(a => new { a.Id, a.UserId });
+            builder.HasKey(a => a.Id);
             builder.Property(a => a.Balance).HasColumnType("decimal(10,2)");
             builder.Property(a => a.Description).HasMaxLength(100);
             builder.Property(a => a.Bank).HasMaxLength(45);

@@ -1,7 +1,6 @@
 ﻿using Finantech.Models.Entities;
 using Finantech.Models.MapConfig;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace Finantech.Models.AppDbContext
 {
