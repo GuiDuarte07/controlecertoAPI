@@ -24,6 +24,8 @@ namespace Finantech.Services
         {
             var alreadyExistEmail = _appDbContext.Users.FirstOrDefaultAsync(u => u.Email == userReq.Email);
 
+            Console.WriteLine(alreadyExistEmail);
+
             if (alreadyExistEmail != null) 
             {
                 throw new Exception("Já existe uma conta com esse e-mail cadastrada!");

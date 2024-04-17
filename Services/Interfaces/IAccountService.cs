@@ -6,7 +6,9 @@ namespace Finantech.Services.Interfaces
     public interface IAccountService
     {
         public Task<InfoAccountResponse> CreateAccountAsync(CreateAccountRequest accountRequest);
-        public Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPagination(int userId, int? accountId, int pageNumber, int pageSize);
-        public Task<InfoAccountResponse> UpdateAccount(UpdateAccountRequest request);
+        public Task<ICollection<InfoTransactionResponse>> GetMonthTransactionsAsync(int userId, int? accountId);
+        public Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPaginationAsync(int pageNumber, int pageSize, int userId, int? accountId);
+        public Task<InfoAccountResponse> UpdateAccountAsync(UpdateAccountRequest request);
+        public Task<ICollection<InfoAccountResponse>> GetAccountsByUserIdAsync(int userId);
     }
 }

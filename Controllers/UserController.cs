@@ -15,8 +15,8 @@ namespace Finantech.Controllers
             _userService = userService;
         }
 
-        [Authorize]
-        [HttpPost]
+        [AllowAnonymous]
+        [HttpPost("CreateUser")]
         public async Task<ActionResult> CreateUser([FromBody] CreateUserRequest data)
         {
             try 
