@@ -27,7 +27,7 @@ namespace Finantech.Models.AppDbContext
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(_configuration.GetConnectionString("WebApiDatabase"));
+            optionsBuilder.UseNpgsql(_configuration.GetConnectionString("WebApiDatabase"));
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

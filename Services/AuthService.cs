@@ -3,6 +3,7 @@ using Finantech.DTOs.User;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -25,7 +26,7 @@ namespace Finantech.Services
             _hashService = hashService;
         }
 
-        public LoginResponse? Authenticate(string email, string password)
+        public AuthResponse? Authenticate(string email, string password)
         {
             string passwordHash = _hashService.HashPassword(password);
 
@@ -46,7 +47,7 @@ namespace Finantech.Services
 
             var token = GenerateToken(user);
 
-            return new LoginResponse { User = userResponse, token = token };
+            return new AuthResponse { User = userResponse, token = token };
         }
 
         public string GenerateToken(User user)

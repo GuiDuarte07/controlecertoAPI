@@ -1,7 +1,7 @@
-﻿using Finantech.Models.Entities;
+﻿using Finantech.DTOs.Auth;
+using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Finantech.Controllers
@@ -20,7 +20,7 @@ namespace Finantech.Controllers
 
         [AllowAnonymous]
         [HttpPost()]
-        public ActionResult Authenticate([FromBody] LoginRequest data)
+        public ActionResult Authenticate([FromBody] AuthRequest data)
         {
 
             var authInfo = _authService.Authenticate(data.Email, data.Password);

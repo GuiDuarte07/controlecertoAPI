@@ -3,8 +3,8 @@ using System;
 using Finantech.Models.AppDbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -18,46 +18,46 @@ namespace Finantech.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.3")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Finantech.Models.Entities.Account", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AccountType")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    b.Property<decimal>("Balance")
+                    b.Property<double>("Balance")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<string>("Bank")
                         .IsRequired()
                         .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)");
+                        .HasColumnType("character varying(45)");
 
                     b.Property<string>("Color")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasColumnType("character varying(10)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -70,36 +70,36 @@ namespace Finantech.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("BillType")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Color")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasColumnType("character varying(10)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Icon")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(60)
-                        .HasColumnType("nvarchar(60)");
+                        .HasColumnType("character varying(60)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -112,27 +112,27 @@ namespace Finantech.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("BillType")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Color")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("Icon")
                         .IsRequired()
                         .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)");
+                        .HasColumnType("character varying(45)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(60)
-                        .HasColumnType("nvarchar(60)");
+                        .HasColumnType("character varying(60)");
 
                     b.HasKey("Id");
 
@@ -143,27 +143,27 @@ namespace Finantech.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AccountId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("CardBrand")
                         .IsRequired()
                         .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)");
+                        .HasColumnType("character varying(45)");
 
                     b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
-                    b.Property<decimal>("Limit")
+                    b.Property<double>("Limit")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<string>("Number")
@@ -172,7 +172,7 @@ namespace Finantech.Migrations
                         .HasColumnType("char(15)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -188,44 +188,44 @@ namespace Finantech.Migrations
             modelBuilder.Entity("Finantech.Models.Entities.CreditExpense", b =>
                 {
                     b.Property<int>("Id")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("InvoiceId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("CategoryId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("AccountId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    b.Property<decimal>("Amount")
+                    b.Property<double>("Amount")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("CreditPurchaseId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Destination")
                         .IsRequired()
                         .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)");
+                        .HasColumnType("character varying(45)");
 
                     b.Property<int?>("InstallmentNumber")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("PurchaseDate")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id", "InvoiceId", "CategoryId");
 
@@ -244,42 +244,42 @@ namespace Finantech.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("CreditCardId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Destination")
                         .IsRequired()
                         .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
+                        .HasColumnType("character varying(80)");
 
                     b.Property<int>("InstalmentsPaid")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    b.Property<byte>("Paid")
-                        .HasColumnType("tinyint");
+                    b.Property<bool>("Paid")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("PurchaseDate")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("TotalAmount")
+                    b.Property<double>("TotalAmount")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<int>("TotalInstalment")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -292,39 +292,39 @@ namespace Finantech.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AccountId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    b.Property<decimal>("Amount")
+                    b.Property<double>("Amount")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<int>("CategoryId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Destination")
                         .IsRequired()
                         .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
+                        .HasColumnType("character varying(80)");
 
                     b.Property<int>("ExpenseType")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("PurchaseDate")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -339,39 +339,39 @@ namespace Finantech.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AccountId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    b.Property<decimal>("Amount")
+                    b.Property<double>("Amount")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<int>("CategoryId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("IncomeType")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Origin")
                         .IsRequired()
                         .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
+                        .HasColumnType("character varying(80)");
 
                     b.Property<DateTime>("PurchaseDate")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -386,33 +386,33 @@ namespace Finantech.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ClosingDate")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("CreditCardId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("DueDate")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<byte?>("IsPaid")
-                        .HasColumnType("tinyint");
+                    b.Property<bool?>("IsPaid")
+                        .HasColumnType("boolean");
 
-                    b.Property<decimal?>("TotalAmount")
+                    b.Property<double?>("TotalAmount")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<decimal?>("TotalPaid")
+                    b.Property<double?>("TotalPaid")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -425,26 +425,26 @@ namespace Finantech.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("AmountPaid")
+                    b.Property<double>("AmountPaid")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("InvoiceId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("PaymentDate")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -456,37 +456,40 @@ namespace Finantech.Migrations
             modelBuilder.Entity("Finantech.Models.Entities.Transference", b =>
                 {
                     b.Property<int>("Id")
-                        .HasColumnType("int");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AccountDestinyId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AccountOriginId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("AccountId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    b.Property<decimal?>("Amount")
+                    b.Property<int>("AccountOriginId")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("Amount")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("PurchaseDate")
                         .IsRequired()
                         .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)");
+                        .HasColumnType("character varying(45)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("Id", "AccountDestinyId", "AccountOriginId");
+                    b.HasKey("Id");
 
                     b.HasIndex("AccountDestinyId");
 
@@ -501,33 +504,33 @@ namespace Finantech.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(60)
-                        .HasColumnType("nvarchar(60)");
+                        .HasColumnType("character varying(60)");
 
-                    b.Property<byte>("EmailConfirmed")
-                        .HasColumnType("tinyint");
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(60)
-                        .HasColumnType("nvarchar(60)");
+                        .HasColumnType("character varying(60)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -578,7 +581,7 @@ namespace Finantech.Migrations
                     b.HasOne("Finantech.Models.Entities.Category", "Category")
                         .WithMany("CreditExpenses")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Finantech.Models.Entities.CreditPurchase", "CreditPurchase")
@@ -624,7 +627,7 @@ namespace Finantech.Migrations
                     b.HasOne("Finantech.Models.Entities.Category", "Category")
                         .WithMany("Expenses")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Account");
@@ -643,7 +646,7 @@ namespace Finantech.Migrations
                     b.HasOne("Finantech.Models.Entities.Category", "Category")
                         .WithMany("Incomes")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Account");
@@ -678,7 +681,7 @@ namespace Finantech.Migrations
                     b.HasOne("Finantech.Models.Entities.Account", "AccountDestiny")
                         .WithMany()
                         .HasForeignKey("AccountDestinyId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Finantech.Models.Entities.Account", null)
@@ -688,7 +691,7 @@ namespace Finantech.Migrations
                     b.HasOne("Finantech.Models.Entities.Account", "AccountOrigin")
                         .WithMany()
                         .HasForeignKey("AccountOriginId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("AccountDestiny");

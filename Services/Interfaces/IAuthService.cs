@@ -6,7 +6,7 @@ namespace Finantech.Services.Interfaces
 {
     public interface IAuthService
     {
-        public LoginResponse? Authenticate(string email, string password);
+        public AuthResponse? Authenticate(string email, string password);
         public string GenerateToken(User user);
     }
 }

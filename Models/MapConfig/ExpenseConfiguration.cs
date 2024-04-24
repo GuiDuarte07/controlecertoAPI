@@ -10,10 +10,10 @@ namespace Finantech.Models.MapConfig
         {
             builder.Property(e => e.Description).HasMaxLength(100);
             builder.Property(e => e.Amount).HasColumnType("decimal(10,2)");
-            builder.Property(e => e.PurchaseDate).HasColumnType("datetime");
+            //builder.Property(e => e.PurchaseDate).HasColumnType("datetime");
             builder.Property(e => e.Destination).HasMaxLength(80);
-            builder.Property(e => e.CreatedAt).HasColumnType("datetime");
-            builder.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            //builder.Property(e => e.CreatedAt).HasColumnType("datetime");
+            //builder.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             builder.HasOne(e => e.Account)
                 .WithMany(a => a.Expenses)
@@ -21,7 +21,8 @@ namespace Finantech.Models.MapConfig
 
             builder.HasOne(e => e.Category)
                 .WithMany(c => c.Expenses)
-                .HasForeignKey(e => e.CategoryId);
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

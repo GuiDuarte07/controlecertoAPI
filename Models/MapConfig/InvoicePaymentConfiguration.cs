@@ -10,8 +10,8 @@ namespace Finantech.Models.MapConfig
         {
             builder.Property(ip => ip.AmountPaid).HasColumnType("decimal(10,2)");
             builder.Property(ip => ip.Description).HasMaxLength(100);
-            builder.Property(ip => ip.PaymentDate).HasColumnType("datetime");
-            builder.Property(ip => ip.CreatedAt).HasColumnType("datetime");
+            //builder.Property(ip => ip.PaymentDate).HasColumnType("datetime");
+            // builder.Property(ip => ip.CreatedAt).HasColumnType("datetime");
 
             builder.HasOne(ip => ip.Invoice)
                 .WithMany(i => i.InvoicePayments)

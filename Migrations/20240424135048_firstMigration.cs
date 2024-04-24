@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -15,12 +16,12 @@ namespace Finantech.Migrations
                 name: "CategoriesDefault",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: false),
-                    Icon = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: false),
-                    Color = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    BillType = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false),
+                    Icon = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
+                    Color = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    BillType = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -31,14 +32,14 @@ namespace Finantech.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: false),
-                    EmailConfirmed = table.Column<byte>(type: "tinyint", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false),
+                    PasswordHash = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false),
+                    EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -49,16 +50,16 @@ namespace Finantech.Migrations
                 name: "Accounts",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Balance = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Bank = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: false),
-                    AccountType = table.Column<int>(type: "int", nullable: false),
-                    Color = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Balance = table.Column<double>(type: "numeric(10,2)", nullable: false),
+                    Description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Bank = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
+                    AccountType = table.Column<int>(type: "integer", nullable: false),
+                    Color = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -75,15 +76,15 @@ namespace Finantech.Migrations
                 name: "Categories",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: false),
-                    Icon = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Color = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    BillType = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime", nullable: true),
-                    UserId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false),
+                    Icon = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Color = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    BillType = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UserId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -100,15 +101,15 @@ namespace Finantech.Migrations
                 name: "CreditCards",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Number = table.Column<string>(type: "char(15)", maxLength: 15, nullable: false),
-                    Limit = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    CardBrand = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: false),
-                    AccountId = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime", nullable: true)
+                    Limit = table.Column<double>(type: "numeric(10,2)", nullable: false),
+                    Description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    CardBrand = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -125,25 +126,26 @@ namespace Finantech.Migrations
                 name: "Transferences",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false),
-                    AccountDestinyId = table.Column<int>(type: "int", nullable: false),
-                    AccountOriginId = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Amount = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
-                    PurchaseDate = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
-                    AccountId = table.Column<int>(type: "int", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Amount = table.Column<double>(type: "numeric(10,2)", nullable: true),
+                    PurchaseDate = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
+                    AccountDestinyId = table.Column<int>(type: "integer", nullable: false),
+                    AccountOriginId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AccountId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Transferences", x => new { x.Id, x.AccountDestinyId, x.AccountOriginId });
+                    table.PrimaryKey("PK_Transferences", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Transferences_Accounts_AccountDestinyId",
                         column: x => x.AccountDestinyId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Transferences_Accounts_AccountId",
                         column: x => x.AccountId,
@@ -154,24 +156,24 @@ namespace Finantech.Migrations
                         column: x => x.AccountOriginId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Expenses",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Amount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    ExpenseType = table.Column<int>(type: "int", nullable: false),
-                    PurchaseDate = table.Column<DateTime>(type: "datetime", nullable: false),
-                    Destination = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime", nullable: true),
-                    AccountId = table.Column<int>(type: "int", nullable: false),
-                    CategoryId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Amount = table.Column<double>(type: "numeric(10,2)", nullable: false),
+                    ExpenseType = table.Column<int>(type: "integer", nullable: false),
+                    PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Destination = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: false),
+                    Description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -187,24 +189,24 @@ namespace Finantech.Migrations
                         column: x => x.CategoryId,
                         principalTable: "Categories",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Incomes",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Amount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    IncomeType = table.Column<int>(type: "int", nullable: false),
-                    PurchaseDate = table.Column<DateTime>(type: "datetime", nullable: false),
-                    Origin = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime", nullable: true),
-                    AccountId = table.Column<int>(type: "int", nullable: false),
-                    CategoryId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Amount = table.Column<double>(type: "numeric(10,2)", nullable: false),
+                    IncomeType = table.Column<int>(type: "integer", nullable: false),
+                    PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Origin = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -220,25 +222,25 @@ namespace Finantech.Migrations
                         column: x => x.CategoryId,
                         principalTable: "Categories",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
                 name: "CreditPurchases",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TotalAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    TotalInstalment = table.Column<int>(type: "int", nullable: false),
-                    InstalmentsPaid = table.Column<int>(type: "int", nullable: false),
-                    PurchaseDate = table.Column<DateTime>(type: "datetime", nullable: false),
-                    Paid = table.Column<byte>(type: "tinyint", nullable: false),
-                    Destination = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime", nullable: true),
-                    CreditCardId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TotalAmount = table.Column<double>(type: "numeric(10,2)", nullable: false),
+                    TotalInstalment = table.Column<int>(type: "integer", nullable: false),
+                    InstalmentsPaid = table.Column<int>(type: "integer", nullable: false),
+                    PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Paid = table.Column<bool>(type: "boolean", nullable: false),
+                    Destination = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: false),
+                    Description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreditCardId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -255,16 +257,16 @@ namespace Finantech.Migrations
                 name: "Invoices",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TotalAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
-                    TotalPaid = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
-                    IsPaid = table.Column<byte>(type: "tinyint", nullable: true),
-                    ClosingDate = table.Column<DateTime>(type: "datetime", nullable: true),
-                    DueDate = table.Column<DateTime>(type: "datetime", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime", nullable: true),
-                    CreditCardId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TotalAmount = table.Column<double>(type: "numeric(10,2)", nullable: true),
+                    TotalPaid = table.Column<double>(type: "numeric(10,2)", nullable: true),
+                    IsPaid = table.Column<bool>(type: "boolean", nullable: true),
+                    ClosingDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DueDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreditCardId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -281,18 +283,18 @@ namespace Finantech.Migrations
                 name: "CreditExpenses",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false),
-                    InvoiceId = table.Column<int>(type: "int", nullable: false),
-                    CategoryId = table.Column<int>(type: "int", nullable: false),
-                    Amount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    PurchaseDate = table.Column<DateTime>(type: "datetime", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false),
+                    InvoiceId = table.Column<int>(type: "integer", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: false),
+                    Amount = table.Column<double>(type: "numeric(10,2)", nullable: false),
+                    Description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     InstallmentNumber = table.Column<int>(type: "int", nullable: true),
-                    Destination = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime", nullable: true),
-                    CreditPurchaseId = table.Column<int>(type: "int", nullable: false),
-                    AccountId = table.Column<int>(type: "int", nullable: false)
+                    Destination = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreditPurchaseId = table.Column<int>(type: "integer", nullable: false),
+                    AccountId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -308,7 +310,7 @@ namespace Finantech.Migrations
                         column: x => x.CategoryId,
                         principalTable: "Categories",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_CreditExpenses_CreditPurchases_CreditPurchaseId",
                         column: x => x.CreditPurchaseId,
@@ -327,13 +329,13 @@ namespace Finantech.Migrations
                 name: "InvoicePayments",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AmountPaid = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    PaymentDate = table.Column<DateTime>(type: "datetime", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
-                    InvoiceId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AmountPaid = table.Column<double>(type: "numeric(10,2)", nullable: false),
+                    Description = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    PaymentDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    InvoiceId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {

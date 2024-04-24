@@ -10,11 +10,11 @@ namespace Finantech.Models.MapConfig
         {
             builder.Property(ce => ce.Amount).HasColumnType("decimal(10,2)");
             builder.Property(ce => ce.Description).HasMaxLength(100);
-            builder.Property(ce => ce.PurchaseDate).HasColumnType("datetime");
+            //builder.Property(ce => ce.PurchaseDate).HasColumnType("datetime");
             builder.Property(ce => ce.InstallmentNumber).HasColumnType("int");
             builder.Property(ce => ce.Destination).HasMaxLength(45);
-            builder.Property(ce => ce.CreatedAt).HasColumnType("datetime");
-            builder.Property(ce => ce.UpdatedAt).HasColumnType("datetime");
+            //builder.Property(ce => ce.CreatedAt).HasColumnType("datetime");
+            //builder.Property(ce => ce.UpdatedAt).HasColumnType("datetime");
 
             builder.HasKey(ce => new { ce.Id, ce.InvoiceId, ce.CategoryId });
 
@@ -32,7 +32,8 @@ namespace Finantech.Models.MapConfig
 
             builder.HasOne(ce => ce.Category)
                 .WithMany(c => c.CreditExpenses)
-                .HasForeignKey(ce => ce.CategoryId);
+                .HasForeignKey(ce => ce.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

@@ -10,11 +10,11 @@ namespace Finantech.Models.MapConfig
         {
             builder.Property(i => i.TotalAmount).HasColumnType("decimal(10,2)");
             builder.Property(i => i.TotalPaid).HasColumnType("decimal(10,2)");
-            builder.Property(i => i.IsPaid).HasColumnType("tinyint");
-            builder.Property(i => i.ClosingDate).HasColumnType("datetime");
-            builder.Property(i => i.DueDate).HasColumnType("datetime");
-            builder.Property(i => i.CreatedAt).HasColumnType("datetime");
-            builder.Property(i => i.UpdatedAt).HasColumnType("datetime");
+            builder.Property(i => i.IsPaid).HasColumnType("boolean");
+            //builder.Property(i => i.ClosingDate).HasColumnType("datetime");
+            //builder.Property(i => i.DueDate).HasColumnType("datetime");
+            //builder.Property(i => i.CreatedAt).HasColumnType("datetime");
+            //builder.Property(i => i.UpdatedAt).HasColumnType("datetime");
 
             builder.HasOne(i => i.CreditCard)
                 .WithMany(cc => cc.Invoices)

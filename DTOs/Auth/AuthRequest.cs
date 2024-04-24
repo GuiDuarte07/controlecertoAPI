@@ -2,7 +2,7 @@
 
 namespace Finantech.DTOs.Auth
 {
-    public class LoginRquest
+    public class AuthRequest
     {
         [Required(ErrorMessage = "Campo 'Email' não informado.")]
         [MaxLength(60, ErrorMessage = "Campo 'Name' pode conter até 60 caracteres")]
