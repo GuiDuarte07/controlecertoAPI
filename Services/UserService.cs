@@ -22,7 +22,7 @@ namespace Finantech.Services
 
         public async Task<InfoUserResponse> CreateUserAync(CreateUserRequest userReq)
         {
-            var alreadyExistEmail = _appDbContext.Users.FirstOrDefaultAsync(u => u.Email == userReq.Email);
+            var alreadyExistEmail = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Email == userReq.Email);
 
             Console.WriteLine(alreadyExistEmail);
 

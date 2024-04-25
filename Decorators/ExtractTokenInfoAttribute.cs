@@ -32,6 +32,9 @@ namespace Finantech.Decorators
                 var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
                 var claims = jwtToken!.Claims;
 
+                httpContext.Items["UserId"] = int.Parse(claims.FirstOrDefault(c => c.Type == "id")?.Value ?? "-1");
+                httpContext.Items["Email"] = claims.FirstOrDefault(c => c.Type == "email")?.Value!;
+
                 // Extrair as informações relevantes do token e armazenar em uma variável normal
                 TokenInfo = new TokenInfoDTO
                 {

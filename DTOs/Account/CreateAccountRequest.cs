@@ -18,8 +18,5 @@ namespace Finantech.DTOs.Account
         public AccountTypeEnum AccountType { get; set; }
 
         public string Color { get; set; }
-
-        [Required(ErrorMessage = "Campo 'UserId' não informado.")]
-        public int UserId { get; set; }
     }
 }

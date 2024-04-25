@@ -121,6 +121,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // DbContext
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 builder.Services.AddDbContext<AppDbContext>();
 
 var app = builder.Build();

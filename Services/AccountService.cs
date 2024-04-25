@@ -20,9 +20,10 @@ namespace Finantech.Services
             _mapper = mapper;
         }
 
-        public async Task<InfoAccountResponse> CreateAccountAsync(CreateAccountRequest accountRequest)
+        public async Task<InfoAccountResponse> CreateAccountAsync(CreateAccountRequest accountRequest, int userId)
         {
             var createdAccount = _mapper.Map<Account>(accountRequest);
+            createdAccount.UserId = userId;
 
             var account = await _appDbContext.Accounts.AddAsync(createdAccount);
 
@@ -30,6 +31,8 @@ namespace Finantech.Services
             {
                 throw new Exception("Um erro ocorreu ao criar a conta");
             }
+
+            await _appDbContext.SaveChangesAsync();
 
             var infoAccount = _mapper.Map<InfoAccountResponse>(account.Entity);
 

@@ -1,4 +1,5 @@
-﻿using Finantech.DTOs.Account;
+﻿using Finantech.Decorators;
+using Finantech.DTOs.Account;
 using Finantech.Models.DTOs;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -16,11 +17,14 @@ namespace Finantech.Controllers
         }
 
         [HttpPut]
+        [ExtractTokenInfo]
         public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest accountRequest)
         {
+            int userId = (int)HttpContext.Items["UserId"];
+
             try
             {
-                var account = await _accountService.CreateAccountAsync(accountRequest);
+                var account = await _accountService.CreateAccountAsync(accountRequest, userId);
 
                 return Created("", account);
             } catch (Exception ex) 

@@ -16,7 +16,7 @@ namespace Finantech.Models.MapConfig
             //builder.Property(ce => ce.CreatedAt).HasColumnType("datetime");
             //builder.Property(ce => ce.UpdatedAt).HasColumnType("datetime");
 
-            builder.HasKey(ce => new { ce.Id, ce.InvoiceId, ce.CategoryId });
+            builder.HasKey(ce => ce.Id );
 
             builder.HasOne(ce => ce.CreditPurchase)
                 .WithMany(cp => cp.CreditExpenses)

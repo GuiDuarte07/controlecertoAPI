@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Finantech.DTOs.Account;
+using Finantech.DTOs.User;
 using Finantech.Models.Entities;
 
 namespace Finantech.Profiles
@@ -17,6 +18,8 @@ namespace Finantech.Profiles
                     dest.UpdatedAt = DateTime.Now;
                 });
             CreateMap<Account, InfoAccountResponse>();
+            CreateMap<User, InfoUserResponse>()
+                .ForMember(dest => dest.Accounts, opt => opt.MapFrom(src => src.Accounts));
         }
     }
 }

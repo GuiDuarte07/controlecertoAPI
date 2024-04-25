@@ -9,7 +9,7 @@ namespace Finantech.DTOs.User
         public string Name { get; set; }
 
         [Required(ErrorMessage = "Campo 'Email' não informado.")]
-        [MaxLength(60, ErrorMessage = "Campo 'Name' pode conter até 60 caracteres")]
+        [MaxLength(60, ErrorMessage = "Campo 'Email' pode conter até 60 caracteres")]
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Campo 'Password' não informado.")]
