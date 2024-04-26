@@ -62,7 +62,69 @@ namespace Finantech.Services
 
         }
 
+        
+
+        public async Task DeleteExpenseAsync(int expenseId, int userId)
+        {
+            var expenseToDelete = await _appDbContext.Expenses.FirstOrDefaultAsync(e => e.Id == expenseId) ?? throw new Exception("Transação não encontrada");
+            bool justForRecord = expenseToDelete.JustForRecord;
+
+            using (var transaction = _appDbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    if (!justForRecord)
+                    {
+                        var account = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == expenseToDelete.AccountId) ?? throw new Exception("Conta não encontrada.");
+
+                        account.Balance += expenseToDelete.Amount;
+
+                        _appDbContext.Update(account);
+
+                        await _appDbContext.SaveChangesAsync();
+                    }
+
+                    var expense = _appDbContext.Expenses.Remove(expenseToDelete);
+
+                    await _appDbContext.SaveChangesAsync();
+
+                    transaction.Commit();
+
+                    return;
+                }
+                catch (Exception)
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        public Task<InfoExpenseResponse> UpdateExpenseAsync(UpdateExpenseRequest request, int userId)
+        {
+            throw new NotImplementedException();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         public Task<InfoIncomeResponse> CreateIncomeAsync(CreateIncomeRequest request, int userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task DeleteIncomeAsync(int incomeId, int userId)
         {
             throw new NotImplementedException();
         }
@@ -77,10 +139,7 @@ namespace Finantech.Services
             throw new NotImplementedException();
         }
 
-        public Task<InfoExpenseResponse> UpdateExpenseAsync(UpdateExpenseRequest request, int userId)
-        {
-            throw new NotImplementedException();
-        }
+        
 
         public Task<InfoIncomeResponse> UpdateIncomeAsync(UpdateIncomeRequest request, int userId)
         {

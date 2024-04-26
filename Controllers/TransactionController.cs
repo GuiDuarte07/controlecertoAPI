@@ -33,5 +33,22 @@ namespace Finantech.Controllers
             }
 
         }
+
+        [HttpDelete("DeleteExpense/{expenseId}")]
+        public async Task<IActionResult> DeleteExpense([FromRoute] int expenseId)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                await _transactionService.DeleteExpenseAsync(expenseId, userId);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

@@ -85,3 +85,9 @@ Authorization: {{BearerToken}}
   "AccountId": 4,
   "CategoryId": 0
 }
+###
+
+DELETE {{HostAddress}}/api/Transaction/DeleteExpense/4
+Content-Type: application/json
+Authorization: {{BearerToken}}
+###
