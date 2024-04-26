@@ -23,5 +23,11 @@ namespace Finantech.DTOs.Income
 
         [Required(ErrorMessage = "Campo 'AccountId' não informado.")]
         public int AccountId { get; set; }
+
+        [Required(ErrorMessage = "Campo 'CategoryId' não informado.")]
+        public int CategoryId { get; set; }
+
+        [Required(ErrorMessage = "Campo 'JustForRecord' não informado.")]
+        public bool JustForRecord { get; set; }
     }
 }

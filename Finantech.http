@@ -65,4 +65,23 @@ Authorization: {{BearerToken}}
   "Color": "#AA2F1A"
 }
 ###
+
+//
+//  TRANSACTIONCONTROLLER
+//
   
+
+POST {{HostAddress}}/api/Transaction/CreateExpense
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "Amount": 100,
+  "ExpenseType": 0,
+  "PurchaseDate": "2024-04-26T13:16:07.448Z",
+  "Destination": "Livraria Santana",
+  "Description": "Harry Potter Coleção",
+  "JustForRecord": false,
+  "AccountId": 4,
+  "CategoryId": 0
+}

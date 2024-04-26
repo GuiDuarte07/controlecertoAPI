@@ -12,6 +12,7 @@ namespace Finantech.Models.MapConfig
             builder.Property(e => e.Amount).HasColumnType("decimal(10,2)");
             //builder.Property(e => e.PurchaseDate).HasColumnType("datetime");
             builder.Property(e => e.Destination).HasMaxLength(80);
+            builder.Property(e => e.JustForRecord).HasDefaultValue(false);
             //builder.Property(e => e.CreatedAt).HasColumnType("datetime");
             //builder.Property(e => e.UpdatedAt).HasColumnType("datetime");
 

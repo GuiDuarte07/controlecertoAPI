@@ -116,6 +116,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHashService, HashService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
 
 // Automapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

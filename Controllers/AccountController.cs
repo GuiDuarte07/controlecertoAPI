@@ -10,7 +10,7 @@ namespace Finantech.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [ExtractTokenInfo]
-    public class AccountController : Controller
+    public class AccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
         public AccountController(IAccountService accountService) 

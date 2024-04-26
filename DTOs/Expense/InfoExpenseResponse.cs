@@ -10,5 +10,6 @@ namespace Finantech.DTOs.Expense
         public DateTime PurchaseDate { get; set; }
         public string Destination { get; set; }
         public string? Description { get; set; }
+        public bool JustForRecord { get; set; } 
     }
 }

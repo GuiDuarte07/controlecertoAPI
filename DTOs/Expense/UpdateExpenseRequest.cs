@@ -19,5 +19,6 @@ namespace Finantech.DTOs.Expense
 
         [MaxLength(100, ErrorMessage = "Campo 'Description' pode conter até 100 caracteres")]
         public string? Description { get; set; }
+        public int CategoryId { get; set; }
     }
 }

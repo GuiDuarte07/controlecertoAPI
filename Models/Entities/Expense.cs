@@ -10,12 +10,13 @@ namespace Finantech.Models.Entities
         public DateTime PurchaseDate { get; set; }
         public string Destination { get; set; }
         public string? Description { get; set; }
+        public bool JustForRecord { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
         public int AccountId { get; set; }
         public int CategoryId { get; set; }
 
-        public Account Account { get; set; }
-        public Category Category { get; set; }
+        public Account? Account { get; set; }
+        public Category? Category { get; set; }
     }
 }
