@@ -145,7 +145,7 @@ namespace Finantech.Services
             var updatedAccount = _appDbContext.Accounts.Update(account);
             await _appDbContext.SaveChangesAsync();
 
-            return _mapper.Map<InfoAccountResponse>(updatedAccount);
+            return _mapper.Map<InfoAccountResponse>(updatedAccount.Entity);
         }
     }
 }

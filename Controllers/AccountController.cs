@@ -35,6 +35,24 @@ namespace Finantech.Controllers
 
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAccountsByUserIdAsync()
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                var accounts = await _accountService.GetAccountsByUserIdAsync(userId);
+
+                return Ok(accounts);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("GetMonthTransactions/{accountId?}")]
         public async Task<IActionResult> GetMonthTransactions(int? accountId) 
         {
@@ -58,6 +76,11 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
                 var updatedAccount = await _accountService.UpdateAccountAsync(request, userId);
@@ -71,8 +94,8 @@ namespace Finantech.Controllers
             }
         }
 
-        /* public Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPagination(int pageNumber, int pageSize, int userId, int? accountId);
+        /* public Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPagination(int pageNumber, int pageSize, int userId, int? accountId);*/
          
-         public Task<ICollection<InfoAccountResponse>> GetAccountsByUserIdAsync(int userId);*/
+         
     }
 }

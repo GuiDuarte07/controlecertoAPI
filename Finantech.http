@@ -46,4 +46,23 @@ Authorization: {{BearerToken}}
   "AccountType": 1,
   "Color": "#AA2F1A"
 }
+###
 
+GET {{HostAddress}}/api/Account
+Content-Type: application/json
+Authorization: {{BearerToken}}
+###
+
+PATCH {{HostAddress}}/api/Account/UpdateAccount
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "Id": 4,
+  "Bank": "Nubank",
+  "Description": "Conta teste: corrigida",
+  "AccountType": 2,
+  "Color": "#AA2F1A"
+}
+###
+  
