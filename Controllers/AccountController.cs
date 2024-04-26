@@ -1,6 +1,7 @@
 ﻿using Finantech.Decorators;
 using Finantech.DTOs.Account;
 using Finantech.Models.DTOs;
+using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,7 @@ namespace Finantech.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [ExtractTokenInfo]
     public class AccountController : Controller
     {
         private readonly IAccountService _accountService;
@@ -16,11 +18,10 @@ namespace Finantech.Controllers
             _accountService = accountService; 
         }
 
-        [HttpPut]
-        [ExtractTokenInfo]
+        [HttpPost("CreateAccount")]
         public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest accountRequest)
         {
-            int userId = (int)HttpContext.Items["UserId"];
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             try
             {
@@ -37,7 +38,7 @@ namespace Finantech.Controllers
         [HttpGet("GetMonthTransactions/{accountId?}")]
         public async Task<IActionResult> GetMonthTransactions(int? accountId) 
         {
-            int userId = 1;//pegar da requisicao
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             try
             {
@@ -52,8 +53,26 @@ namespace Finantech.Controllers
 
         }
 
+        [HttpPatch("UpdateAccount")]
+        public async Task<IActionResult> UpdateAccount(UpdateAccountRequest request)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                var updatedAccount = await _accountService.UpdateAccountAsync(request, userId);
+
+                return Ok(updatedAccount);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         /* public Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPagination(int pageNumber, int pageSize, int userId, int? accountId);
-         public Task<InfoAccountResponse> UpdateAccount(UpdateAccountRequest request);
+         
          public Task<ICollection<InfoAccountResponse>> GetAccountsByUserIdAsync(int userId);*/
     }
 }

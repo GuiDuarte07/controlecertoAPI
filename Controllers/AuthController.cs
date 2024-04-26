@@ -19,7 +19,7 @@ namespace Finantech.Controllers
 
 
         [AllowAnonymous]
-        [HttpPost()]
+        [HttpPost("Authenticate")]
         public ActionResult Authenticate([FromBody] AuthRequest data)
         {
 

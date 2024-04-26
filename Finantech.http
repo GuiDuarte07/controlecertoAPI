@@ -1,6 +1,49 @@
-@Finantech_HostAddress = http://localhost:5037
-
-GET {{Finantech_HostAddress}}/weatherforecast/
-Accept: application/json
+@HostAddress = http://localhost:5037
+@BearerToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjExIiwiZW1haWwiOiJ0ZXN0QHRlc3QuY29tIiwianRpIjoiYWMwMGE2ZjktZWM3Zi00MTFhLTk5MDYtMDI2ZjE2ZTdlYmY5IiwiZXhwIjoxNzQ1NTkyMDUwLCJpc3MiOiJmaW5hbnRlY2guY29tLmJyIiwiYXVkIjoiaHR0cDovL2ZpbmFudGVjaC5jb20uYnIifQ.A_gIWPGoA7cb4h0Kr5Qd-IYHTb3xmqpKsMYkF3LgZNM
 
 ###
+
+//
+// USERCONTROLLER
+//
+POST {{HostAddress}}/api/User/CreateUser
+Content-Type: application/json
+
+{
+  "Name": "Usuário teste",
+  "Email": "test@test.com",
+  "Password": "test123"
+}
+###
+
+
+//
+// USERCONTROLLER
+//
+
+POST {{HostAddress}}/api/Auth/Authenticate
+Content-Type: application/json
+
+{
+  "Email": "test@test.com",
+  "Password": "test123"
+}
+###
+
+
+//
+// USERCONTROLLER
+//
+
+POST {{HostAddress}}/api/Account/CreateAccount
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "Balance": 1000,
+  "Bank": "NunBank",
+  "Description": "Conta teste",
+  "AccountType": 1,
+  "Color": "#AA2F1A"
+}
+

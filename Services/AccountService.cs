@@ -124,9 +124,14 @@ namespace Finantech.Services
             return allTransactions;
         }
 
-        public async Task<InfoAccountResponse> UpdateAccountAsync(UpdateAccountRequest request)
+        public async Task<InfoAccountResponse> UpdateAccountAsync(UpdateAccountRequest request, int userId)
         {
             var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == request.Id) ?? throw new Exception("Conta não encontrada.");
+
+            if (account.UserId != userId)
+            {
+                throw new Exception("Não autorizado: Conta não pertence a usuário.");
+            }
 
             if (request.Description != null)
                 account.Description = request.Description;

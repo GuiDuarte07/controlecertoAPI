@@ -135,7 +135,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AnotherPolicy");
 app.UseRouting();
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

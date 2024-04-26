@@ -22,7 +22,7 @@ namespace Finantech.Controllers
             try 
             {
                 var userInfo = await _userService.CreateUserAync(data);
-                return CreatedAtAction("Auth/Authenticate", new { id = userInfo.Id }, userInfo);
+                return Created("", userInfo);
 
             } catch (Exception ex)
             {
