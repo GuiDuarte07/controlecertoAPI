@@ -7,11 +7,7 @@ namespace Finantech.DTOs.Expense
     {
         [Required(ErrorMessage = "Campo 'Id' não informado.")]
         public int Id { get; set; }
-
-        public double? Amount { get; set; }
-
         public ExpenseTypeEnum? ExpenseType { get; set; }
-
         public DateTime? PurchaseDate { get; set; }
 
         [MaxLength(80, ErrorMessage = "Campo 'Destination' pode conter até 80 caracteres")]
@@ -19,6 +15,6 @@ namespace Finantech.DTOs.Expense
 
         [MaxLength(100, ErrorMessage = "Campo 'Description' pode conter até 100 caracteres")]
         public string? Description { get; set; }
-        public int CategoryId { get; set; }
+        public int? CategoryId { get; set; }
     }
 }

@@ -21,6 +21,12 @@ namespace Finantech.Profiles
 
             CreateMap<Account, InfoAccountResponse>();
 
+            CreateMap<UpdateAccountRequest, Account>()
+                .AfterMap((src, dest) =>
+                {
+                    dest.UpdatedAt = DateTime.Now;
+                });
+
             CreateMap<User, InfoUserResponse>()
                 .ForMember(dest => dest.Accounts, opt => opt.MapFrom(src => src.Accounts));
 
@@ -34,6 +40,13 @@ namespace Finantech.Profiles
                 });
 
             CreateMap<Expense, InfoExpenseResponse>();
+
+
+            CreateMap<UpdateExpenseRequest, Expense>()
+                .AfterMap((src, dest) =>
+                {
+                    dest.UpdatedAt = DateTime.Now;
+                });
         }
     }
 }

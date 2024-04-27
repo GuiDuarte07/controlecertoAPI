@@ -1,6 +1,7 @@
 ﻿using Finantech.Decorators;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Income;
+using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -44,6 +45,23 @@ namespace Finantech.Controllers
                 await _transactionService.DeleteExpenseAsync(expenseId, userId);
 
                 return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPatch("UpdateExpense")]
+        public async Task<IActionResult> UpdateExpense([FromBody] UpdateExpenseRequest request)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                var updatedExpense = await _transactionService.UpdateExpenseAsync(request, userId);
+
+                return Ok(updatedExpense);
             }
             catch (Exception ex)
             {

@@ -91,3 +91,14 @@ DELETE {{HostAddress}}/api/Transaction/DeleteExpense/4
 Content-Type: application/json
 Authorization: {{BearerToken}}
 ###
+
+PATCH {{HostAddress}}/api/Transaction/UpdateExpense
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "Id": 5,
+  "PurchaseDate": "2024-04-22T13:16:07.448Z",
+  "Destination": "Livraria Saraiva",
+  "Description": "Harry Potter Coleção de Livros"
+}

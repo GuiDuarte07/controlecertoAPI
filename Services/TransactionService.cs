@@ -2,6 +2,7 @@
 using Finantech.DTOs.Account;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Income;
+using Finantech.Enums;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.DTOs;
 using Finantech.Models.Entities;
@@ -100,9 +101,39 @@ namespace Finantech.Services
             }
         }
 
-        public Task<InfoExpenseResponse> UpdateExpenseAsync(UpdateExpenseRequest request, int userId)
+        public async Task<InfoExpenseResponse> UpdateExpenseAsync(UpdateExpenseRequest request, int userId)
         {
-            throw new NotImplementedException();
+            var expenseToUpdate = await _appDbContext.Expenses.Include(e => e.Account).FirstOrDefaultAsync(e => e.Id == request.Id) ?? throw new Exception("Conta não encontrada.");
+
+            expenseToUpdate.UpdatedAt = DateTime.Now;
+
+            if (expenseToUpdate.Account!.UserId != userId)
+            {
+                throw new Exception("Não autorizado: Transação não pertence a usuário.");
+            }
+
+            if (request.Description is not null)
+                expenseToUpdate.Description = request.Description;
+            if (request.Destination is not null)
+                expenseToUpdate.Destination = request.Destination;
+            if (request.ExpenseType is not null)
+                expenseToUpdate.ExpenseType = (ExpenseTypeEnum)request.ExpenseType;
+            if (request.PurchaseDate is not null)
+                expenseToUpdate.PurchaseDate = (DateTime)request.PurchaseDate;
+
+            if (request.CategoryId is not null)
+            {
+                var category = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId) 
+                    ?? throw new Exception("Nova categória não encntrada.");
+
+                expenseToUpdate.CategoryId = category.Id;
+            }
+                
+
+            var updatedexpense = _appDbContext.Expenses.Update(expenseToUpdate);
+            await _appDbContext.SaveChangesAsync();
+
+            return _mapper.Map<InfoExpenseResponse>(updatedexpense.Entity);
         }
 
 
