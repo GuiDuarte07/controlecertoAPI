@@ -102,3 +102,39 @@ Authorization: {{BearerToken}}
   "Destination": "Livraria Saraiva",
   "Description": "Harry Potter Coleção de Livros"
 }
+###
+
+
+// INCOME
+
+POST {{HostAddress}}/api/Transaction/CreateIncome
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "Amount": 100,
+  "ExpenseType": 0,
+  "PurchaseDate": "2024-04-26T13:16:07.448Z",
+  "Origin": "Imperio soft LTDA",
+  "Description": "Salário mensal",
+  "JustForRecord": false,
+  "AccountId": 4,
+  "CategoryId": 0
+}
+###
+
+DELETE {{HostAddress}}/api/Transaction/DeleteIncome/1
+Content-Type: application/json
+Authorization: {{BearerToken}}
+###
+
+PATCH {{HostAddress}}/api/Transaction/UpdateIncome
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "Id": 1,
+  "PurchaseDate": "2024-04-22T13:16:07.448Z",
+  "Origin": "Imperios soft LTDA",
+  "Description": "Salário do mês"
+}

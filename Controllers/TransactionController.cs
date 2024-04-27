@@ -1,4 +1,5 @@
 ﻿using Finantech.Decorators;
+using Finantech.DTOs.Account;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Income;
 using Finantech.Models.Entities;
@@ -62,6 +63,58 @@ namespace Finantech.Controllers
                 var updatedExpense = await _transactionService.UpdateExpenseAsync(request, userId);
 
                 return Ok(updatedExpense);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("CreateIncome")]
+        public async Task<IActionResult> CreateIncome([FromBody] CreateIncomeRequest request)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                var income = await _transactionService.CreateIncomeAsync(request, userId);
+
+                return Created("", income);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
+
+        [HttpDelete("DeleteIncome/{incomeId}")]
+        public async Task<IActionResult> DeleteIncome([FromRoute] int incomeId)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                await _transactionService.DeleteIncomeAsync(incomeId, userId);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPatch("UpdateIncome")]
+        public async Task<IActionResult> UpdateIncome([FromBody] UpdateIncomeRequest request)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                var updatedIncome = await _transactionService.UpdateIncomeAsync(request, userId);
+
+                return Ok(updatedIncome);
             }
             catch (Exception ex)
             {

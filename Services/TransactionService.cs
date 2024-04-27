@@ -36,7 +36,7 @@ namespace Finantech.Services
 
                         if (account.Balance < expenseToCreate.Amount)
                         {
-                            throw new Exception("Valor é conta é menor que o valor da transação");
+                            throw new Exception("Valor em conta é menor que o valor da transação.");
                         }
 
                         account.Balance -= expenseToCreate.Amount;
@@ -62,8 +62,6 @@ namespace Finantech.Services
             }
 
         }
-
-        
 
         public async Task DeleteExpenseAsync(int expenseId, int userId)
         {
@@ -142,23 +140,119 @@ namespace Finantech.Services
 
 
 
-
-
-
-
-
-
-
-
-        public Task<InfoIncomeResponse> CreateIncomeAsync(CreateIncomeRequest request, int userId)
+        public async Task<InfoIncomeResponse> CreateIncomeAsync(CreateIncomeRequest request, int userId)
         {
-            throw new NotImplementedException();
+            bool justForRecord = request.JustForRecord;
+            var incomeToCreate = _mapper.Map<Income>(request);
+
+            using (var transaction = _appDbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    if (!justForRecord)
+                    {
+                        var account = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == incomeToCreate.AccountId) ?? throw new Exception("Conta não encontrada.");
+
+                        account.Balance += incomeToCreate.Amount;
+
+                        _appDbContext.Update(account);
+
+                        await _appDbContext.SaveChangesAsync();
+                    }
+
+                    var income = await _appDbContext.Incomes.AddAsync(incomeToCreate);
+
+                    await _appDbContext.SaveChangesAsync();
+
+                    transaction.Commit();
+
+                    return _mapper.Map<InfoIncomeResponse>(income.Entity);
+                }
+                catch (Exception)
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+
         }
 
-        public Task DeleteIncomeAsync(int incomeId, int userId)
+        public async Task DeleteIncomeAsync(int incomeId, int userId)
         {
-            throw new NotImplementedException();
+            var incomeToDelete = await _appDbContext.Incomes.FirstOrDefaultAsync(e => e.Id == incomeId) ?? throw new Exception("Transação não encontrada");
+            bool justForRecord = incomeToDelete.JustForRecord;
+
+            using (var transaction = _appDbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    if (!justForRecord)
+                    {
+                        var account = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == incomeToDelete.AccountId) ?? throw new Exception("Conta não encontrada.");
+
+                        if (account.Balance < incomeToDelete.Amount)
+                        {
+                            throw new Exception("Valor em conta é menor que o valor da transação a ser deletado.");
+                        }
+                        account.Balance -= incomeToDelete.Amount;
+
+                        _appDbContext.Update(account);
+
+                        await _appDbContext.SaveChangesAsync();
+                    }
+
+                    var income = _appDbContext.Incomes.Remove(incomeToDelete);
+
+                    await _appDbContext.SaveChangesAsync();
+
+                    transaction.Commit();
+
+                    return;
+                }
+                catch (Exception)
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
         }
+
+        public async Task<InfoIncomeResponse> UpdateIncomeAsync(UpdateIncomeRequest request, int userId)
+        {
+            var incomeToUpdate = await _appDbContext.Incomes.Include(e => e.Account).FirstOrDefaultAsync(e => e.Id == request.Id) ?? throw new Exception("Conta não encontrada.");
+
+            incomeToUpdate.UpdatedAt = DateTime.Now;
+
+            if (incomeToUpdate.Account!.UserId != userId)
+            {
+                throw new Exception("Não autorizado: Transação não pertence a usuário.");
+            }
+
+            if (request.Description is not null)
+                incomeToUpdate.Description = request.Description;
+            if (request.Origin is not null)
+                incomeToUpdate.Origin = request.Origin;
+            if (request.IncomeType is not null)
+                incomeToUpdate.IncomeType = (IncomeTypeEnum)request.IncomeType;
+            if (request.PurchaseDate is not null)
+                incomeToUpdate.PurchaseDate = (DateTime)request.PurchaseDate;
+
+            if (request.CategoryId is not null)
+            {
+                var category = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId)
+                    ?? throw new Exception("Nova categória não encntrada.");
+
+                incomeToUpdate.CategoryId = category.Id;
+            }
+
+
+            var updatedIncome = _appDbContext.Incomes.Update(incomeToUpdate);
+            await _appDbContext.SaveChangesAsync();
+
+            return _mapper.Map<InfoIncomeResponse>(updatedIncome.Entity);
+        }
+
+
 
         public Task<ICollection<InfoTransactionResponse>> GetMonthTransactionsAsync(int userId, int? accountId)
         {
@@ -166,13 +260,6 @@ namespace Finantech.Services
         }
 
         public Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPaginationAsync(int pageNumber, int pageSize, int userId, int? accountId)
-        {
-            throw new NotImplementedException();
-        }
-
-        
-
-        public Task<InfoIncomeResponse> UpdateIncomeAsync(UpdateIncomeRequest request, int userId)
         {
             throw new NotImplementedException();
         }

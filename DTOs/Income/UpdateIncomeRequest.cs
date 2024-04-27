@@ -12,12 +12,12 @@ namespace Finantech.DTOs.Account
 
         public IncomeTypeEnum? IncomeType { get; set; }
 
-        public DateTime PurchaseDate { get; set; }
+        public DateTime? PurchaseDate { get; set; }
 
         [MaxLength(80, ErrorMessage = "Campo 'Description' pode conter até 80 caracteres")]
         public string? Origin { get; set; }
 
         public string? Description { get; set; }
-        public int CategoryId { get; set; }
+        public int? CategoryId { get; set; }
     }
 }
