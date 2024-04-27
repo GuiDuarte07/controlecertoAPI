@@ -2,6 +2,7 @@
 using Finantech.DTOs.Account;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Income;
+using Finantech.Models.DTOs;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -117,6 +118,34 @@ namespace Finantech.Controllers
                 return Ok(updatedIncome);
             }
             catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("GetTransactionsWithPagination")]
+        public async Task<IActionResult> GetTransactionsWithPagination
+        (
+            [FromQuery]int pageNumber,
+            [FromQuery] DateTime? startDate,
+            [FromQuery] DateTime? endDate,
+            [FromQuery] int? accountId
+        )
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            const int pageSize = 30;
+
+            DateTime startDateSet = startDate ?? DateTime.MinValue;
+            DateTime endDateSet = endDate ?? DateTime.Now;
+
+            if (pageNumber < 1) pageNumber = 1;
+
+            try
+            {
+                var transactions = await _transactionService.GetTransactionsWithPaginationAsync(pageNumber, pageSize, userId, startDateSet, endDateSet, accountId);
+
+                return Ok(transactions);
+            } catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }

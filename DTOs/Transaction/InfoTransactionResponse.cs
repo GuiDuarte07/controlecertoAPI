@@ -1,4 +1,6 @@
 ﻿using System;
+using Finantech.DTOs.Category;
+using Finantech.DTOs.Expense;
 using Finantech.Enums;
 using Finantech.Models.Entities;
 
@@ -10,9 +12,8 @@ namespace Finantech.Models.DTOs
         public double Amount { get; set; }
         public string? Description { get; set; }
         public DateTime PurchaseDate { get; set; }
-        public string? Origin { get; set; }
-        public string? Destination { get; set; }
-        public Category Category { get; set; }
+        public string Source { get; set; } //Origin or Destination
+        public InfoCategoryResponse Category { get; set; }
         public TransactionTypeEnum TransactionType { get; set; }
         public int AccountId { get; set; }
 
@@ -23,10 +24,17 @@ namespace Finantech.Models.DTOs
             Amount = expense.Amount;
             Description = expense.Description ?? null;
             PurchaseDate = expense.PurchaseDate;
-            Destination = expense.Destination;
-            Category = expense.Category;
+            Source = expense.Destination;
             TransactionType = TransactionTypeEnum.EXPENSE;
             AccountId = expense.AccountId;
+
+            Category = new InfoCategoryResponse
+            {
+                BillType = expense.Category!.BillType,
+                Icon = expense.Category.Icon,
+                Id = expense.Category.Id,
+                Name = expense.Category.Name
+            };
         }
 
         // Construtor para Income
@@ -36,10 +44,17 @@ namespace Finantech.Models.DTOs
             Amount = income.Amount;
             Description = income.Description ?? null;
             PurchaseDate = income.PurchaseDate;
-            Origin = income.Origin;
-            Category = income.Category;
+            Source = income.Origin;
             TransactionType = TransactionTypeEnum.INCOME;
             AccountId = income.AccountId;
+
+            Category = new InfoCategoryResponse
+            {
+                BillType = income.Category!.BillType,
+                Icon = income.Category.Icon,
+                Id = income.Category.Id,
+                Name = income.Category.Name
+            };
         }
 
         // Construtor para CreditExpense
@@ -49,10 +64,18 @@ namespace Finantech.Models.DTOs
             Amount = creditExpense.Amount;
             Description = creditExpense.Description;
             PurchaseDate = creditExpense.PurchaseDate;
-            Destination = creditExpense.Destination;
-            Category = creditExpense.Category;
+            Source = creditExpense.Destination;
+
             TransactionType = TransactionTypeEnum.CREDITEXPENSE;
             AccountId = creditExpense.AccountId;
+
+            Category = new InfoCategoryResponse
+            {
+                BillType = creditExpense.Category!.BillType,
+                Icon = creditExpense.Category.Icon,
+                Id = creditExpense.Category.Id,
+                Name = creditExpense.Category.Name
+            };
         }
     }
 }

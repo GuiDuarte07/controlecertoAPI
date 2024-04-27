@@ -48,82 +48,6 @@ namespace Finantech.Services
             return accountsInfo;
         }
 
-        public async Task<ICollection<InfoTransactionResponse>> GetMonthTransactionsAsync(int userId, int? accountId)
-        {
-            var firstDayOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-
-            var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
-
-            IQueryable<InfoTransactionResponse> transactionsQuery = _appDbContext.Expenses
-                .Where(e => e.Account.UserId == userId &&
-                            e.PurchaseDate >= firstDayOfMonth &&
-                            e.PurchaseDate <= lastDayOfMonth)
-                .Select(e => new InfoTransactionResponse(e));
-
-            IQueryable<InfoTransactionResponse> incomesQuery = _appDbContext.Incomes
-                .Where(i => i.Account.UserId == userId &&
-                            i.PurchaseDate >= firstDayOfMonth &&
-                            i.PurchaseDate <= lastDayOfMonth)
-                .Select(i => new InfoTransactionResponse(i));
-
-            IQueryable<InfoTransactionResponse> creditExpensesQuery = _appDbContext.CreditExpenses
-                .Where(ce => ce.Account.UserId == userId &&
-                             ce.PurchaseDate >= firstDayOfMonth &&
-                             ce.PurchaseDate <= lastDayOfMonth)
-                .Select(ce => new InfoTransactionResponse(ce));
-
-            // Se accountId for especificado, filtra as transações pela conta
-            if (accountId.HasValue)
-            {
-                transactionsQuery = transactionsQuery.Where(t => t.AccountId == accountId);
-                incomesQuery = incomesQuery.Where(t => t.AccountId == accountId);
-                creditExpensesQuery = creditExpensesQuery.Where(t => t.AccountId == accountId);
-            }
-
-            // Concatena todas as transações
-            var allTransactions = await transactionsQuery
-                .Concat(incomesQuery)
-                .Concat(creditExpensesQuery)
-                .ToListAsync();
-
-            return allTransactions;
-        }
-
-        public async Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPaginationAsync(int pageNumber, int pageSize, int userId, int? accountId)
-        {
-            // Calcula o índice inicial com base no número da página e no tamanho da página
-            int startIndex = (pageNumber - 1) * pageSize;
-
-            IQueryable<InfoTransactionResponse> transactionsQuery = _appDbContext.Expenses
-                .Where(e => e.Account.UserId == userId)
-                .Select(e => new InfoTransactionResponse(e));
-
-            IQueryable<InfoTransactionResponse> incomesQuery = _appDbContext.Incomes
-                .Where(i => i.Account.UserId == userId)
-                .Select(i => new InfoTransactionResponse(i));
-
-            IQueryable<InfoTransactionResponse> creditExpensesQuery = _appDbContext.CreditExpenses
-                .Where(ce => ce.Account.UserId == userId)
-                .Select(ce => new InfoTransactionResponse(ce));
-
-            if (accountId.HasValue)
-            {
-                transactionsQuery = transactionsQuery.Where(t => t.AccountId == accountId);
-                incomesQuery = incomesQuery.Where(t => t.AccountId == accountId);
-                creditExpensesQuery = creditExpensesQuery.Where(t => t.AccountId == accountId);
-            }
-
-            var allTransactions = await transactionsQuery
-                .Concat(incomesQuery)
-                .Concat(creditExpensesQuery)
-                .OrderByDescending(t => t.PurchaseDate) // Ordena as transações pela data de compra em ordem decrescente
-                .Skip(startIndex) // Pula os registros correspondentes às páginas anteriores
-                .Take(pageSize) // Obtém a quantidade de registros correspondente ao tamanho da página
-                .ToListAsync();
-
-            return allTransactions;
-        }
-
         public async Task<InfoAccountResponse> UpdateAccountAsync(UpdateAccountRequest request, int userId)
         {
             var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == request.Id) ?? throw new Exception("Conta não encontrada.");
@@ -147,5 +71,6 @@ namespace Finantech.Services
 
             return _mapper.Map<InfoAccountResponse>(updatedAccount.Entity);
         }
+
     }
 }

@@ -13,7 +13,6 @@ namespace Finantech.Services.Interfaces
         public Task<InfoExpenseResponse> CreateExpenseAsync(CreateExpenseRequest request, int userId);
         public Task<InfoExpenseResponse> UpdateExpenseAsync(UpdateExpenseRequest request, int userId);
         public Task DeleteIncomeAsync(int incomeId, int userId);
-        public Task<ICollection<InfoTransactionResponse>> GetMonthTransactionsAsync(int userId, int? accountId);
-        public Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPaginationAsync(int pageNumber, int pageSize, int userId, int? accountId);
+        public Task<IEnumerable<InfoTransactionResponse>> GetTransactionsWithPaginationAsync(int pageNumber, int pageSize, int userId, DateTime startDate, DateTime endDate, int? accountId);
     }
 }

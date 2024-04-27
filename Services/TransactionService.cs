@@ -136,10 +136,6 @@ namespace Finantech.Services
 
 
 
-
-
-
-
         public async Task<InfoIncomeResponse> CreateIncomeAsync(CreateIncomeRequest request, int userId)
         {
             bool justForRecord = request.JustForRecord;
@@ -254,14 +250,95 @@ namespace Finantech.Services
 
 
 
-        public Task<ICollection<InfoTransactionResponse>> GetMonthTransactionsAsync(int userId, int? accountId)
+        public async Task<IEnumerable<InfoTransactionResponse>> GetTransactionsWithPaginationAsync(int pageNumber, int pageSize, int userId, DateTime startDate, DateTime endDate, int? accountId)
         {
-            throw new NotImplementedException();
-        }
+            // Calcula o índice inicial com base no número da página e no tamanho da página
+            int startIndex = (pageNumber - 1) * pageSize;
 
-        public Task<ICollection<InfoTransactionResponse>> GetTransactionsWithPaginationAsync(int pageNumber, int pageSize, int userId, int? accountId)
-        {
-            throw new NotImplementedException();
+            IQueryable<InfoTransactionResponse> transactionsQuery = _appDbContext.Expenses
+                .Include(e => e.Category)
+                .Where(e => 
+                    e.Account!.UserId == userId && 
+                    e.PurchaseDate >= startDate &&
+                    e.PurchaseDate <= endDate)
+                .Select(e => new InfoTransactionResponse(e));
+
+            IQueryable<InfoTransactionResponse> incomesQuery = _appDbContext.Incomes
+                .Include(e => e.Category)
+                .Where(i => i.Account.UserId == userId &&
+                    i.Account!.UserId == userId &&
+                    i.PurchaseDate >= startDate &&
+                    i.PurchaseDate <= endDate)
+                .Select(i => new InfoTransactionResponse(i));
+
+            IQueryable<InfoTransactionResponse> creditExpensesQuery = _appDbContext.CreditExpenses
+                .Include(e => e.Category)
+                .Where(ce => ce.Account.UserId == userId &&
+                    ce.Account!.UserId == userId &&
+                    ce.PurchaseDate >= startDate &&
+                    ce.PurchaseDate <= endDate)
+                .Select(ce => new InfoTransactionResponse(ce));
+
+            var allTransactions = transactionsQuery.AsEnumerable()
+                .Union(incomesQuery.AsEnumerable())
+                .Union(creditExpensesQuery.AsEnumerable())
+                .OrderByDescending(t => t.PurchaseDate)
+                .Skip(startIndex)
+                .Take(pageSize);
+
+            if (accountId.HasValue)
+            {
+
+                var _ = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId) ??
+                    throw new Exception("Conta não encontrada.");
+
+                allTransactions = allTransactions.Where(t => t.AccountId == accountId);
+            }
+
+            return allTransactions;
         }
     }
 }
+
+
+/*public async Task<ICollection<InfoTransactionResponse>> GetMonthTransactionsAsync(int userId, int? accountId)
+{
+    var firstDayOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+    var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+
+    IQueryable<InfoTransactionResponse> transactionsQuery = _appDbContext.Expenses
+        .Where(e => e.Account.UserId == userId &&
+                    e.PurchaseDate >= firstDayOfMonth &&
+                    e.PurchaseDate <= lastDayOfMonth)
+        .Select(e => new InfoTransactionResponse(e));
+
+    IQueryable<InfoTransactionResponse> incomesQuery = _appDbContext.Incomes
+        .Where(i => i.Account.UserId == userId &&
+                    i.PurchaseDate >= firstDayOfMonth &&
+                    i.PurchaseDate <= lastDayOfMonth)
+        .Select(i => new InfoTransactionResponse(i));
+
+    IQueryable<InfoTransactionResponse> creditExpensesQuery = _appDbContext.CreditExpenses
+        .Where(ce => ce.Account.UserId == userId &&
+                     ce.PurchaseDate >= firstDayOfMonth &&
+                     ce.PurchaseDate <= lastDayOfMonth)
+        .Select(ce => new InfoTransactionResponse(ce));
+
+    // Se accountId for especificado, filtra as transações pela conta
+    if (accountId.HasValue)
+    {
+        transactionsQuery = transactionsQuery.Where(t => t.AccountId == accountId);
+        incomesQuery = incomesQuery.Where(t => t.AccountId == accountId);
+        creditExpensesQuery = creditExpensesQuery.Where(t => t.AccountId == accountId);
+    }
+
+    // Concatena todas as transações
+    var allTransactions = await transactionsQuery
+        .Concat(incomesQuery)
+        .Concat(creditExpensesQuery)
+        .OrderByDescending(t => t.PurchaseDate) // Ordena as transações pela data de compra em ordem decrescente
+        .ToListAsync();
+
+    return allTransactions;
+}*/

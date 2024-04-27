@@ -138,3 +138,9 @@ Authorization: {{BearerToken}}
   "Origin": "Imperios soft LTDA",
   "Description": "Salário do mês"
 }
+###
+
+// TRANSACTIONS: pageNumber,startDate, endDate, accountId
+
+GET {{HostAddress}}/api/Transaction/GetTransactionsWithPagination?pageNumber=1
+Authorization: {{BearerToken}}

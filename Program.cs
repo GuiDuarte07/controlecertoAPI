@@ -33,11 +33,11 @@ builder.Services.AddCors(options =>
         });
 });
 
-builder.Services.AddControllersWithViews()
+/*builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
-    });
+    });*/
 
 // JWT TOKEN
 builder.Services.AddAuthentication(options =>
