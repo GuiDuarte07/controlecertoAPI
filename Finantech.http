@@ -144,3 +144,38 @@ Authorization: {{BearerToken}}
 
 GET {{HostAddress}}/api/Transaction/GetTransactionsWithPagination?pageNumber=1
 Authorization: {{BearerToken}}
+###
+
+//
+//   CATEGORYCONTROLLER
+//
+
+POST {{HostAddress}}/api/Category/CreateCategory
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "Name": "Compas",
+  "Icon": "icon",
+  "Color": "#E30A31",
+  "BillType": 0
+}
+###
+
+GET {{HostAddress}}/api/Category/GetAllCategories
+Authorization: {{BearerToken}}
+###
+
+PATCH {{HostAddress}}/api/Category/UpdateCategory
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "Id": 0,
+  "Name": "Compras",
+  "color": "#AD451D"
+}
+###
+
+DELETE {{HostAddress}}/api/Category/DeleteCategory/2
+Authorization: {{BearerToken}}

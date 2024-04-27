@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Finantech.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace Finantech.DTOs.Category
 {
@@ -7,12 +8,11 @@ namespace Finantech.DTOs.Category
         [Required(ErrorMessage = "Campo 'Name' não informado.")]
         [MaxLength(60, ErrorMessage = "Campo 'Name' pode conter até 60 caracteres")]
         public string Name { get; set; }
-        /*[Required(ErrorMessage = "Campo 'Icon' não informado.")]*/
+        [Required(ErrorMessage = "Campo 'Icon' não informado.")]
         public string Icon { get; set; }
         [Required(ErrorMessage = "Campo 'BillType' não informado.")]
-        public string BillType { get; set; }
-
-        [Required(ErrorMessage = "Campo 'UserId' não informado.")]
-        public int UserId { get; set; }
+        public BillTypeEnum BillType { get; set; }
+        [Required(ErrorMessage = "Campo 'Color' não informado.")]
+        public string Color { get; set; }
     }
 }

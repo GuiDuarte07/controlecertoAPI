@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Finantech.DTOs.Account;
+using Finantech.DTOs.Category;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Income;
 using Finantech.DTOs.User;
@@ -55,6 +56,23 @@ namespace Finantech.Profiles
                     dest.UpdatedAt = DateTime.Now;
                 });
             CreateMap<Income, InfoIncomeResponse>();
+
+
+
+            CreateMap<CreateCategoryRequest, Category>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .AfterMap((src, dest) =>
+                {
+                    dest.CreatedAt = DateTime.Now;
+                    dest.UpdatedAt = DateTime.Now;
+                });
+            CreateMap<Category, InfoCategoryResponse>();
+            CreateMap<UpdateCategoryRequest, Category>()
+                .AfterMap((src, dest) =>
+                {
+                    dest.UpdatedAt = DateTime.Now;
+                });
 
         }
     }

@@ -8,5 +8,6 @@ namespace Finantech.DTOs.Category
         public string Name { get; set; }
         public string Icon { get; set; }
         public BillTypeEnum BillType { get; set; }
+        public string Color { get; set; }
     }
 }
