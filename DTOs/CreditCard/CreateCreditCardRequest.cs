@@ -7,8 +7,10 @@ namespace Finantech.DTOs.CreditCard
         [Required(ErrorMessage = "Campo 'Number' não informado.")]
         public string Number { get; set; }
 
-        [Required(ErrorMessage = "Campo 'Limit' não informado.")]
-        public double? Limit { get; set; }
+        [Required(ErrorMessage = "Campo 'TotalLimit' não informado.")]
+        public double TotalLimit { get; set; }
+        [Required(ErrorMessage = "Campo 'UsedLimit' não informado.")]
+        public double UsedLimit { get; set; }
 
         [MaxLength(100, ErrorMessage = "Campo 'Description' pode conter até 100 caracteres")]
         public string Description { get; set; }
@@ -18,5 +20,11 @@ namespace Finantech.DTOs.CreditCard
 
         [Required(ErrorMessage = "Campo 'AccountId' não informado.")]
         public int AccountId { get; set; }
+
+        [Required(ErrorMessage = "Campo 'DueDay' não informado.")]
+        public int DueDay { get; set; }
+
+        [Required(ErrorMessage = "Campo 'CloseDay' não informado.")]
+        public int CloseDay { get; set; }
     }
 }

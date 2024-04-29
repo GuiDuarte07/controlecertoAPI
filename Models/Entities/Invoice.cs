@@ -3,13 +3,13 @@
     public class Invoice
     {
         public int Id { get; set; }
-        public double? TotalAmount { get; set; }
-        public double? TotalPaid { get; set; }
-        public bool? IsPaid { get; set; }
+        public double TotalAmount { get; set; } = 0;
+        public double TotalPaid { get; set; } = 0;
+        public bool IsPaid { get; set; } = false;
         public DateTime? ClosingDate { get; set; }
         public DateTime? DueDate { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime? UpdatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
         public int CreditCardId { get; set; }
 
         public CreditCard CreditCard { get; set; }

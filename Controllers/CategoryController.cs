@@ -1,10 +1,5 @@
 ﻿using Finantech.Decorators;
-using Finantech.DTOs.Account;
 using Finantech.DTOs.Category;
-using Finantech.DTOs.Expense;
-using Finantech.DTOs.Income;
-using Finantech.Models.DTOs;
-using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

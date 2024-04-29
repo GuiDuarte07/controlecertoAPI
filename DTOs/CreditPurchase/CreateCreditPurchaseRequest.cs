@@ -7,8 +7,11 @@ namespace Finantech.DTOs.CreditPurcchase
         [Required(ErrorMessage = "Campo 'TotalAmount' não informado.")]
         public double TotalAmount { get; set; }
 
-        [Required(ErrorMessage = "Campo 'TotalInstalment' não informado.")]
-        public int TotalInstalment { get; set; }
+        [Required(ErrorMessage = "Campo 'TotallInstallment' não informado.")]
+        public int TotalInstallment { get; set; }
+
+        [Required(ErrorMessage = "Campo 'InstallmentsPaid' não informado.")]
+        public int InstallmentsPaid { get; set; } = 0;
 
         [Required(ErrorMessage = "Campo 'PurchaseDate' não informado.")]
         public DateTime? PurchaseDate { get; set; }
@@ -22,5 +25,8 @@ namespace Finantech.DTOs.CreditPurcchase
 
         [Required(ErrorMessage = "Campo 'CreditCardId' não informado.")]
         public int CreditCardId { get; set; }
+
+        [Required(ErrorMessage = "Campo 'CategoryId' não informado.")]
+        public int CategoryId { get; set; }
     }
 }

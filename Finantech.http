@@ -179,3 +179,13 @@ Authorization: {{BearerToken}}
 
 DELETE {{HostAddress}}/api/Category/DeleteCategory/2
 Authorization: {{BearerToken}}
+###
+
+
+//
+// CREDITCARDCONTROLLER
+//
+
+POST {{HostAddress}}/api/CreditCard/CreateCreditCard
+Content-Type: application/json
+Authorization: {{BearerToken}}
