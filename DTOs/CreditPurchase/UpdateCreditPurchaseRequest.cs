@@ -7,7 +7,7 @@ namespace Finantech.DTOs.CreditPurcchase
         [Required(ErrorMessage = "Campo 'Id' não informado.")]
         public int Id { get; set; }
 
-        public int TotalInstalment { get; set; }
+        public int TotalInstallment { get; set; }
 
         public DateTime? PurchaseDate { get; set; }
 

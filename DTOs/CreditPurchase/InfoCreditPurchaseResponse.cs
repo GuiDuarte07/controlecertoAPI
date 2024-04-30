@@ -4,8 +4,8 @@
     {
         public int Id { get; set; }
         public double TotalAmount { get; set; }
-        public int TotalInstalment { get; set; }
-        public int InstalmentsPaid { get; set; }
+        public int TotalInstallment { get; set; }
+        public int InstallmentsPaid { get; set; }
         public DateTime? PurchaseDate { get; set; }
         public bool Paid { get; set; }
         public string Destination { get; set; }

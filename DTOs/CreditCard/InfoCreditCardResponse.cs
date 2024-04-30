@@ -5,7 +5,6 @@ namespace Finantech.DTOs.CreditCard
     public class InfoCreditCardResponse
     {
         public int Id { get; set; }
-        public string Number { get; set; }
         public double TotalLimit { get; set; }
         public double UsedLimit { get; set; }
         public string Description { get; set; }

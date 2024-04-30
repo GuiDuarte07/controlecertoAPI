@@ -8,7 +8,6 @@ namespace Finantech.Models.MapConfig
     {
         public void Configure(EntityTypeBuilder<CreditCard> builder)
         {
-            builder.Property(cc => cc.Number).HasMaxLength(15).HasColumnType("char(15)");
             builder.Property(cc => cc.TotalLimit).HasColumnType("decimal(10,2)");
             builder.Property(cc => cc.UsedLimit).HasColumnType("decimal(10,2)");
             builder.Property(cc => cc.Description).HasMaxLength(100);
@@ -17,7 +16,6 @@ namespace Finantech.Models.MapConfig
             //builder.Property(cc => cc.UpdatedAt).HasColumnType("datetime");
 
             builder.HasKey(cc => cc.Id);
-            builder.HasIndex(u => u.Number).IsUnique();
 
             builder.HasOne(cc => cc.Account)
                 .WithOne(a => a.CreditCard)

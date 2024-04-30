@@ -22,6 +22,10 @@ namespace Finantech.Services
             _mapper = mapper;
         }
 
+        /*
+         * =========+> EXPENSES
+         */
+
         public async Task<InfoExpenseResponse> CreateExpenseAsync(CreateExpenseRequest request, int userId)
         {
             bool justForRecord = request.JustForRecord;
@@ -134,7 +138,9 @@ namespace Finantech.Services
             return _mapper.Map<InfoExpenseResponse>(updatedexpense.Entity);
         }
 
-
+        /*
+         * =========+> INCOMES
+         */
 
         public async Task<InfoIncomeResponse> CreateIncomeAsync(CreateIncomeRequest request, int userId)
         {
@@ -270,6 +276,13 @@ namespace Finantech.Services
                     i.PurchaseDate >= startDate &&
                     i.PurchaseDate <= endDate)
                 .Select(i => new InfoTransactionResponse(i));
+
+
+            /*
+             * - Talvez não seja necessário puxar esses dados aqui nessa parte
+             * Avaliar a possibilidade de puxar os dados de CreditPurchase
+             * Ou, mais simples, puxar os dados de InvoicePayment.
+             */
 
             IQueryable<InfoTransactionResponse> creditExpensesQuery = _appDbContext.CreditExpenses
                 .Include(e => e.Category)

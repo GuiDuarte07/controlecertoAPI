@@ -189,3 +189,41 @@ Authorization: {{BearerToken}}
 POST {{HostAddress}}/api/CreditCard/CreateCreditCard
 Content-Type: application/json
 Authorization: {{BearerToken}}
+
+{
+  "totalLimit": 1000,
+  "usedLimit": 0,
+  "description": "Cartão do Nubank",
+  "cardBrand": "MasterCard",
+  "accountId": 4,
+  "closeDay": 3,
+  "dueDay": 10
+}
+###
+
+PATCH {{HostAddress}}/api/CreditCard/UpdateCreditCard
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "id": 1,
+  "description": "Cartão atualizado",
+  "cardBrand": "master card"
+}
+###
+
+POST {{HostAddress}}/api/CreditCard/CreateCreditPurchase
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "totalAmount": 100,
+  "totalInstallment": 1,
+  "installmentsPaid": 0,
+  "purchaseDate": "2024-04-30T01:48:44.848Z",
+  "destination": "bom lar",
+  "description": "compras de casa",
+  "creditCardId": 1,
+  "categoryId": 0
+}
+###

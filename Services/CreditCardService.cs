@@ -2,6 +2,7 @@
 using Finantech.DTOs.CreditCard;
 using Finantech.DTOs.CreditPurcchase;
 using Finantech.DTOs.Expense;
+using Finantech.Enums;
 using Finantech.Migrations;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.Entities;
@@ -49,30 +50,34 @@ namespace Finantech.Services
 
             if(request.CardBrand is not null)
                 creditCardToUpdate.CardBrand = request.CardBrand;
-            if(request.Number is not null)
-                creditCardToUpdate.Number = request.Number;
-            if (request.DueDay is not null)
-                creditCardToUpdate.DueDay = (int)request.DueDay;
-            if (request.CloseDay is not null)
-                creditCardToUpdate.CloseDay = (int)request.CloseDay;
             if (request.Description is not null)
                 creditCardToUpdate.Description = request.Description;
-            if(request.TotalLimit is not null && request.TotalLimit >= 0)
-                creditCardToUpdate.TotalLimit = (double)request.TotalLimit;
-            if (request.UsedLimit is not null && request.UsedLimit >= 0)
-                creditCardToUpdate.UsedLimit = (double)request.UsedLimit;
+
+
+
+            /*
+             * Será feito posteriormente a lógica em mudar o TotalLimit, UsedLimit, DueDate e CloseDate
+             */
+
+            /*
+                if (request.CloseDay is not null)
+                    creditCardToUpdate.CloseDay = (int)request.CloseDay;
+                if (request.DueDay is not null)
+                    creditCardToUpdate.DueDay = (int)request.DueDay;
+                if(request.TotalLimit is not null && request.TotalLimit >= 0)
+                    creditCardToUpdate.TotalLimit = (double)request.TotalLimit;
+                if (request.UsedLimit is not null && request.UsedLimit >= 0)
+                    creditCardToUpdate.UsedLimit = (double)request.UsedLimit;
+            */
 
             var updatedCreditCard = _appDbContext.CreditCards.Update(creditCardToUpdate);
             await _appDbContext.SaveChangesAsync();
 
-            return _mapper.Map<InfoCreditCardResponse>(updatedCreditCard);
+            return _mapper.Map<InfoCreditCardResponse>(updatedCreditCard.Entity);
         }
 
         public async Task<InfoCreditPurchaseResponse> CreateCreditPurchaseAsync(CreateCreditPurchaseRequest request, int userId)
         {
-            /*
-             * IGNORAR CATEGORY NO MAPPER ======================================================================
-             */
             var creditPurchaseToCreate = _mapper.Map<CreditPurchase>(request);
 
             var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstOrDefaultAsync(cc => cc.Id == request.CreditCardId && cc.Account.UserId == userId)
@@ -80,15 +85,26 @@ namespace Finantech.Services
 
             if(creditCard.TotalLimit - creditCard.UsedLimit < request.TotalAmount)
                 throw new Exception("Limite inferior ao valor da compra.");
-            
+
+            var category = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId && c.UserId == userId)
+                ?? throw new Exception("Categoria informada não encontrada");
+
+            /*if (category.BillType != BillTypeEnum.EXPENSE)
+                throw new Exception("Essa categoria não é de gastos.");*/
+
+
+            /*
+             * ===== VALIDAR O FUNCIONAMENTO PARA REGISTRO DE COMPRAS ANTIGAS ======
+             */
+
             using (var transaction = _appDbContext.Database.BeginTransaction())
             {
                 try
                 {
                     double TotalAmount = request.TotalAmount;
-                    int TotalInstallment = request.TotalInstallment;
-                    int InstallmentsPaid = request.InstallmentsPaid;
-                    double installmentAmount = TotalAmount / (request.TotalInstallment - InstallmentsPaid);
+                    int totalInstallment = request.TotalInstallment;
+                    int installmentsPaid = request.InstallmentsPaid;
+                    double installmentAmount = TotalAmount / (request.TotalInstallment - installmentsPaid);
 
                     /*
                      * Detalhes sobre implementação:
@@ -111,7 +127,7 @@ namespace Finantech.Services
 
                     ICollection<CreditExpense> expenses = [];
 
-                    for (int i = 0; i < TotalAmount - InstallmentsPaid; i++)
+                    for (int i = 0; i < totalInstallment - installmentsPaid; i++)
                     {
                         var monthClosingInvoiceDate = actualClosingMonthDate.AddMonths(i);
 
@@ -130,8 +146,8 @@ namespace Finantech.Services
                         {
                             var newInvoice = new Invoice
                             {
-                                DueDate = monthClosingInvoiceDate,
-                                ClosingDate = monthClosingInvoiceDate.AddDays(7),
+                                ClosingDate = monthClosingInvoiceDate,
+                                DueDate = monthClosingInvoiceDate.AddDays(7),
                                 CreditCardId = creditCard.Id,
                             };
 
@@ -148,9 +164,9 @@ namespace Finantech.Services
                             AccountId = creditCard.AccountId,
                             CategoryId = request.CategoryId,
                             Amount = installmentAmount,
-                            InstallmentNumber = i + 1 + InstallmentsPaid,
+                            InstallmentNumber = i + 1 + installmentsPaid,
                             InvoiceId = monthInvoice.Id,
-                            Description = request.Description + $" - parcela {i + 1 + InstallmentsPaid}/{(TotalAmount - InstallmentsPaid)}",
+                            Description = request.Description + $" - parcela {i + 1 + installmentsPaid}/{(totalInstallment - installmentsPaid)}",
                             Destination = request.Destination,
                             PurchaseDate = request.PurchaseDate ?? DateTime.UtcNow,
                         };

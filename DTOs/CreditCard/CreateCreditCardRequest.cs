@@ -4,11 +4,10 @@ namespace Finantech.DTOs.CreditCard
 {
     public class CreateCreditCardRequest
     {
-        [Required(ErrorMessage = "Campo 'Number' não informado.")]
-        public string Number { get; set; }
 
         [Required(ErrorMessage = "Campo 'TotalLimit' não informado.")]
         public double TotalLimit { get; set; }
+
         [Required(ErrorMessage = "Campo 'UsedLimit' não informado.")]
         public double UsedLimit { get; set; }
 
