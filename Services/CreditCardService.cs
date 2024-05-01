@@ -2,9 +2,11 @@
 using Finantech.DTOs.CreditCard;
 using Finantech.DTOs.CreditPurcchase;
 using Finantech.DTOs.Expense;
+using Finantech.DTOs.Invoice;
 using Finantech.Enums;
 using Finantech.Migrations;
 using Finantech.Models.AppDbContext;
+using Finantech.Models.DTOs;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -194,6 +196,29 @@ namespace Finantech.Services
                     throw;
                 }
             }
+        }
+
+
+        public async Task<IEnumerable<InfoInvoiceResponse>> GetInvoicesWithPaginationAsync(int pageNumber, int pageSize, int userId, DateTime startDate, DateTime endDate, int? accountId)
+        {
+            int startIndex = (pageNumber - 1) * pageSize;
+
+            if (accountId.HasValue)
+            {
+                var _ = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId) ??
+                    throw new Exception("Conta não encontrada.");
+            }
+
+            var invoices = await _appDbContext.Invoices.Where(i =>
+                i.CreditCard.Account.UserId == userId && 
+                i.DueDate >= startDate &&
+                i.DueDate <= endDate && 
+                i.CreditCard.AccountId == (accountId ?? i.CreditCard.AccountId)
+            ).Skip(startIndex)
+            .Take(pageSize)
+            .ToListAsync();            
+
+            return _mapper.Map<ICollection<InfoInvoiceResponse>>(invoices);
         }
 
         public Task DeleteCreditPurchaseAsync(int purchaseId, int userId)

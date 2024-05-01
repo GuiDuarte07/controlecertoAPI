@@ -294,10 +294,7 @@ namespace Finantech.Services
 
             var allTransactions = transactionsQuery.AsEnumerable()
                 .Union(incomesQuery.AsEnumerable())
-                .Union(creditExpensesQuery.AsEnumerable())
-                .OrderByDescending(t => t.PurchaseDate)
-                .Skip(startIndex)
-                .Take(pageSize);
+                .Union(creditExpensesQuery.AsEnumerable());
 
             if (accountId.HasValue)
             {
@@ -306,9 +303,12 @@ namespace Finantech.Services
                     throw new Exception("Conta não encontrada.");
 
                 allTransactions = allTransactions.Where(t => t.AccountId == accountId);
-            }
+            
 
-            return allTransactions;
+            return allTransactions
+                    .Skip(startIndex)
+                    .Take(pageSize)
+                    .OrderByDescending(t => t.PurchaseDate);
         }
     }
 }
