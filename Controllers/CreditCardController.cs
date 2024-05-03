@@ -1,6 +1,7 @@
 ﻿using Finantech.Decorators;
 using Finantech.DTOs.CreditCard;
 using Finantech.DTOs.CreditPurcchase;
+using Finantech.DTOs.Invoice;
 using Finantech.Services;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -20,7 +21,7 @@ namespace Finantech.Controllers
         }
 
         [HttpPost("CreateCreditCard")]
-        public async Task<IActionResult> CreateCreditCard(CreateCreditCardRequest request)
+        public async Task<IActionResult> CreateCreditCard([FromBody] CreateCreditCardRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
@@ -37,7 +38,7 @@ namespace Finantech.Controllers
         }
 
         [HttpPatch("UpdateCreditCard")]
-        public async Task<IActionResult> UpdateCreditCard(UpdateCreditCardRequest request)
+        public async Task<IActionResult> UpdateCreditCard([FromBody] UpdateCreditCardRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
@@ -54,7 +55,7 @@ namespace Finantech.Controllers
         }
 
         [HttpPost("CreateCreditPurchase")]
-        public async Task<IActionResult> CreateCreditPurchase(CreateCreditPurchaseRequest request)
+        public async Task<IActionResult> CreateCreditPurchase([FromBody] CreateCreditPurchaseRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
@@ -83,7 +84,7 @@ namespace Finantech.Controllers
             const int pageSize = 12;
 
             DateTime startDateSet = startDate ?? DateTime.MinValue;
-            DateTime endDateSet = endDate ?? DateTime.Now;
+            DateTime endDateSet = endDate ?? DateTime.MaxValue;
 
             if (pageNumber < 1) pageNumber = 1;
 
@@ -98,5 +99,25 @@ namespace Finantech.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPost("PayInvoice")]
+        public async Task<IActionResult> PayInvoice([FromBody] CreteInvoicePaymentRequest request)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                var invoicePayment = await _creditCardService.PayInvoiceAsync(request, userId);
+
+                return Created("", invoicePayment);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        
     }
 }

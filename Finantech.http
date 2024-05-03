@@ -227,3 +227,20 @@ Authorization: {{BearerToken}}
   "categoryId": 0
 }
 ###
+
+GET {{HostAddress}}/api/CreditCard/GetInvoicesWithPagination
+Authorization: {{BearerToken}}
+###
+
+POST {{HostAddress}}/api/CreditCard/PayInvoice
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "amountPaid": 50,
+  "description": "pagamento de 50 da fatura",
+  "paymentDate": "2024-04-20T20:05:09.367Z",
+  "invoiceId": 508,
+  "accountPaidId": 4
+}
+###

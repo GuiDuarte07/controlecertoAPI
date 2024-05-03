@@ -5,6 +5,7 @@ namespace Finantech.DTOs.Expense
 {
     public class CreateExpenseRequest
     {
+        [Range(0, double.MaxValue, ErrorMessage = "O 'Amount' deve ser um número positivo.")]
         [Required(ErrorMessage = "Campo 'Amount' não informado.")]
         public double Amount { get; set; }
 

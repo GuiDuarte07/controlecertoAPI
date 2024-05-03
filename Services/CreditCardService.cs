@@ -210,12 +210,13 @@ namespace Finantech.Services
             }
 
             var invoices = await _appDbContext.Invoices.Where(i =>
-                i.CreditCard.Account.UserId == userId && 
+                i.CreditCard.Account.UserId == userId &&
                 i.DueDate >= startDate &&
                 i.DueDate <= endDate && 
                 i.CreditCard.AccountId == (accountId ?? i.CreditCard.AccountId)
             ).Skip(startIndex)
             .Take(pageSize)
+            .OrderByDescending(a => a.DueDate)
             .ToListAsync();            
 
             return _mapper.Map<ICollection<InfoInvoiceResponse>>(invoices);
@@ -231,6 +232,69 @@ namespace Finantech.Services
         public Task<InfoCreditPurchaseResponse> UpdateCreditPurchaseAsync(UpdateCreditPurchaseResponse request, int userId)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<InfoInvoicePaymentResponse> PayInvoiceAsync(CreteInvoicePaymentRequest invoicePaymentRequest, int userId)
+        {
+            var invoicePayment = _mapper.Map<InvoicePayment>(invoicePaymentRequest);
+
+            var invoice = await _appDbContext.Invoices.FirstAsync(
+                i => i.Id == invoicePayment.InvoiceId && 
+                i.CreditCard.Account.UserId == userId
+            ) ?? throw new Exception("Fatura não encontrada.");
+
+            if (DateTime.Now < invoice.ClosingDate)
+                throw new Exception("Essa fatura ainda não está fechada ainda.");
+            if (invoicePayment.PaymentDate < invoice.DueDate)
+                throw new Exception("A data de pagamento da fatura não pode ser anterior a data que a fatura foi gerada.");
+
+            Account? account = null;
+
+            if (invoicePayment.AccountPaidId.HasValue)
+            {
+                account = await _appDbContext.Accounts.FirstAsync(a => a.Id == invoicePayment.AccountPaidId && a.UserId == userId) ??
+                    throw new Exception("Conta não encontrada.");
+            }
+
+            if (invoice.IsPaid) throw new Exception("Essa fatura já está paga.");
+
+            var amountRemainder = invoice.TotalAmount - invoice.TotalPaid;
+
+            if (invoicePayment.AmountPaid > amountRemainder) 
+                throw new Exception($"Quantidade a ser paga (R$ {invoicePayment.AmountPaid}) é maior que o valor da fatura restante (R$ {amountRemainder}).");
+
+            invoice.TotalPaid += invoicePayment.AmountPaid;
+
+            if (invoice.TotalPaid == invoice.TotalAmount)
+                invoice.IsPaid = true;
+
+            using (var transaction = _appDbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    if (account is not null && !invoicePaymentRequest.JustForRecord)
+                    {
+                        account.Balance -= invoicePayment.AmountPaid;
+                        _appDbContext.Update(account);
+                        await _appDbContext.SaveChangesAsync();
+
+                    }
+                    var createdInvoicePayment = await _appDbContext.InvoicePayments.AddAsync(invoicePayment);
+                    _appDbContext.Update(invoice);
+
+                    await _appDbContext.SaveChangesAsync();
+
+                    transaction.Commit();
+                    return _mapper.Map<InfoInvoicePaymentResponse>(createdInvoicePayment.Entity);
+                }
+                catch (Exception)
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+
+            
         }
     }
 }

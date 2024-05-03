@@ -16,6 +16,9 @@ namespace Finantech.Models.MapConfig
             builder.HasOne(ip => ip.Invoice)
                 .WithMany(i => i.InvoicePayments)
                 .HasForeignKey(ip => ip.InvoiceId);
+            builder.HasOne(ip => ip.PaidAccount)
+                .WithMany(a => a.InvoicePayments)
+                .HasForeignKey(i => i.AccountPaidId);
         }
     }
 }

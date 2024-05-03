@@ -4,6 +4,7 @@ namespace Finantech.DTOs.CreditPurcchase
 {
     public class CreateCreditPurchaseRequest
     {
+        [Range(0, double.MaxValue, ErrorMessage = "O 'TotalAmount' deve ser um número positivo.")]
         [Required(ErrorMessage = "Campo 'TotalAmount' não informado.")]
         public double TotalAmount { get; set; }
 

@@ -20,5 +20,6 @@ namespace Finantech.Models.Entities
         public ICollection<Income> Incomes { get; set; }
         public ICollection<CreditExpense> CreditExpenses { get; set; }
         public ICollection<Transference> Transferences { get; set; }
+        public ICollection<InvoicePayment> InvoicePayments { get; set; }
     }
 }

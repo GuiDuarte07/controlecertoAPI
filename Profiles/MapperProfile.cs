@@ -5,6 +5,7 @@ using Finantech.DTOs.CreditCard;
 using Finantech.DTOs.CreditPurcchase;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Income;
+using Finantech.DTOs.Invoice;
 using Finantech.DTOs.User;
 using Finantech.Models.Entities;
 
@@ -101,7 +102,12 @@ namespace Finantech.Profiles
                     dest.UpdatedAt = DateTime.Now;
                 });
             CreateMap<CreditPurchase, InfoCreditPurchaseResponse>();
-            
+
+
+            CreateMap<Invoice, InfoInvoiceResponse>();
+
+            CreateMap<CreteInvoicePaymentRequest, InvoicePayment>();
+            CreateMap<InvoicePayment, InfoInvoicePaymentResponse>();
         }
     }
 }

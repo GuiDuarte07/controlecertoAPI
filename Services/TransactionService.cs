@@ -303,7 +303,7 @@ namespace Finantech.Services
                     throw new Exception("Conta não encontrada.");
 
                 allTransactions = allTransactions.Where(t => t.AccountId == accountId);
-            
+            }
 
             return allTransactions
                     .Skip(startIndex)
