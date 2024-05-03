@@ -117,7 +117,22 @@ namespace Finantech.Controllers
             }
         }
 
+        [HttpDelete("DeleteCreditPurchase/{creditPurchaseId}")]
+        public async Task<IActionResult> DeleteCreditPurchase([FromRoute] int creditPurchaseId)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-        
+            try
+            {
+                await _creditCardService.DeleteCreditPurchaseAsync(creditPurchaseId, userId);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
     }
 }

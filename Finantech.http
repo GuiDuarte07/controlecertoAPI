@@ -244,3 +244,7 @@ Authorization: {{BearerToken}}
   "accountPaidId": 4
 }
 ###
+
+DELETE {{HostAddress}}/api/CreditCard/DeleteCreditPurchase/8
+Authorization: {{BearerToken}}
+###

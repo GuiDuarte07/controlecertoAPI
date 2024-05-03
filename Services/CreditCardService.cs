@@ -222,18 +222,6 @@ namespace Finantech.Services
             return _mapper.Map<ICollection<InfoInvoiceResponse>>(invoices);
         }
 
-        public Task DeleteCreditPurchaseAsync(int purchaseId, int userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        
-
-        public Task<InfoCreditPurchaseResponse> UpdateCreditPurchaseAsync(UpdateCreditPurchaseResponse request, int userId)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<InfoInvoicePaymentResponse> PayInvoiceAsync(CreteInvoicePaymentRequest invoicePaymentRequest, int userId)
         {
             var invoicePayment = _mapper.Map<InvoicePayment>(invoicePaymentRequest);
@@ -295,6 +283,58 @@ namespace Finantech.Services
             }
 
             
+        }
+        public async Task DeleteCreditPurchaseAsync(int purchaseId, int userId)
+        {
+            var creditPurchaseToDelete = await _appDbContext.CreditPurchases.FirstAsync(cp => cp.Id == purchaseId && cp.CreditCard.Account.UserId == userId) ?? throw new Exception("Compra no cartão não localizado ou não pertence ao usuário.");
+
+            var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstOrDefaultAsync(cc => cc.Id == creditPurchaseToDelete.CreditCardId && cc.Account.UserId == userId)
+                ?? throw new Exception("Cartão de Crédito não localizado ou não pertence ao usuário.");
+
+            var creditExpenses = await _appDbContext.CreditExpenses.Where(ce => ce.CreditPurchaseId == creditPurchaseToDelete.Id).ToListAsync();
+
+            
+
+            using (var transaction = _appDbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    foreach (var expense in creditExpenses)
+                    {
+                        var invoice = await _appDbContext.Invoices.FirstAsync(cp => cp.Id == expense.InvoiceId);
+
+                        if (invoice.IsPaid)
+                        {
+                            throw new Exception("Não é mais possível excluir esse registro pois a fatura já foi paga.");
+                        }
+
+                        invoice.TotalAmount -= expense.Amount;
+                    }
+
+                    creditCard.UsedLimit -= creditPurchaseToDelete.TotalAmount;
+
+                    _appDbContext.CreditExpenses.RemoveRange(creditExpenses);
+                    _appDbContext.CreditPurchases.Remove(creditPurchaseToDelete);
+
+                    await _appDbContext.SaveChangesAsync();
+
+                    transaction.Commit();
+
+                    return;
+                }
+                catch (Exception)
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
+
+
+        public Task<InfoCreditPurchaseResponse> UpdateCreditPurchaseAsync(UpdateCreditPurchaseResponse request, int userId)
+        {
+            throw new NotImplementedException();
         }
     }
 }
