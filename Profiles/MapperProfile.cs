@@ -6,6 +6,7 @@ using Finantech.DTOs.CreditPurcchase;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Income;
 using Finantech.DTOs.Invoice;
+using Finantech.DTOs.TransferenceDTO;
 using Finantech.DTOs.User;
 using Finantech.Models.Entities;
 
@@ -108,6 +109,15 @@ namespace Finantech.Profiles
 
             CreateMap<CreteInvoicePaymentRequest, InvoicePayment>();
             CreateMap<InvoicePayment, InfoInvoicePaymentResponse>();
+
+            CreateMap<CreateTransferenceRequest, Transference>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .AfterMap((src, dest) =>
+                {
+                    dest.CreatedAt = DateTime.Now;
+                    dest.UpdatedAt = DateTime.Now;
+                });
         }
     }
 }

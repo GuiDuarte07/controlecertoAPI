@@ -2,6 +2,7 @@
 using Finantech.DTOs.Account;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Income;
+using Finantech.DTOs.TransferenceDTO;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -119,6 +120,24 @@ namespace Finantech.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        [HttpPost("CreateTransference")]
+        public async Task<IActionResult> CreateTransference([FromBody] CreateTransferenceRequest request)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                var transference = await _transactionService.CreateTransferenceAsync(request, userId);
+
+                return Created("", transference);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
         }
 
         [HttpGet("GetTransactionsWithPagination")]

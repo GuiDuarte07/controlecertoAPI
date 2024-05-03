@@ -2,6 +2,7 @@
 using Finantech.DTOs.Account;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Income;
+using Finantech.DTOs.TransferenceDTO;
 using Finantech.Enums;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.DTOs;
@@ -23,7 +24,7 @@ namespace Finantech.Services
         }
 
         /*
-         * =========+> EXPENSES
+         * =========> EXPENSES
          */
 
         public async Task<InfoExpenseResponse> CreateExpenseAsync(CreateExpenseRequest request, int userId)
@@ -139,7 +140,7 @@ namespace Finantech.Services
         }
 
         /*
-         * =========+> INCOMES
+         * =========> INCOMES
          */
 
         public async Task<InfoIncomeResponse> CreateIncomeAsync(CreateIncomeRequest request, int userId)
@@ -254,6 +255,49 @@ namespace Finantech.Services
             return _mapper.Map<InfoIncomeResponse>(updatedIncome.Entity);
         }
 
+        /*
+         * =========> TRANSFERENCES
+         */
+
+        public async Task<InfoTransferenceResponse> CreateTransferenceAsync(CreateTransferenceRequest request, int userId)
+        {
+            var transferenceToCreate = _mapper.Map<Transference>(request);
+
+            var accountDestiny = await _appDbContext.Accounts.FirstAsync(x => x.Id == request.AccountDestinyId) ?? throw new Exception("Conta destino não encontrada.");
+
+            var accountOrigin = await _appDbContext.Accounts.FirstAsync(x => x.Id == request.AccountOriginId) ?? throw new Exception("Conta origem não encontrada.");
+
+            if (accountOrigin.Balance < request.Amount)
+            {
+                throw new Exception("Conta origem não possui saldo suficiente para essa transferência.");
+            }
+
+            using (var transaction = _appDbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    accountDestiny.Balance += request.Amount;
+                    accountOrigin.Balance -= request.Amount;
+
+                    _appDbContext.Update(accountOrigin);
+                    _appDbContext.Update(accountDestiny);
+
+
+                    var createdTransference = await _appDbContext.Transferences.AddAsync(transferenceToCreate);
+
+                    await _appDbContext.SaveChangesAsync();
+
+                    transaction.Commit();
+
+                    return new InfoTransferenceResponse(createdTransference.Entity);
+                }
+                catch (Exception)
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
 
 
         public async Task<IEnumerable<InfoTransactionResponse>> GetTransactionsWithPaginationAsync(int pageNumber, int pageSize, int userId, DateTime startDate, DateTime endDate, int? accountId)
@@ -310,6 +354,10 @@ namespace Finantech.Services
                     .Take(pageSize)
                     .OrderByDescending(t => t.PurchaseDate);
         }
+
+
+
+        
     }
 }
 

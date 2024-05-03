@@ -17,3 +17,9 @@ SELECT * FROM "Categories" WHERE "Categories"."UserId" = 11
 
 INSERT INTO "Categories"
 VALUES (0, 'Teste', 'icon', 'Color', 0, now(), now(), 11)
+
+
+SELECT * FROM "CreditCards";
+SELECT * FROM "CreditPurchases";
+SELECT * FROM "Invoices";
+SELECT * FROM "InvoicePayments";

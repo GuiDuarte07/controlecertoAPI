@@ -140,6 +140,19 @@ Authorization: {{BearerToken}}
 }
 ###
 
+// TRANSFENCES
+POST {{HostAddress}}/api/Transaction/CreateTransference
+Content-Type: application/json
+Authorization: {{BearerToken}}
+
+{
+  "Description": "transferencia teste",
+  "Amount": 200,
+  "PurchaseDate": "2024-05-02T13:16:07.448Z",
+  "AccountDestinyId": 3,
+  "AccountOriginId": 4
+}
+###
 // TRANSACTIONS: pageNumber,startDate, endDate, accountId
 
 GET {{HostAddress}}/api/Transaction/GetTransactionsWithPagination?pageNumber=1

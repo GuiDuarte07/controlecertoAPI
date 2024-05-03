@@ -1,6 +1,7 @@
 ﻿using Finantech.DTOs.Account;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Income;
+using Finantech.DTOs.TransferenceDTO;
 using Finantech.Models.DTOs;
 
 namespace Finantech.Services.Interfaces
@@ -14,5 +15,6 @@ namespace Finantech.Services.Interfaces
         public Task<InfoExpenseResponse> UpdateExpenseAsync(UpdateExpenseRequest request, int userId);
         public Task DeleteIncomeAsync(int incomeId, int userId);
         public Task<IEnumerable<InfoTransactionResponse>> GetTransactionsWithPaginationAsync(int pageNumber, int pageSize, int userId, DateTime startDate, DateTime endDate, int? accountId);
+        public Task<InfoTransferenceResponse> CreateTransferenceAsync(CreateTransferenceRequest request, int userId);
     }
 }
