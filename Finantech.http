@@ -10,8 +10,8 @@ POST {{HostAddress}}/api/User/CreateUser
 Content-Type: application/json
 
 {
-  "Name": "Usuário teste",
-  "Email": "test@test.com",
+  "Name": "abc",
+  "Email": "abcv@test.com",
   "Password": "test123"
 }
 ###

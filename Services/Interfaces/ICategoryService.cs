@@ -9,5 +9,6 @@ namespace Finantech.Services.Interfaces
         public Task<InfoCategoryResponse> UpdateCategoryAsync(UpdateCategoryRequest request, int userId);
         public Task DeleteCategoryAsync(int categoryId, int userId);
         public Task<ICollection<InfoCategoryResponse>> GetAllCategoriesAsync(int userId);
+        public Task SetAllDefaultCatogoriesAsync(int userId);
     }
 }
