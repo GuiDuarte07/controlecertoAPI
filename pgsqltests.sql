@@ -20,6 +20,7 @@ VALUES (0, 'Teste', 'icon', 'Color', 0, now(), now(), 11)
 
 
 SELECT * FROM "CreditCards";
+SELECT * FROM "CreditExpenses";
 SELECT * FROM "CreditPurchases";
 SELECT * FROM "Invoices";
 SELECT * FROM "InvoicePayments";
@@ -47,3 +48,6 @@ VALUES
 ('Prêmio', 'trophy', '#ffe135', 1),
 ('Salário', 'payments', '#8b0000', 1);
 
+SELECT * FROM "Categories" WHERE "UserId" = 11;
+
+SELECT "Icon" FROM "CategoriesDefault";

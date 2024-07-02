@@ -2,8 +2,9 @@
 {
     public enum TransactionTypeEnum
     {
-        INCOME,
         EXPENSE,
-        CREDITEXPENSE
+        INCOME,
+        CREDITEXPENSE,
+        TRANSFERENCE,
     }
 }

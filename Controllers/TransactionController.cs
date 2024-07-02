@@ -144,9 +144,9 @@ namespace Finantech.Controllers
         public async Task<IActionResult> GetTransactionsWithPagination
         (
             [FromQuery]int pageNumber,
+            [FromQuery] int? accountId,
             [FromQuery] DateTime? startDate,
-            [FromQuery] DateTime? endDate,
-            [FromQuery] int? accountId
+            [FromQuery] DateTime? endDate
         )
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;

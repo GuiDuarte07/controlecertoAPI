@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Finantech.DTOs.CreditCard;
+using Finantech.DTOs.CreditCardExpense;
 using Finantech.DTOs.CreditPurcchase;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Invoice;
@@ -330,11 +331,23 @@ namespace Finantech.Services
             }
         }
 
+        public async Task<InfoCreditExpenseRequest[]> GetCreditExpensesFromInvoice(int invoiceId, int userId)
+        {
+            var creditExpenses = await _appDbContext.CreditExpenses.Where(ce => ce.InvoiceId == invoiceId && ce.Account.UserId == userId).ToListAsync();
 
+            return _mapper.Map<InfoCreditExpenseRequest[]>(creditExpenses);
+        }
 
         public Task<InfoCreditPurchaseResponse> UpdateCreditPurchaseAsync(UpdateCreditPurchaseResponse request, int userId)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<InfoCreditCardResponse[]> GetCreditCardInfo(int userId)
+        {
+            var creditCards = await _appDbContext.CreditCards.Include(cc => cc.Account).Where(cc => cc.Account.UserId == userId).ToListAsync();
+
+            return _mapper.Map<InfoCreditCardResponse[]>(creditCards);
         }
     }
 }

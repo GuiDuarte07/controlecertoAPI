@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Finantech.DTOs.Account;
+using System.ComponentModel.DataAnnotations;
 
 namespace Finantech.DTOs.CreditCard
 {
@@ -9,7 +10,8 @@ namespace Finantech.DTOs.CreditCard
         public double UsedLimit { get; set; }
         public string Description { get; set; }
         public string CardBrand { get; set; }
-        public DateTime DueDay { get; set; }
-        public DateTime CloseDay { get; set; }
+        public int DueDay { get; set; }
+        public int CloseDay { get; set; }
+        public InfoAccountResponse Account { get; set; }
     }
 }

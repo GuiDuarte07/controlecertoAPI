@@ -8,7 +8,5 @@ namespace Finantech.DTOs.User
         public string Name { get; set; }
         public string Email { get; set; }
         public bool EmailConfirmed { get; set; }
-
-        public ICollection<InfoAccountResponse> Accounts { get; set; }
     }
 }

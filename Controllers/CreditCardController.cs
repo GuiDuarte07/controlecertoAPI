@@ -2,6 +2,7 @@
 using Finantech.DTOs.CreditCard;
 using Finantech.DTOs.CreditPurcchase;
 using Finantech.DTOs.Invoice;
+using Finantech.Models.Entities;
 using Finantech.Services;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -30,7 +31,7 @@ namespace Finantech.Controllers
                 var createdCreditCard = await _creditCardService.CreateCreditCardAsync(request, userId);
 
                 return Created("", createdCreditCard);
-            } 
+            }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -100,6 +101,22 @@ namespace Finantech.Controllers
             }
         }
 
+        [HttpGet("GetCreditExpensesFromInvoice/{invoiceId}")]
+        public async Task<IActionResult> GetCreditExpensesFromInvoice(int invoiceId)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            try
+            {
+                var creditExpenses = await _creditCardService.GetCreditExpensesFromInvoice(invoiceId, userId);
+
+                return Ok(creditExpenses);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPost("PayInvoice")]
         public async Task<IActionResult> PayInvoice([FromBody] CreteInvoicePaymentRequest request)
         {
@@ -134,5 +151,20 @@ namespace Finantech.Controllers
             }
         }
 
+        [HttpGet("GetCreditCardInfo")]
+        public async Task<IActionResult> GetCreditCardInfo()
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            try
+            {
+                var creditCards = await _creditCardService.GetCreditCardInfo(userId);
+
+                return Ok(creditCards);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

@@ -12,7 +12,7 @@ namespace Finantech.Models.DTOs
         public double Amount { get; set; }
         public string? Description { get; set; }
         public DateTime PurchaseDate { get; set; }
-        public string Source { get; set; } //Origin or Destination
+        public string Source { get; set; }
         public InfoCategoryResponse Category { get; set; }
         public TransactionTypeEnum TransactionType { get; set; }
         public int AccountId { get; set; }
@@ -33,7 +33,8 @@ namespace Finantech.Models.DTOs
                 BillType = expense.Category!.BillType,
                 Icon = expense.Category.Icon,
                 Id = expense.Category.Id,
-                Name = expense.Category.Name
+                Name = expense.Category.Name,
+                Color = expense.Category.Color
             };
         }
 
@@ -53,7 +54,8 @@ namespace Finantech.Models.DTOs
                 BillType = income.Category!.BillType,
                 Icon = income.Category.Icon,
                 Id = income.Category.Id,
-                Name = income.Category.Name
+                Name = income.Category.Name,
+                Color = income.Category.Color,
             };
         }
 
@@ -74,7 +76,8 @@ namespace Finantech.Models.DTOs
                 BillType = creditExpense.Category!.BillType,
                 Icon = creditExpense.Category.Icon,
                 Id = creditExpense.Category.Id,
-                Name = creditExpense.Category.Name
+                Name = creditExpense.Category.Name,
+                Color = creditExpense.Category.Color,
             };
         }
     }

@@ -2,6 +2,7 @@
 using Finantech.DTOs.Account;
 using Finantech.DTOs.Category;
 using Finantech.DTOs.CreditCard;
+using Finantech.DTOs.CreditCardExpense;
 using Finantech.DTOs.CreditPurcchase;
 using Finantech.DTOs.Expense;
 using Finantech.DTOs.Income;
@@ -33,8 +34,6 @@ namespace Finantech.Profiles
                     dest.UpdatedAt = DateTime.Now;
                 });
 
-            CreateMap<User, InfoUserResponse>()
-                .ForMember(dest => dest.Accounts, opt => opt.MapFrom(src => src.Accounts));
 
             CreateMap<CreateExpenseRequest, Expense>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
@@ -87,7 +86,7 @@ namespace Finantech.Profiles
                     dest.CreatedAt = DateTime.Now;
                     dest.UpdatedAt = DateTime.Now;
                 });
-            CreateMap<CreditCard, InfoCreditCardResponse>();
+            CreateMap<CreditCard, InfoCreditCardResponse>();        
             CreateMap<UpdateCreditCardRequest, CreditCard>()
                 .AfterMap((src, dest) =>
                 {
@@ -118,6 +117,8 @@ namespace Finantech.Profiles
                     dest.CreatedAt = DateTime.Now;
                     dest.UpdatedAt = DateTime.Now;
                 });
+
+            CreateMap<CreditExpense, InfoCreditExpenseRequest>();
         }
     }
 }
