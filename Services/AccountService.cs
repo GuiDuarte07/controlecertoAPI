@@ -39,9 +39,33 @@ namespace Finantech.Services
             return infoAccount;
         }
 
+        public async Task DeleteAccountAsync(int accountId, int userId)
+        {
+            var accountToDelete = await _appDbContext.Accounts.Include(a => a.CreditCard).Include(a => a.Incomes).Include(a => a.Expenses).Include(a => a.Transferences).Include(a => a.CreditCard).FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId) ?? throw new Exception("Conta não encontrada.");
+
+            if(accountToDelete.CreditCard is not null)
+            {
+                throw new Exception("Conta não pode ser deletada pois possui cartão de crédito.");
+            }
+
+            if (IsWithin24Hours(accountToDelete.CreatedAt, DateTime.Now) && !accountToDelete.Incomes.Any() && !accountToDelete.Expenses.Any() && !accountToDelete.CreditExpenses.Any() && !accountToDelete.Transferences.Any())
+            {
+                _appDbContext.Accounts.Remove(accountToDelete);
+                await _appDbContext.SaveChangesAsync();
+            }
+            else
+            {
+                accountToDelete.Deleted = true;
+                _appDbContext.Accounts.Update(accountToDelete);
+                await _appDbContext.SaveChangesAsync();
+            }
+
+            return;
+        }
+
         public async Task<ICollection<InfoAccountResponse>> GetAccountsByUserIdAsync(int userId)
         {
-            var accounts = await _appDbContext.Accounts.Where(a => a.UserId == userId).ToListAsync();
+            var accounts = await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false).ToListAsync();
 
             var accountsInfo = _mapper.Map<List<InfoAccountResponse>>(accounts);
 
@@ -98,6 +122,12 @@ namespace Finantech.Services
             await _appDbContext.SaveChangesAsync();
 
             return _mapper.Map<InfoAccountResponse>(updatedAccount.Entity);
+        }
+
+        private bool IsWithin24Hours(DateTime deadline, DateTime currentDate)
+        {
+            TimeSpan difference = deadline - currentDate;
+            return difference.TotalHours <= 24 && difference.TotalHours >= 0;
         }
 
     }

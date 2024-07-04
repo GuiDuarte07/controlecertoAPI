@@ -150,7 +150,7 @@ namespace Finantech.Controllers
         )
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
-            const int pageSize = 30;
+            const int pageSize = 9999;
 
             DateTime startDateSet = startDate ?? DateTime.MinValue;
             DateTime endDateSet = endDate ?? DateTime.Now;

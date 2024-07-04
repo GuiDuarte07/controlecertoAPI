@@ -9,8 +9,8 @@ namespace Finantech.Services.Interfaces
     {
         public Task<InfoAccountResponse> CreateAccountAsync(CreateAccountRequest accountRequest, int userId);
         public Task<InfoAccountResponse> UpdateAccountAsync(UpdateAccountRequest request, int userId);
+        public Task DeleteAccountAsync(int accountId, int userId);
         public Task<ICollection<InfoAccountResponse>> GetAccountsByUserIdAsync(int userId);
-
         public Task<BalanceStatement> GetBalanceStatementAsync(int userId, DateTime? startDate, DateTime? endDate);
     }
 }

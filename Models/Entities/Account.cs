@@ -11,6 +11,7 @@ namespace Finantech.Models.Entities
         public AccountTypeEnum AccountType { get; set; }
         public string Color { get; set; }
         public int UserId { get; set; }
+        public Boolean Deleted { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; }
 

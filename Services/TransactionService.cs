@@ -307,6 +307,7 @@ namespace Finantech.Services
 
             IQueryable<InfoTransactionResponse> transactionsQuery = _appDbContext.Expenses
                 .Include(e => e.Category)
+                .Include(e => e.Account)
                 .Where(e => 
                     e.Account!.UserId == userId && 
                     e.PurchaseDate >= startDate &&
@@ -315,6 +316,7 @@ namespace Finantech.Services
 
             IQueryable<InfoTransactionResponse> incomesQuery = _appDbContext.Incomes
                 .Include(e => e.Category)
+                .Include(e => e.Account)
                 .Where(i => i.Account.UserId == userId &&
                     i.Account!.UserId == userId &&
                     i.PurchaseDate >= startDate &&
@@ -330,6 +332,7 @@ namespace Finantech.Services
 
             IQueryable<InfoTransactionResponse> creditExpensesQuery = _appDbContext.CreditExpenses
                 .Include(e => e.Category)
+                .Include(e => e.Account)
                 .Where(ce => ce.Account.UserId == userId &&
                     ce.Account!.UserId == userId &&
                     ce.PurchaseDate >= startDate &&
@@ -346,7 +349,7 @@ namespace Finantech.Services
                 var _ = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId) ??
                     throw new Exception("Conta não encontrada.");
 
-                allTransactions = allTransactions.Where(t => t.AccountId == accountId);
+                allTransactions = allTransactions.Where(t => t.Account.Id == accountId);
             }
 
             return allTransactions

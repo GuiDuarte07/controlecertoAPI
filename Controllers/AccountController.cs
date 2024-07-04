@@ -35,6 +35,25 @@ namespace Finantech.Controllers
 
         }
 
+        
+        [HttpDelete("DeleteAccount/{accountId}")]
+        public async Task<IActionResult> DeleteAccount([FromRoute] int accountId)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                await _accountService.DeleteAccountAsync(accountId, userId);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAccountsByUserIdAsync()
         {

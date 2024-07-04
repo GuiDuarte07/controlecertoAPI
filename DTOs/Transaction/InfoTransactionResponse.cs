@@ -1,4 +1,5 @@
 ﻿using System;
+using Finantech.DTOs.Account;
 using Finantech.DTOs.Category;
 using Finantech.DTOs.Expense;
 using Finantech.Enums;
@@ -15,7 +16,7 @@ namespace Finantech.Models.DTOs
         public string Source { get; set; }
         public InfoCategoryResponse Category { get; set; }
         public TransactionTypeEnum TransactionType { get; set; }
-        public int AccountId { get; set; }
+        public InfoAccountResponse Account { get; set; }
 
         // Construtor para Expense
         public InfoTransactionResponse(Expense expense)
@@ -26,7 +27,15 @@ namespace Finantech.Models.DTOs
             PurchaseDate = expense.PurchaseDate;
             Source = expense.Destination;
             TransactionType = TransactionTypeEnum.EXPENSE;
-            AccountId = expense.AccountId;
+
+            Account = new InfoAccountResponse
+            {
+                AccountType = expense.Account!.AccountType,
+                Balance = expense.Account.Balance,
+                Bank = expense.Account.Bank,
+                Color = expense.Account.Color,
+                Description = expense.Account.Description ?? ""
+            };
 
             Category = new InfoCategoryResponse
             {
@@ -47,7 +56,15 @@ namespace Finantech.Models.DTOs
             PurchaseDate = income.PurchaseDate;
             Source = income.Origin;
             TransactionType = TransactionTypeEnum.INCOME;
-            AccountId = income.AccountId;
+
+            Account = new InfoAccountResponse
+            {
+                AccountType = income.Account!.AccountType,
+                Balance = income.Account.Balance,
+                Bank = income.Account.Bank,
+                Color = income.Account.Color,
+                Description = income.Account.Description ?? ""
+            };
 
             Category = new InfoCategoryResponse
             {
@@ -69,7 +86,15 @@ namespace Finantech.Models.DTOs
             Source = creditExpense.Destination;
 
             TransactionType = TransactionTypeEnum.CREDITEXPENSE;
-            AccountId = creditExpense.AccountId;
+
+            Account = new InfoAccountResponse
+            {
+                AccountType = creditExpense.Account!.AccountType,
+                Balance = creditExpense.Account.Balance,
+                Bank = creditExpense.Account.Bank,
+                Color = creditExpense.Account.Color,
+                Description = creditExpense.Account.Description ?? ""
+            };
 
             Category = new InfoCategoryResponse
             {
