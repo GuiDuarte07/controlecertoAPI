@@ -1,11 +1,8 @@
 ﻿using AutoMapper;
 using Finantech.DTOs.CreditCard;
-using Finantech.DTOs.CreditCardExpense;
-using Finantech.DTOs.CreditPurcchase;
-using Finantech.DTOs.Expense;
+using Finantech.DTOs.CreditPurchase;
 using Finantech.DTOs.Invoice;
 using Finantech.Enums;
-using Finantech.Migrations;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.DTOs;
 using Finantech.Models.Entities;
@@ -78,6 +75,7 @@ namespace Finantech.Services
 
             return _mapper.Map<InfoCreditCardResponse>(updatedCreditCard.Entity);
         }
+           
 
         public async Task<InfoCreditPurchaseResponse> CreateCreditPurchaseAsync(CreateCreditPurchaseRequest request, int userId)
         {
@@ -92,8 +90,8 @@ namespace Finantech.Services
             var category = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId && c.UserId == userId)
                 ?? throw new Exception("Categoria informada não encontrada");
 
-            /*if (category.BillType != BillTypeEnum.EXPENSE)
-                throw new Exception("Essa categoria não é de gastos.");*/
+            if (category.BillType != BillTypeEnum.EXPENSE)
+                throw new Exception("Essa categoria não é de gastos.");
 
 
             /*
@@ -113,7 +111,7 @@ namespace Finantech.Services
                      * Detalhes sobre implementação:
                      * - Se a data de fechamento da fatura é dia 20 p.e., as compras do dia 20 a 27 entram na fatura do próximo mês
                      * - Se a compra foi feito antes do fechamento, ex: dia 19, a primeira parcela da compra já entra na fatura do mês
-                     * * Por enquanto estamos supondo que o dia de fechamento possa ser entre dia 8 e 28 ---------
+                     * * Por enquanto estamos supondo que o dia de vencimento possa ser entre dia 8 e 28 ---------
                      *   (ou seja, não corre o risco de a fatura do mês acaber sendo paga no começo do outro mês).
                      */
 
@@ -128,12 +126,13 @@ namespace Finantech.Services
                     var actualDueMonthDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, creditCard.DueDay);
 
 
-                    ICollection<CreditExpense> expenses = [];
+                    ICollection<Transaction> transactions = [];
 
                     for (int i = 0; i < totalInstallment - installmentsPaid; i++)
                     {
                         var monthClosingInvoiceDate = actualClosingMonthDate.AddMonths(i);
 
+                        // Se essa fatura já está na sua data de fechamento, entra pra próxima.
                         if (isInClosingDate)
                             monthClosingInvoiceDate = monthClosingInvoiceDate.AddMonths(1);
 
@@ -161,8 +160,9 @@ namespace Finantech.Services
                         }
                         
 
-                        var expense = new CreditExpense
+                        var newTransaction = new Transaction
                         {
+                            Type = TransactionTypeEnum.CREDITEXPENSE,
                             CreditPurchaseId = createdCreditPurchase.Entity.Id,
                             AccountId = creditCard.AccountId,
                             CategoryId = request.CategoryId,
@@ -175,14 +175,14 @@ namespace Finantech.Services
                         };
 
 
-                        expenses.Add(expense);
+                        transactions.Add(newTransaction);
                         monthInvoice.TotalAmount += installmentAmount;
                         _appDbContext.Invoices.Update(monthInvoice);
                     }
 
 
                     creditCard.UsedLimit += request.TotalAmount;
-                    await _appDbContext.CreditExpenses.AddRangeAsync(expenses);
+                    await _appDbContext.Transactions.AddRangeAsync(transactions);
                     _appDbContext.CreditCards.Update(creditCard);
 
                     await _appDbContext.SaveChangesAsync();
@@ -198,7 +198,6 @@ namespace Finantech.Services
                 }
             }
         }
-
 
         public async Task<IEnumerable<InfoInvoiceResponse>> GetInvoicesWithPaginationAsync(int pageNumber, int pageSize, int userId, DateTime startDate, DateTime endDate, int? accountId)
         {
@@ -292,7 +291,7 @@ namespace Finantech.Services
             var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstOrDefaultAsync(cc => cc.Id == creditPurchaseToDelete.CreditCardId && cc.Account.UserId == userId)
                 ?? throw new Exception("Cartão de Crédito não localizado ou não pertence ao usuário.");
 
-            var creditExpenses = await _appDbContext.CreditExpenses.Where(ce => ce.CreditPurchaseId == creditPurchaseToDelete.Id).ToListAsync();
+            var creditExpenses = await _appDbContext.Transactions.Where(ce => ce.Type == TransactionTypeEnum.CREDITEXPENSE && ce.CreditPurchaseId == creditPurchaseToDelete.Id).ToListAsync();
 
             
 
@@ -314,7 +313,7 @@ namespace Finantech.Services
 
                     creditCard.UsedLimit -= creditPurchaseToDelete.TotalAmount;
 
-                    _appDbContext.CreditExpenses.RemoveRange(creditExpenses);
+                    _appDbContext.Transactions.RemoveRange(creditExpenses);
                     _appDbContext.CreditPurchases.Remove(creditPurchaseToDelete);
 
                     await _appDbContext.SaveChangesAsync();
@@ -331,11 +330,11 @@ namespace Finantech.Services
             }
         }
 
-        public async Task<InfoCreditExpenseRequest[]> GetCreditExpensesFromInvoice(int invoiceId, int userId)
+        public async Task<InfoTransactionResponse[]> GetCreditExpensesFromInvoice(int invoiceId, int userId)
         {
-            var creditExpenses = await _appDbContext.CreditExpenses.Where(ce => ce.InvoiceId == invoiceId && ce.Account.UserId == userId).ToListAsync();
+            var creditExpenses = await _appDbContext.Transactions.Where(ce =>ce.Type == TransactionTypeEnum.CREDITEXPENSE && ce.InvoiceId == invoiceId && ce.Account.UserId == userId).ToListAsync();
 
-            return _mapper.Map<InfoCreditExpenseRequest[]>(creditExpenses);
+            return _mapper.Map<InfoTransactionResponse[]>(creditExpenses);
         }
 
         public Task<InfoCreditPurchaseResponse> UpdateCreditPurchaseAsync(UpdateCreditPurchaseResponse request, int userId)

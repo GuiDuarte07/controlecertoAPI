@@ -2,12 +2,12 @@
 {
     public class Transference
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string Description { get; set; }
         public double Amount { get; set; }
         public string PurchaseDate { get; set; }
-        public int AccountDestinyId { get; set; }
-        public int AccountOriginId { get; set; }
+        public long AccountDestinyId { get; set; }
+        public long AccountOriginId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; }
 

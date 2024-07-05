@@ -4,7 +4,7 @@ namespace Finantech.Models.Entities
 {
     public class Category
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string Name { get; set; }
         public string Icon { get; set; }
         public string Color { get; set; }
@@ -14,9 +14,7 @@ namespace Finantech.Models.Entities
         public int UserId { get; set; }
 
         public User User { get; set; }
-        public ICollection<Expense> Expenses { get; set; }
-        public ICollection<Income> Incomes { get; set; }
-        public ICollection<CreditExpense> CreditExpenses { get; set; }
+        public ICollection<Transaction> Transactions { get; set; }
 
         public Category() { }
 

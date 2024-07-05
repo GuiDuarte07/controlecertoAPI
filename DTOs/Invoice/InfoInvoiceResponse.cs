@@ -1,4 +1,6 @@
-﻿namespace Finantech.DTOs.Invoice
+﻿using Finantech.Models.DTOs;
+
+namespace Finantech.DTOs.Invoice
 {
     public class InfoInvoiceResponse
     {
@@ -8,5 +10,8 @@
         public bool IsPaid { get; set; }
         public DateTime ClosingDate { get; set; }
         public DateTime DueDate { get; set; }
+
+        public ICollection<InfoTransactionResponse>? Transactions { get; set; }
+        public ICollection<InfoInvoicePaymentResponse>? InvoicePayments { get; set; }
     }
 }

@@ -2,14 +2,14 @@
 {
     public class CreditCard
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public double TotalLimit { get; set; }
         public double UsedLimit { get; set; }
         public string Description { get; set; }
         public string CardBrand { get; set; }
         public int DueDay { get; set; }
         public int CloseDay { get; set; }
-        public int AccountId { get; set; }
+        public long AccountId { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public Account Account { get; set; }

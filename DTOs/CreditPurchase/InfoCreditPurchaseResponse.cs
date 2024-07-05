@@ -1,4 +1,4 @@
-﻿namespace Finantech.DTOs.CreditPurcchase
+﻿namespace Finantech.DTOs.CreditPurchase
 {
     public class InfoCreditPurchaseResponse
     {

@@ -13,10 +13,6 @@ namespace Finantech.DTOs.Account
 
         [Required(ErrorMessage = "Campo 'Bank' não informado.")]
         public string Bank { get; set; }
-
-        [Required(ErrorMessage = "Campo 'AccountType' não informado.")]
-        public AccountTypeEnum AccountType { get; set; }
-
         public string Color { get; set; }
     }
 }

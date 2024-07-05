@@ -5,7 +5,7 @@ namespace Finantech.DTOs.TransferenceDTO
 {
     public class InfoTransferenceResponse
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string Description { get; set; }
         public double Amount { get; set; }
         public string PurchaseDate { get; set; }

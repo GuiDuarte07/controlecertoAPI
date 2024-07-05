@@ -1,7 +1,5 @@
 ﻿using AutoMapper;
 using Finantech.DTOs.Category;
-using Finantech.DTOs.Expense;
-using Finantech.Enums;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
@@ -35,13 +33,11 @@ namespace Finantech.Services
         public async Task DeleteCategoryAsync(int categoryId, int userId)
         {
             var categoryToDelete = await _appDbContext.Categories
-                .Include(c => c.Expenses)
-                .Include(c => c.Incomes)
-                .Include(c => c.CreditExpenses)
+                .Include(c => c.Transactions)
                 .FirstOrDefaultAsync(c => c.Id == categoryId) 
                 ?? throw new Exception("Categoria não encontrada");
 
-            if(!categoryToDelete.Incomes.Any() && !categoryToDelete.Expenses.Any() && !categoryToDelete.CreditExpenses.Any())
+            if(!categoryToDelete.Transactions.Any())
             {
                 _appDbContext.Categories.Remove(categoryToDelete);
                 await _appDbContext.SaveChangesAsync();

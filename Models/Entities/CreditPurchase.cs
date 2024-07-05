@@ -2,7 +2,7 @@
 {
     public class CreditPurchase
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public double TotalAmount { get; set; }
         public int TotalInstallment { get; set; }
         public int InstallmentsPaid { get; set; } = 0;
@@ -12,8 +12,8 @@
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
-        public int CreditCardId { get; set; }
+        public long CreditCardId { get; set; }
         public CreditCard CreditCard { get; set; }
-        public ICollection<CreditExpense> CreditExpenses { get; set; }
+        public ICollection<Transaction> Transactions { get; set; }
     }
 }

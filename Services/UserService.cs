@@ -1,7 +1,5 @@
 ﻿using AutoMapper;
-using Finantech.DTOs.Income;
 using Finantech.DTOs.User;
-using Finantech.Migrations;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;

@@ -14,15 +14,9 @@ namespace Finantech.Models.MapConfig
             //builder.Property(c => c.CreatedAt).HasColumnType("datetime");
             //builder.Property(c => c.UpdatedAt).HasColumnType("datetime");
 
-            builder.HasMany(c => c.Incomes)
+            builder.HasMany(c => c.Transactions)
                 .WithOne(i => i.Category)
                 .HasForeignKey(i => i.CategoryId);
-            builder.HasMany(c => c.Expenses)
-                .WithOne(e => e.Category)
-                .HasForeignKey(e => e.CategoryId);
-            builder.HasMany(c => c.CreditExpenses)
-                .WithOne(ce => ce.Category)
-                .HasForeignKey(ce => ce.CategoryId);
             builder.HasOne(c => c.User)
                 .WithMany(u => u.Categories)
                 .HasForeignKey(c => c.UserId);

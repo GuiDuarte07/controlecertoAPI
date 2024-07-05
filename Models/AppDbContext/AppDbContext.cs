@@ -16,12 +16,10 @@ namespace Finantech.Models.AppDbContext
         public DbSet<CreditCard> CreditCards { get; set; }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Category> Categories { get; set; }
-        public DbSet<Expense> Expenses { get; set; }
-        public DbSet<Income> Incomes { get; set; }
+        public DbSet<Transaction> Transactions { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoicePayment> InvoicePayments { get; set; }
         public DbSet<CreditPurchase> CreditPurchases { get; set; }
-        public DbSet<CreditExpense> CreditExpenses { get; set; }
         public DbSet<Transference> Transferences { get; set; }
         public DbSet<CategoryDefault> CategoriesDefault { get; set; }
 
@@ -36,12 +34,10 @@ namespace Finantech.Models.AppDbContext
             modelBuilder.ApplyConfiguration(new CreditCardConfiguration());
             modelBuilder.ApplyConfiguration(new AccountConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
-            modelBuilder.ApplyConfiguration(new ExpenseConfiguration());
-            modelBuilder.ApplyConfiguration(new IncomeConfiguration());
+            modelBuilder.ApplyConfiguration(new TransactionConfiguration());
             modelBuilder.ApplyConfiguration(new InvoiceConfiguration());
             modelBuilder.ApplyConfiguration(new InvoicePaymentConfiguration());
             modelBuilder.ApplyConfiguration(new CreditPurchaseConfiguration());
-            modelBuilder.ApplyConfiguration(new CreditExpenseConfiguration());
             modelBuilder.ApplyConfiguration(new TransferenceConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryDefaultConfiguration());
         }

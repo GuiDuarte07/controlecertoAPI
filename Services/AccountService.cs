@@ -41,14 +41,14 @@ namespace Finantech.Services
 
         public async Task DeleteAccountAsync(int accountId, int userId)
         {
-            var accountToDelete = await _appDbContext.Accounts.Include(a => a.CreditCard).Include(a => a.Incomes).Include(a => a.Expenses).Include(a => a.Transferences).Include(a => a.CreditCard).FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId) ?? throw new Exception("Conta não encontrada.");
+            var accountToDelete = await _appDbContext.Accounts.Include(a => a.CreditCard).Include(a => a.Transactions).Include(a => a.Transferences).Include(a => a.CreditCard).FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId) ?? throw new Exception("Conta não encontrada.");
 
             if(accountToDelete.CreditCard is not null)
             {
                 throw new Exception("Conta não pode ser deletada pois possui cartão de crédito.");
             }
 
-            if (IsWithin24Hours(accountToDelete.CreatedAt, DateTime.Now) && !accountToDelete.Incomes.Any() && !accountToDelete.Expenses.Any() && !accountToDelete.CreditExpenses.Any() && !accountToDelete.Transferences.Any())
+            if (IsWithin24Hours(accountToDelete.CreatedAt, DateTime.Now) && !accountToDelete.Transactions.Any() && !accountToDelete.Transferences.Any())
             {
                 _appDbContext.Accounts.Remove(accountToDelete);
                 await _appDbContext.SaveChangesAsync();
@@ -86,16 +86,11 @@ namespace Finantech.Services
 
             double balance = await _appDbContext.Accounts.Where(a => a.UserId == userId).SumAsync(a => a.Balance);
 
-            double expenses = await _appDbContext.Expenses.Where(e => e.Account!.UserId == userId && e.PurchaseDate >= startDate && e.PurchaseDate <= endDate).SumAsync(e => e.Amount);
+            double expenses = await _appDbContext.Transactions.Where(t => t.Type == TransactionTypeEnum.EXPENSE &&  t.Account!.UserId == userId && t.PurchaseDate >= startDate && t.PurchaseDate <= endDate).SumAsync(e => e.Amount);
 
-            double incomes = await _appDbContext.Incomes.Where(i => i.Account!.UserId == userId && i.PurchaseDate >= startDate && i.PurchaseDate <= endDate).SumAsync(i => i.Amount);
+            double incomes = await _appDbContext.Transactions.Where(t => t.Type == TransactionTypeEnum.INCOME && t.Account!.UserId == userId && t.PurchaseDate >= startDate && t.PurchaseDate <= endDate).SumAsync(i => i.Amount);
 
             double invoices = await _appDbContext.Invoices.Where(i => i.CreditCard.Account.UserId == userId && i.ClosingDate >= startDate && i.ClosingDate <= endDate).SumAsync(i => i.TotalAmount - i.TotalPaid);
-
-            DateTime now = DateTime.Now;
-            DateTime firstDayNextMonth = new DateTime(now.Year, now.Month, 1).AddMonths(1);
-            DateTime lastDayNextMonth = firstDayNextMonth.AddMonths(1).AddDays(-1);
-            var invoicesToTestttt = await _appDbContext.Invoices.Where(i => i.CreditCard.Account.UserId == userId && i.ClosingDate > now).Include(i => i.CreditExpenses).ToListAsync();
 
             return new BalanceStatement(balance, incomes, expenses, invoices);
         }
@@ -113,8 +108,6 @@ namespace Finantech.Services
                 account.Description = request.Description;
             if (request.Bank != null)
                 account.Bank = request.Bank;
-            if (request.AccountType != null)
-                account.AccountType = (AccountTypeEnum)request.AccountType;
             if (request.Color != null)
                 account.Color = request.Color;
 
@@ -126,7 +119,7 @@ namespace Finantech.Services
 
         private bool IsWithin24Hours(DateTime deadline, DateTime currentDate)
         {
-            TimeSpan difference = deadline - currentDate;
+            TimeSpan difference = currentDate - deadline;
             return difference.TotalHours <= 24 && difference.TotalHours >= 0;
         }
 

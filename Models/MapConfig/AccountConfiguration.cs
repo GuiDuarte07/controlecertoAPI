@@ -23,15 +23,9 @@ namespace Finantech.Models.MapConfig
             builder.HasOne(a => a.CreditCard)
                 .WithOne(cc => cc.Account)
                 .HasForeignKey<CreditCard>(a => a.AccountId);
-            builder.HasMany(a => a.Incomes)
+            builder.HasMany(a => a.Transactions)
                 .WithOne(i => i.Account)
                 .HasForeignKey(i => i.AccountId);
-            builder.HasMany(a => a.Expenses)
-                .WithOne(e => e.Account)
-                .HasForeignKey(e => e.AccountId);
-            builder.HasMany(a => a.CreditExpenses)
-                .WithOne(ce => ce.Account)
-                .HasForeignKey(c => c.AccountId);
         }
     }
 }

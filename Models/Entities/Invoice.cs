@@ -2,7 +2,7 @@
 {
     public class Invoice
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public double TotalAmount { get; set; } = 0;
         public double TotalPaid { get; set; } = 0;
         public bool IsPaid { get; set; } = false;
@@ -10,10 +10,10 @@
         public DateTime? DueDate { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
-        public int CreditCardId { get; set; }
+        public long CreditCardId { get; set; }
 
         public CreditCard CreditCard { get; set; }
         public ICollection<InvoicePayment> InvoicePayments { get; set; }
-        public ICollection<CreditExpense> CreditExpenses { get; set; }
+        public ICollection<Transaction> Transactions { get; set; }
     }
 }

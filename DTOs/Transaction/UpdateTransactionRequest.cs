@@ -1,13 +1,15 @@
 ﻿using Finantech.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace Finantech.DTOs.Expense
+namespace Finantech.DTOs.Transaction
 {
-    public class UpdateExpenseRequest
+    public class UpdateTransactionRequest
     {
         [Required(ErrorMessage = "Campo 'Id' não informado.")]
-        public int Id { get; set; }
-        public ExpenseTypeEnum? ExpenseType { get; set; }
+        public long Id { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "O 'Amount' deve ser um número positivo.")]
+        public double? Amount { get; set; }
         public DateTime? PurchaseDate { get; set; }
 
         [MaxLength(80, ErrorMessage = "Campo 'Destination' pode conter até 80 caracteres")]
@@ -15,6 +17,10 @@ namespace Finantech.DTOs.Expense
 
         [MaxLength(100, ErrorMessage = "Campo 'Description' pode conter até 100 caracteres")]
         public string? Description { get; set; }
-        public int? CategoryId { get; set; }
+
+        [MaxLength(300, ErrorMessage = "Campo 'Observations' pode conter até 300 caracteres")]
+        public String? Observations { get; set; }
+
+        public long? CategoryId { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Finantech.DTOs.CreditPurcchase
+namespace Finantech.DTOs.CreditPurchase
 {
     public class UpdateCreditPurchaseResponse
     {

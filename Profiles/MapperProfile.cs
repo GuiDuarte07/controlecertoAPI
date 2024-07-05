@@ -2,13 +2,12 @@
 using Finantech.DTOs.Account;
 using Finantech.DTOs.Category;
 using Finantech.DTOs.CreditCard;
-using Finantech.DTOs.CreditCardExpense;
-using Finantech.DTOs.CreditPurcchase;
-using Finantech.DTOs.Expense;
-using Finantech.DTOs.Income;
+using Finantech.DTOs.CreditPurchase;
 using Finantech.DTOs.Invoice;
+using Finantech.DTOs.Transaction;
 using Finantech.DTOs.TransferenceDTO;
 using Finantech.DTOs.User;
+using Finantech.Models.DTOs;
 using Finantech.Models.Entities;
 
 namespace Finantech.Profiles
@@ -35,7 +34,7 @@ namespace Finantech.Profiles
                 });
 
 
-            CreateMap<CreateExpenseRequest, Expense>()
+            CreateMap<CreateTransactionRequest, Transaction>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .AfterMap((src, dest) =>
@@ -43,22 +42,12 @@ namespace Finantech.Profiles
                     dest.CreatedAt = DateTime.Now;
                     dest.UpdatedAt = DateTime.Now;
                 });
-            CreateMap<Expense, InfoExpenseResponse>();
-            CreateMap<UpdateExpenseRequest, Expense>()
+            CreateMap<Transaction, InfoTransactionResponse>();
+            CreateMap<UpdateTransactionRequest, Transaction>()
                 .AfterMap((src, dest) =>
                 {
                     dest.UpdatedAt = DateTime.Now;
                 });
-
-            CreateMap<CreateIncomeRequest, Income>()
-                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
-                .AfterMap((src, dest) =>
-                {
-                    dest.CreatedAt = DateTime.Now;
-                    dest.UpdatedAt = DateTime.Now;
-                });
-            CreateMap<Income, InfoIncomeResponse>();
 
 
 
@@ -117,8 +106,6 @@ namespace Finantech.Profiles
                     dest.CreatedAt = DateTime.Now;
                     dest.UpdatedAt = DateTime.Now;
                 });
-
-            CreateMap<CreditExpense, InfoCreditExpenseRequest>();
         }
     }
 }

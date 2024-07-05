@@ -13,8 +13,6 @@ namespace Finantech.DTOs.Account
 
         public string? Bank { get; set; }
 
-        public AccountTypeEnum? AccountType { get; set; }
-
         public string? Color { get; set; }
     }
 }

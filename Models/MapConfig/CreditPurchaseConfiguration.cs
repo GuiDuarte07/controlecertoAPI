@@ -20,7 +20,7 @@ namespace Finantech.Models.MapConfig
                 .WithMany(cc => cc.CreditPurchases)
                 .HasForeignKey(cp => cp.CreditCardId);
 
-            builder.HasMany(cp => cp.CreditExpenses)
+            builder.HasMany(cp => cp.Transactions)
                 .WithOne(ce => ce.CreditPurchase)
                 .HasForeignKey(ce => ce.CreditPurchaseId);
         }
