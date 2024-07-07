@@ -113,5 +113,23 @@ namespace Finantech.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("GetAccountBalance")]
+        public async Task<IActionResult> GetAccountBalanceAsync()
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                var balance = await _accountService.GetAccountBalanceAsync(userId);
+
+                return Ok(balance);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

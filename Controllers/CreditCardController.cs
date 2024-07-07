@@ -2,10 +2,7 @@
 using Finantech.DTOs.CreditCard;
 using Finantech.DTOs.CreditPurchase;
 using Finantech.DTOs.Invoice;
-using Finantech.Models.Entities;
-using Finantech.Services;
 using Finantech.Services.Interfaces;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Finantech.Controllers
@@ -55,7 +52,7 @@ namespace Finantech.Controllers
             }
         }
 
-        /*[HttpPost("CreateCreditPurchase")]
+        [HttpPost("CreateCreditPurchase")]
         public async Task<IActionResult> CreateCreditPurchase([FromBody] CreateCreditPurchaseRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -70,7 +67,7 @@ namespace Finantech.Controllers
             {
                 return BadRequest(ex.Message);
             }
-        }*/
+        }
 
         [HttpGet("GetInvoicesWithPagination")]
         public async Task<IActionResult> GetInvoicesWithPagination

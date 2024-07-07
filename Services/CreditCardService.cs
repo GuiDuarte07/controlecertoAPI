@@ -48,12 +48,8 @@ namespace Finantech.Services
 
             creditCardToUpdate.UpdatedAt = DateTime.UtcNow;
 
-            if(request.CardBrand is not null)
-                creditCardToUpdate.CardBrand = request.CardBrand;
             if (request.Description is not null)
                 creditCardToUpdate.Description = request.Description;
-
-
 
             /*
              * Será feito posteriormente a lógica em mudar o TotalLimit, UsedLimit, DueDate e CloseDate
@@ -122,8 +118,8 @@ namespace Finantech.Services
                     bool isInClosingDate = today >= creditCard.CloseDay && today <= creditCard.DueDay;
                     bool isAfterDueDate = today > creditCard.CloseDay;
 
-                    var actualClosingMonthDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, creditCard.CloseDay);
-                    var actualDueMonthDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, creditCard.DueDay);
+                    var actualClosingMonthDate = new DateTime(creditPurchaseToCreate.PurchaseDate.Year, creditPurchaseToCreate.PurchaseDate.Month, creditCard.CloseDay);
+                    var actualDueMonthDate = new DateTime(creditPurchaseToCreate.PurchaseDate.Year, creditPurchaseToCreate.PurchaseDate.Month, creditCard.DueDay);
 
 
                     ICollection<Transaction> transactions = [];
@@ -133,10 +129,7 @@ namespace Finantech.Services
                         var monthClosingInvoiceDate = actualClosingMonthDate.AddMonths(i);
 
                         // Se essa fatura já está na sua data de fechamento, entra pra próxima.
-                        if (isInClosingDate)
-                            monthClosingInvoiceDate = monthClosingInvoiceDate.AddMonths(1);
-
-                        if (isAfterDueDate)
+                        if (isInClosingDate || isAfterDueDate)
                             monthClosingInvoiceDate = monthClosingInvoiceDate.AddMonths(1);
 
                         var monthInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync
@@ -169,7 +162,8 @@ namespace Finantech.Services
                             Amount = installmentAmount,
                             InstallmentNumber = i + 1 + installmentsPaid,
                             InvoiceId = monthInvoice.Id,
-                            Description = request.Description + $" - parcela {i + 1 + installmentsPaid}/{(totalInstallment - installmentsPaid)}",
+                            Description = request.Description + 
+                                (totalInstallment > 1 ? $" {i + 1 + installmentsPaid}/{(totalInstallment -                  installmentsPaid)}" : ""),
                             Destination = request.Destination,
                             PurchaseDate = request.PurchaseDate ?? DateTime.UtcNow,
                         };

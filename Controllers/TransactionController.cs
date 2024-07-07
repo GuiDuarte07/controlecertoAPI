@@ -3,6 +3,7 @@ using Finantech.DTOs.Transaction;
 using Finantech.DTOs.TransferenceDTO;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection.Metadata;
 
 namespace Finantech.Controllers
 {
@@ -93,11 +94,15 @@ namespace Finantech.Controllers
             [FromQuery] int? accountId
         )
         {
+            Console.WriteLine(startDate.ToLocalTime());
+            DateTime utcStartDate = startDate.ToUniversalTime();
+            DateTime utcEndDate = endDate.ToUniversalTime();
+
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             try
             {
-                var transactions = await _transactionService.GetTransactionsAsync(userId, startDate, endDate, accountId);
+                var transactions = await _transactionService.GetTransactionsAsync(userId, utcStartDate, utcEndDate, accountId);
 
                 return Ok(transactions);
             } catch (Exception ex)

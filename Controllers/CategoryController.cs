@@ -1,5 +1,6 @@
 ﻿using Finantech.Decorators;
 using Finantech.DTOs.Category;
+using Finantech.Enums;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -34,14 +35,14 @@ namespace Finantech.Controllers
 
         }
 
-        [HttpGet("GetAllCategories")]
-        public async Task<IActionResult> GetAllCategories()
+        [HttpGet("GetAllCategories/{type?}")]
+        public async Task<IActionResult> GetAllCategories(BillTypeEnum? type)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             try
             {
-                var categories = await _categoryService.GetAllCategoriesAsync(userId);
+                var categories = await _categoryService.GetAllCategoriesAsync(userId, type);
 
                 return Ok(categories);
             }

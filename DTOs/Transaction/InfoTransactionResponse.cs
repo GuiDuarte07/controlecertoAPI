@@ -1,6 +1,8 @@
 ﻿using System;
 using Finantech.DTOs.Account;
 using Finantech.DTOs.Category;
+using Finantech.DTOs.CreditCard;
+using Finantech.DTOs.CreditPurchase;
 using Finantech.Enums;
 
 namespace Finantech.Models.DTOs
@@ -21,6 +23,7 @@ namespace Finantech.Models.DTOs
 
         // Credit Card Transaction info:
         public int? InstallmentNumber { get; set; }
+        public InfoCreditPurchaseResponse? CreditPurchase { get; set; }
 
     }
 }

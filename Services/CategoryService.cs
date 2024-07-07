@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Finantech.DTOs.Category;
+using Finantech.Enums;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
@@ -49,9 +50,14 @@ namespace Finantech.Services
             return;
         }
 
-        public async Task<ICollection<InfoCategoryResponse>> GetAllCategoriesAsync(int userId)
+        public async Task<ICollection<InfoCategoryResponse>> GetAllCategoriesAsync(int userId, BillTypeEnum? type)
         {
             var catogories = await _appDbContext.Categories.Where(c => c.UserId == userId).ToListAsync();
+
+            if (type.HasValue)
+            {
+                catogories = catogories.Where(c => c.BillType == type.Value).ToList();
+            }
 
             return _mapper.Map<ICollection<InfoCategoryResponse>>(catogories);
         }

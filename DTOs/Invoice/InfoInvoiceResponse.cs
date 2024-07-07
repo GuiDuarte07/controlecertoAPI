@@ -1,4 +1,5 @@
-﻿using Finantech.Models.DTOs;
+﻿using Finantech.DTOs.CreditCard;
+using Finantech.Models.DTOs;
 
 namespace Finantech.DTOs.Invoice
 {
@@ -10,6 +11,8 @@ namespace Finantech.DTOs.Invoice
         public bool IsPaid { get; set; }
         public DateTime ClosingDate { get; set; }
         public DateTime DueDate { get; set; }
+
+        public InfoCreditCardResponse CreditCard { get; set; }
 
         public ICollection<InfoTransactionResponse>? Transactions { get; set; }
         public ICollection<InfoInvoicePaymentResponse>? InvoicePayments { get; set; }

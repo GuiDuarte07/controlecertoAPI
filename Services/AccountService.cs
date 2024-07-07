@@ -81,10 +81,10 @@ namespace Finantech.Services
 
             if (endDate == null)
             {
-                endDate = DateTime.Now;
+                endDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month+1, 1);
             }
 
-            double balance = await _appDbContext.Accounts.Where(a => a.UserId == userId).SumAsync(a => a.Balance);
+            double balance = await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false).SumAsync(a => a.Balance);
 
             double expenses = await _appDbContext.Transactions.Where(t => t.Type == TransactionTypeEnum.EXPENSE &&  t.Account!.UserId == userId && t.PurchaseDate >= startDate && t.PurchaseDate <= endDate).SumAsync(e => e.Amount);
 
@@ -93,6 +93,11 @@ namespace Finantech.Services
             double invoices = await _appDbContext.Invoices.Where(i => i.CreditCard.Account.UserId == userId && i.ClosingDate >= startDate && i.ClosingDate <= endDate).SumAsync(i => i.TotalAmount - i.TotalPaid);
 
             return new BalanceStatement(balance, incomes, expenses, invoices);
+        }
+
+        public async Task<double> GetAccountBalanceAsync(int userId)
+        {
+            return await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false).SumAsync(a => a.Balance);
         }
 
         public async Task<InfoAccountResponse> UpdateAccountAsync(UpdateAccountRequest request, int userId)

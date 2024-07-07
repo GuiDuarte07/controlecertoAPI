@@ -249,7 +249,8 @@ namespace Finantech.Services
 
         public async Task<TransactionList> GetTransactionsAsync(int userId, DateTime startDate, DateTime endDate, int? accountId)
         {
-            var transactions = await _appDbContext.Transactions.Include(i => i.Category)
+            var transactions = await _appDbContext.Transactions
+                .Include(i => i.Category)
                 .Include(t => t.Account)
                 .Where(t =>
                     t.Type != TransactionTypeEnum.CREDITEXPENSE &&
@@ -261,6 +262,11 @@ namespace Finantech.Services
 
             var invoices = await _appDbContext.Invoices
                 .Include(i => i.Transactions)
+                    .ThenInclude(t => t.Category)
+                .Include(i => i.Transactions)
+                    .ThenInclude(t => t.CreditPurchase)
+               .Include(i => i.Transactions)
+                    .ThenInclude(t => t.Account)
                 .Include(i => i.CreditCard)
                 .Where(i => i.CreditCard.Account!.UserId == userId &&
                     i.ClosingDate >= startDate &&
