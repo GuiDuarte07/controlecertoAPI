@@ -80,6 +80,11 @@ namespace Finantech.Services
             var transactionToDelete = await _appDbContext.Transactions.FirstOrDefaultAsync(e => e.Id == expenseId) ?? throw new Exception("Transação não encontrada");
             bool justForRecord = transactionToDelete.JustForRecord;
 
+            if (transactionToDelete.Type == TransactionTypeEnum.CREDITEXPENSE || transactionToDelete.Type == TransactionTypeEnum.TRANSFERENCE) 
+            {
+                throw new Exception("Exclusão de transação não implementada para esse tipo ainda.");
+            }
+
             using (var transaction = _appDbContext.Database.BeginTransaction())
             {
                 try
@@ -88,7 +93,13 @@ namespace Finantech.Services
                     {
                         var account = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == transactionToDelete.AccountId) ?? throw new Exception("Conta não encontrada.");
 
+                        if (transactionToDelete.Type == TransactionTypeEnum.INCOME)
+                        {
+                            account.Balance -= transactionToDelete.Amount;
+                        } else if (transactionToDelete.Type == TransactionTypeEnum.INCOME)
+                        {
                         account.Balance += transactionToDelete.Amount;
+                        }
 
                         _appDbContext.Update(account);
 

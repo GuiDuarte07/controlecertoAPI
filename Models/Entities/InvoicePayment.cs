@@ -8,9 +8,9 @@
         public DateTime PaymentDate { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public long InvoiceId { get; set; }
-        public long? AccountPaidId { get; set; }
+        public long AccountId { get; set; }
         public Boolean JustForRecord { get; set; } = false;
-        public Account? PaidAccount { get; set; }
+        public Account Account { get; set; }
         public Invoice Invoice { get; set; }
     }
 }

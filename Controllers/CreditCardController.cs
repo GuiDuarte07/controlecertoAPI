@@ -2,6 +2,7 @@
 using Finantech.DTOs.CreditCard;
 using Finantech.DTOs.CreditPurchase;
 using Finantech.DTOs.Invoice;
+using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -91,6 +92,27 @@ namespace Finantech.Controllers
                 var invoices = await _creditCardService.GetInvoicesWithPaginationAsync(pageNumber, pageSize, userId, startDateSet, endDateSet, accountId);
 
                 return Ok(invoices);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        
+        [HttpGet("GetInvoicesById/{invoiceId}")]
+        public async Task<IActionResult> GetInvoicesByIdAsync
+        (
+            long invoiceId
+        )
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                var invoice = await _creditCardService.GetInvoicesByIdAsync(invoiceId, userId);
+
+                return Ok(invoice);
             }
             catch (Exception ex)
             {

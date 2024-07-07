@@ -216,6 +216,29 @@ namespace Finantech.Services
             return _mapper.Map<ICollection<InfoInvoiceResponse>>(invoices);
         }
 
+        public async Task<InvoicePageResponse> GetInvoicesByIdAsync(long invoiceId, int userId)
+        {
+            var invoice = await _appDbContext.Invoices
+                .Include(i => i.CreditCard)
+                .Include(i => i.Transactions)
+                    .ThenInclude(t => t.Account)
+                .Include(i => i.Transactions)
+                    .ThenInclude(t => t.Category)
+                .Include(i => i.InvoicePayments)
+                    .ThenInclude(ip => ip.Account)
+                .FirstOrDefaultAsync(i => i.Id == invoiceId && i.CreditCard.Account.UserId == userId) ??
+                    throw new Exception("Fatura não encontrada.");
+
+            DateTime nextInvoiceMonth = invoice.ClosingDate.AddMonths(1);
+            DateTime prevInvoiceMonth = invoice.ClosingDate.AddMonths(-1);
+
+            var nextInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync(i => i.CreditCardId == invoice.CreditCardId && i.ClosingDate.Year == nextInvoiceMonth.Year && i.ClosingDate.Month == nextInvoiceMonth.Month);
+
+            var prevInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync(i => i.CreditCardId == invoice.CreditCardId && i.ClosingDate.Year == prevInvoiceMonth.Year && i.ClosingDate.Month == prevInvoiceMonth.Month);
+
+            return new InvoicePageResponse(_mapper.Map<InfoInvoiceResponse>(invoice), nextInvoice?.Id, prevInvoice?.Id);
+        }
+
         public async Task<InfoInvoicePaymentResponse> PayInvoiceAsync(CreteInvoicePaymentRequest invoicePaymentRequest, int userId)
         {
             var invoicePayment = _mapper.Map<InvoicePayment>(invoicePaymentRequest);
@@ -231,12 +254,8 @@ namespace Finantech.Services
                 throw new Exception("A data de pagamento da fatura não pode ser anterior a data que a fatura foi gerada.");
 
             Account? account = null;
-
-            if (invoicePayment.AccountPaidId.HasValue)
-            {
-                account = await _appDbContext.Accounts.FirstAsync(a => a.Id == invoicePayment.AccountPaidId && a.UserId == userId) ??
-                    throw new Exception("Conta não encontrada.");
-            }
+            account = await _appDbContext.Accounts.FirstAsync(a => a.Id == invoicePayment.AccountId && a.UserId == userId) ??
+                throw new Exception("Conta não encontrada.");
 
             if (invoice.IsPaid) throw new Exception("Essa fatura já está paga.");
 

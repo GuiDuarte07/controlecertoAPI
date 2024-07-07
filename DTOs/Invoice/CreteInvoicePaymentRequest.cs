@@ -16,9 +16,9 @@ namespace Finantech.DTOs.Invoice
         public DateTime PaymentDate { get; set; }
 
         [Required(ErrorMessage = "Campo 'InvoiceId' não informado.")]
-        public int InvoiceId { get; set; }
+        public long InvoiceId { get; set; }
 
-        public int? AccountPaidId { get; set; }
+        public long AccountId { get; set; }
 
         public Boolean JustForRecord { get; set; } = false;
     }
