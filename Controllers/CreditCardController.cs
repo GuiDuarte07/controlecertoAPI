@@ -70,26 +70,22 @@ namespace Finantech.Controllers
             }
         }
 
-        [HttpGet("GetInvoicesWithPagination")]
-        public async Task<IActionResult> GetInvoicesWithPagination
+        [HttpGet("GetInvoicesByDate")]
+        public async Task<IActionResult> GetInvoicesByDate
         (
-            [FromQuery] int pageNumber,
             [FromQuery] DateTime? startDate,
             [FromQuery] DateTime? endDate,
-            [FromQuery] int? accountId
+            [FromQuery] long? creditCardId
         )
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
-            const int pageSize = 12;
 
             DateTime startDateSet = startDate ?? DateTime.MinValue;
             DateTime endDateSet = endDate ?? DateTime.MaxValue;
 
-            if (pageNumber < 1) pageNumber = 1;
-
             try
             {
-                var invoices = await _creditCardService.GetInvoicesWithPaginationAsync(pageNumber, pageSize, userId, startDateSet, endDateSet, accountId);
+                var invoices = await _creditCardService.GetInvoicesByDateAsync(userId, startDateSet, endDateSet, creditCardId);
 
                 return Ok(invoices);
             }
@@ -101,7 +97,7 @@ namespace Finantech.Controllers
 
         
         [HttpGet("GetInvoicesById/{invoiceId}")]
-        public async Task<IActionResult> GetInvoicesByIdAsync
+        public async Task<IActionResult> GetInvoicesById
         (
             long invoiceId
         )

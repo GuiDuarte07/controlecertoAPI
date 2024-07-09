@@ -193,13 +193,11 @@ namespace Finantech.Services
             }
         }
 
-        public async Task<IEnumerable<InfoInvoiceResponse>> GetInvoicesWithPaginationAsync(int pageNumber, int pageSize, int userId, DateTime startDate, DateTime endDate, int? accountId)
+        public async Task<IEnumerable<InfoInvoiceResponse>> GetInvoicesByDateAsync(int userId, DateTime startDate, DateTime endDate, long? creditCardId)
         {
-            int startIndex = (pageNumber - 1) * pageSize;
-
-            if (accountId.HasValue)
+            if (creditCardId.HasValue)
             {
-                var _ = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId) ??
+                var _ = await _appDbContext.CreditCards.FirstOrDefaultAsync(cc => cc.Id == creditCardId && cc.Account.UserId == userId) ??
                     throw new Exception("Conta não encontrada.");
             }
 
@@ -207,9 +205,8 @@ namespace Finantech.Services
                 i.CreditCard.Account.UserId == userId &&
                 i.DueDate >= startDate &&
                 i.DueDate <= endDate && 
-                i.CreditCard.AccountId == (accountId ?? i.CreditCard.AccountId)
-            ).Skip(startIndex)
-            .Take(pageSize)
+                i.CreditCard.Id == (creditCardId ?? i.CreditCard.Id)
+            )
             .OrderByDescending(a => a.DueDate)
             .ToListAsync();            
 
@@ -247,11 +244,6 @@ namespace Finantech.Services
                 i => i.Id == invoicePayment.InvoiceId && 
                 i.CreditCard.Account.UserId == userId
             ) ?? throw new Exception("Fatura não encontrada.");
-
-            if (DateTime.Now < invoice.ClosingDate)
-                throw new Exception("Essa fatura ainda não está fechada ainda.");
-            if (invoicePayment.PaymentDate < invoice.DueDate)
-                throw new Exception("A data de pagamento da fatura não pode ser anterior a data que a fatura foi gerada.");
 
             Account? account = null;
             account = await _appDbContext.Accounts.FirstAsync(a => a.Id == invoicePayment.AccountId && a.UserId == userId) ??
