@@ -128,6 +128,7 @@ namespace Finantech.Services
                     for (int i = 0; i < totalInstallment - installmentsPaid; i++)
                     {
                         var monthClosingInvoiceDate = actualClosingMonthDate.AddMonths(i);
+                        var monthDueInvoiceDate = actualDueMonthDate.AddMonths(i);
 
                         // Se essa fatura já está na sua data de fechamento, entra pra próxima.
                         if (isInClosingDate || isAfterDueDate)
@@ -143,7 +144,7 @@ namespace Finantech.Services
                             var newInvoice = new Invoice
                             {
                                 ClosingDate = monthClosingInvoiceDate,
-                                DueDate = monthClosingInvoiceDate.AddDays(7),
+                                DueDate = monthDueInvoiceDate,
                                 CreditCardId = creditCard.Id,
                             };
 
@@ -172,6 +173,10 @@ namespace Finantech.Services
 
                         transactions.Add(newTransaction);
                         monthInvoice.TotalAmount += installmentAmount;
+                        if(monthInvoice.IsPaid)
+                        {
+                            monthInvoice.IsPaid = false;
+                        }
                         _appDbContext.Invoices.Update(monthInvoice);
                     }
 
