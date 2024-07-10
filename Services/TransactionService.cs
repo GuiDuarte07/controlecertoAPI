@@ -126,7 +126,7 @@ namespace Finantech.Services
         {
             var transactionToUpdate = await _appDbContext.Transactions.Include(e => e.Account).FirstOrDefaultAsync(e => e.Id == request.Id) ?? throw new Exception("Conta não encontrada.");
 
-            transactionToUpdate.UpdatedAt = DateTime.Now;
+            transactionToUpdate.UpdatedAt = DateTime.UtcNow;
 
             if (transactionToUpdate.Account!.UserId != userId)
             {

@@ -8,8 +8,8 @@
         public bool IsPaid { get; set; } = false;
         public DateTime ClosingDate { get; set; }
         public DateTime DueDate { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public long CreditCardId { get; set; }
 
         public CreditCard CreditCard { get; set; }

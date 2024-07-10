@@ -67,7 +67,7 @@ namespace Finantech.Services
             var categoryToUpdate = await _appDbContext.Categories.FirstOrDefaultAsync(e => e.Id == request.Id) 
                 ?? throw new Exception("Conta não encontrada.");
 
-            categoryToUpdate.UpdatedAt = DateTime.Now;
+            categoryToUpdate.UpdatedAt = DateTime.UtcNow;
 
             if (categoryToUpdate.UserId != userId)
             {

@@ -21,8 +21,8 @@ namespace Finantech.Profiles
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .AfterMap((src, dest) =>
                 {
-                    dest.CreatedAt = DateTime.Now;
-                    dest.UpdatedAt = DateTime.Now;
+                    dest.CreatedAt = DateTime.UtcNow;
+                    dest.UpdatedAt = DateTime.UtcNow;
                 });
 
             CreateMap<Account, InfoAccountResponse>();
@@ -30,7 +30,7 @@ namespace Finantech.Profiles
             CreateMap<UpdateAccountRequest, Account>()
                 .AfterMap((src, dest) =>
                 {
-                    dest.UpdatedAt = DateTime.Now;
+                    dest.UpdatedAt = DateTime.UtcNow;
                 });
 
 
@@ -39,14 +39,14 @@ namespace Finantech.Profiles
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .AfterMap((src, dest) =>
                 {
-                    dest.CreatedAt = DateTime.Now;
-                    dest.UpdatedAt = DateTime.Now;
+                    dest.CreatedAt = DateTime.UtcNow;
+                    dest.UpdatedAt = DateTime.UtcNow;
                 });
             CreateMap<Transaction, InfoTransactionResponse>();
             CreateMap<UpdateTransactionRequest, Transaction>()
                 .AfterMap((src, dest) =>
                 {
-                    dest.UpdatedAt = DateTime.Now;
+                    dest.UpdatedAt = DateTime.UtcNow;
                 });
 
 
@@ -56,14 +56,14 @@ namespace Finantech.Profiles
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .AfterMap((src, dest) =>
                 {
-                    dest.CreatedAt = DateTime.Now;
-                    dest.UpdatedAt = DateTime.Now;
+                    dest.CreatedAt = DateTime.UtcNow;
+                    dest.UpdatedAt = DateTime.UtcNow;
                 });
             CreateMap<Category, InfoCategoryResponse>();
             CreateMap<UpdateCategoryRequest, Category>()
                 .AfterMap((src, dest) =>
                 {
-                    dest.UpdatedAt = DateTime.Now;
+                    dest.UpdatedAt = DateTime.UtcNow;
                 });
 
 
@@ -72,14 +72,14 @@ namespace Finantech.Profiles
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .AfterMap((src, dest) =>
                 {
-                    dest.CreatedAt = DateTime.Now;
-                    dest.UpdatedAt = DateTime.Now;
+                    dest.CreatedAt = DateTime.UtcNow;
+                    dest.UpdatedAt = DateTime.UtcNow;
                 });
             CreateMap<CreditCard, InfoCreditCardResponse>();        
             CreateMap<UpdateCreditCardRequest, CreditCard>()
                 .AfterMap((src, dest) =>
                 {
-                    dest.UpdatedAt = DateTime.Now;
+                    dest.UpdatedAt = DateTime.UtcNow;
                 });
 
             CreateMap<CreateCreditPurchaseRequest, CreditPurchase>()
@@ -87,8 +87,8 @@ namespace Finantech.Profiles
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .AfterMap((src, dest) =>
                 {
-                    dest.CreatedAt = DateTime.Now;
-                    dest.UpdatedAt = DateTime.Now;
+                    dest.CreatedAt = DateTime.UtcNow;
+                    dest.UpdatedAt = DateTime.UtcNow;
                 });
             CreateMap<CreditPurchase, InfoCreditPurchaseResponse>();
 
@@ -103,8 +103,8 @@ namespace Finantech.Profiles
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .AfterMap((src, dest) =>
                 {
-                    dest.CreatedAt = DateTime.Now;
-                    dest.UpdatedAt = DateTime.Now;
+                    dest.CreatedAt = DateTime.UtcNow;
+                    dest.UpdatedAt = DateTime.UtcNow;
                 });
         }
     }

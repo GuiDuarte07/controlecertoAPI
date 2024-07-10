@@ -10,7 +10,7 @@
         public bool Paid { get; set; } = false;
         public string Destination { get; set; }
         public string? Description { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public long CreditCardId { get; set; }
         public CreditCard CreditCard { get; set; }

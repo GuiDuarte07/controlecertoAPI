@@ -6,7 +6,7 @@
         public double AmountPaid { get; set; }
         public string Description { get; set; }
         public DateTime PaymentDate { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public long InvoiceId { get; set; }
         public long AccountId { get; set; }
         public Boolean JustForRecord { get; set; } = false;

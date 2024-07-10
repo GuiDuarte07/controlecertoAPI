@@ -50,6 +50,8 @@ namespace Finantech.Services
 
             if (request.Description is not null)
                 creditCardToUpdate.Description = request.Description;
+            if (request.TotalLimit is not null && request.TotalLimit >= 0)
+                creditCardToUpdate.TotalLimit = (double)request.TotalLimit;
 
             /*
              * Será feito posteriormente a lógica em mudar o TotalLimit, UsedLimit, DueDate e CloseDate
@@ -60,8 +62,7 @@ namespace Finantech.Services
                     creditCardToUpdate.CloseDay = (int)request.CloseDay;
                 if (request.DueDay is not null)
                     creditCardToUpdate.DueDay = (int)request.DueDay;
-                if(request.TotalLimit is not null && request.TotalLimit >= 0)
-                    creditCardToUpdate.TotalLimit = (double)request.TotalLimit;
+                
                 if (request.UsedLimit is not null && request.UsedLimit >= 0)
                     creditCardToUpdate.UsedLimit = (double)request.UsedLimit;
             */
@@ -114,7 +115,7 @@ namespace Finantech.Services
                     var createdCreditPurchase = await _appDbContext.CreditPurchases.AddAsync(creditPurchaseToCreate);
                     await _appDbContext.SaveChangesAsync();
 
-                    int today = DateTime.Now.Day;
+                    int today = DateTime.UtcNow.Day;
                     bool isInClosingDate = today >= creditCard.CloseDay && today <= creditCard.DueDay;
                     bool isAfterDueDate = today > creditCard.CloseDay;
 

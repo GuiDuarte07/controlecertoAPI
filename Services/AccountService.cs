@@ -48,7 +48,7 @@ namespace Finantech.Services
                 throw new Exception("Conta não pode ser deletada pois possui cartão de crédito.");
             }
 
-            if (IsWithin24Hours(accountToDelete.CreatedAt, DateTime.Now) && !accountToDelete.Transactions.Any() && !accountToDelete.Transferences.Any())
+            if (IsWithin24Hours(accountToDelete.CreatedAt, DateTime.UtcNow) && !accountToDelete.Transactions.Any() && !accountToDelete.Transferences.Any())
             {
                 _appDbContext.Accounts.Remove(accountToDelete);
                 await _appDbContext.SaveChangesAsync();
@@ -76,12 +76,12 @@ namespace Finantech.Services
         {
             if (startDate == null) 
             {
-                startDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                startDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
             }
 
             if (endDate == null)
             {
-                endDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month+1, 1);
+                endDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month+1, 1);
             }
 
             double balance = await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false).SumAsync(a => a.Balance);

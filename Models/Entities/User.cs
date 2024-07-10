@@ -7,7 +7,7 @@
         public string Email { get; set; }
         public string PasswordHash { get; set; }
         public bool EmailConfirmed { get; set; } = false;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
         public ICollection<Account> Accounts { get; set; }

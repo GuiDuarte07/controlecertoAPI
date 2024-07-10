@@ -9,8 +9,8 @@ namespace Finantech.Models.Entities
         public string Icon { get; set; }
         public string Color { get; set; }
         public BillTypeEnum BillType { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime? UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
         public int UserId { get; set; }
 
         public User User { get; set; }
