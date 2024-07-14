@@ -132,7 +132,10 @@ namespace Finantech.Services
 
                         // Se essa fatura já está na sua data de fechamento, entra pra próxima.
                         if (isInClosingDate || isAfterDueDate)
+                        {
                             monthClosingInvoiceDate = monthClosingInvoiceDate.AddMonths(1);
+                            monthDueInvoiceDate = monthDueInvoiceDate.AddMonths(1);
+                        }
 
                         var monthInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync
                         (
@@ -315,14 +318,15 @@ namespace Finantech.Services
                         if (invoice.IsPaid)
                         {
                             throw new Exception("Não é mais possível excluir esse registro pois a fatura já foi paga.");
-                        }
+                        }                        
+
+                        invoice.TotalAmount -= expense.Amount;
 
                         if ((invoice.TotalAmount - invoice.TotalPaid).Equals(0))
                         {
                             invoice.IsPaid = true;
                         }
 
-                        invoice.TotalAmount -= expense.Amount;
                         _appDbContext.Update(invoice);
                     }
 
