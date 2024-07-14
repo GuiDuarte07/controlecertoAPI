@@ -72,6 +72,15 @@ namespace Finantech.Services
             return accountsInfo;
         }
 
+        public async Task<ICollection<InfoAccountResponse>> GetAccountsWithoutCreditCardAsync(int userId)
+        {
+            var accounts = await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false && a.CreditCard == null).ToListAsync();
+
+            var accountsInfo = _mapper.Map<List<InfoAccountResponse>>(accounts);
+
+            return accountsInfo;
+        }
+
         public async Task<BalanceStatement> GetBalanceStatementAsync(int userId, DateTime? startDate, DateTime? endDate)
         {
             if (startDate == null) 

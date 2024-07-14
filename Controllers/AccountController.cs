@@ -72,6 +72,24 @@ namespace Finantech.Controllers
             }
         }
 
+        [HttpGet("GetAccountsWithoutCreditCard")]
+        public async Task<IActionResult> GetAccountsWithoutCreditCard()
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                var accounts = await _accountService.GetAccountsWithoutCreditCardAsync(userId);
+
+                return Ok(accounts);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPatch("UpdateAccount")]
         public async Task<IActionResult> UpdateAccount(UpdateAccountRequest request)
         {

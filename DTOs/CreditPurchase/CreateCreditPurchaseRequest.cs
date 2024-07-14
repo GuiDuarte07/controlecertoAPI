@@ -25,9 +25,9 @@ namespace Finantech.DTOs.CreditPurchase
         public string? Description { get; set; }
 
         [Required(ErrorMessage = "Campo 'CreditCardId' não informado.")]
-        public int CreditCardId { get; set; }
+        public long CreditCardId { get; set; }
 
         [Required(ErrorMessage = "Campo 'CategoryId' não informado.")]
-        public int CategoryId { get; set; }
+        public long CategoryId { get; set; }
     }
 }

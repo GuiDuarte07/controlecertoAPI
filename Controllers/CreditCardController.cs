@@ -70,6 +70,23 @@ namespace Finantech.Controllers
             }
         }
 
+        [HttpPatch("UpdateCreditPurchaseAsync")]
+        public async Task<IActionResult> UpdateCreditPurchase([FromBody] UpdateCreditPurchaseResponse request)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            try
+            {
+                var updatedCreditCard = await _creditCardService.UpdateCreditPurchaseAsync(request, userId);
+
+                return Created("", updatedCreditCard);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        
         [HttpGet("GetInvoicesByDate")]
         public async Task<IActionResult> GetInvoicesByDate
         (

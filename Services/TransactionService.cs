@@ -279,6 +279,8 @@ namespace Finantech.Services
                .Include(i => i.Transactions)
                     .ThenInclude(t => t.Account)
                 .Include(i => i.CreditCard)
+                .Include(i => i.InvoicePayments)
+                    .ThenInclude(ip => ip.Account)
                 .Where(i => i.CreditCard.Account!.UserId == userId &&
                     i.ClosingDate >= startDate &&
                     i.ClosingDate <= endDate)

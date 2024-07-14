@@ -11,6 +11,7 @@ namespace Finantech.Services.Interfaces
         public Task<InfoAccountResponse> UpdateAccountAsync(UpdateAccountRequest request, int userId);
         public Task DeleteAccountAsync(int accountId, int userId);
         public Task<ICollection<InfoAccountResponse>> GetAccountsByUserIdAsync(int userId);
+        public Task<ICollection<InfoAccountResponse>> GetAccountsWithoutCreditCardAsync(int userId);
         public Task<BalanceStatement> GetBalanceStatementAsync(int userId, DateTime? startDate, DateTime? endDate);
         public Task<double> GetAccountBalanceAsync(int userId);
     }
