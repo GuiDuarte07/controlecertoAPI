@@ -2,7 +2,7 @@
 
 namespace Finantech.DTOs.CreditPurchase
 {
-    public class UpdateCreditPurchaseResponse
+    public class UpdateCreditPurchaseRequest
     {
         [Required(ErrorMessage = "Campo 'Id' não informado.")]
         public long Id { get; set; }

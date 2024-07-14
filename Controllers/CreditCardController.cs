@@ -70,8 +70,8 @@ namespace Finantech.Controllers
             }
         }
 
-        [HttpPatch("UpdateCreditPurchaseAsync")]
-        public async Task<IActionResult> UpdateCreditPurchase([FromBody] UpdateCreditPurchaseResponse request)
+        [HttpPatch("UpdateCreditPurchase")]
+        public async Task<IActionResult> UpdateCreditPurchase([FromBody] UpdateCreditPurchaseRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 

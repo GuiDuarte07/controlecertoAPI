@@ -297,14 +297,12 @@ namespace Finantech.Services
         }
         public async Task DeleteCreditPurchaseAsync(long purchaseId, int userId)
         {
-            var creditPurchaseToDelete = await _appDbContext.CreditPurchases.FirstAsync(cp => cp.Id == purchaseId && cp.CreditCard.Account.UserId == userId) ?? throw new Exception("Compra no cartão não localizado ou não pertence ao usuário.");
+            var creditPurchaseToDelete = await _appDbContext.CreditPurchases.Include(cp => cp.Transactions).FirstAsync(cp => cp.Id == purchaseId && cp.CreditCard.Account.UserId == userId) ?? throw new Exception("Compra no cartão não localizado ou não pertence ao usuário.");
 
             var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstOrDefaultAsync(cc => cc.Id == creditPurchaseToDelete.CreditCardId && cc.Account.UserId == userId)
                 ?? throw new Exception("Cartão de Crédito não localizado ou não pertence ao usuário.");
-
-            var creditExpenses = await _appDbContext.Transactions.Where(ce => ce.Type == TransactionTypeEnum.CREDITEXPENSE && ce.CreditPurchaseId == creditPurchaseToDelete.Id).ToListAsync();
-
-            
+            //corrgir isso aqui
+            var creditExpenses = creditPurchaseToDelete.Transactions;
 
             using (var transaction = _appDbContext.Database.BeginTransaction())
             {
@@ -319,7 +317,13 @@ namespace Finantech.Services
                             throw new Exception("Não é mais possível excluir esse registro pois a fatura já foi paga.");
                         }
 
+                        if ((invoice.TotalAmount - invoice.TotalPaid).Equals(0))
+                        {
+                            invoice.IsPaid = true;
+                        }
+
                         invoice.TotalAmount -= expense.Amount;
+                        _appDbContext.Update(invoice);
                     }
 
                     creditCard.UsedLimit -= creditPurchaseToDelete.TotalAmount;
@@ -348,82 +352,71 @@ namespace Finantech.Services
             return _mapper.Map<InfoTransactionResponse[]>(creditExpenses);
         }
 
-        public async Task<InfoCreditPurchaseResponse> UpdateCreditPurchaseAsync(UpdateCreditPurchaseResponse request, int userId)
+        public async Task<InfoCreditPurchaseResponse> UpdateCreditPurchaseAsync(UpdateCreditPurchaseRequest request, int userId)
         {
             var creditPurchaseToUpdate = await _appDbContext.CreditPurchases.FirstOrDefaultAsync(cp => cp.Id == request.Id) ?? throw new Exception("Compra não localizada");
 
-            using (var transaction = _appDbContext.Database.BeginTransaction())
+            var creditPurchaseToCreate = new CreateCreditPurchaseRequest();
+
+            if (request.PurchaseDate is not null)
             {
-                try
-                {
-                    await this.DeleteCreditPurchaseAsync(creditPurchaseToUpdate.Id, userId);
-
-                    var creditPurchaseToCreate = new CreateCreditPurchaseRequest();
-
-                    if (request.PurchaseDate is not null)
-                    {
-                        creditPurchaseToCreate.PurchaseDate = request.PurchaseDate;
-                    }
-                    else
-                    {
-                        creditPurchaseToCreate.PurchaseDate = creditPurchaseToUpdate.PurchaseDate;
-                    }
-                    if (request.Description is not null)
-                    {
-                        creditPurchaseToCreate.Description = request.Description;
-                    }
-                    else
-                    {
-                        creditPurchaseToCreate.Description = creditPurchaseToUpdate.Description;
-                    }
-                    if (request.TotalInstallment is not null)
-                    {
-                        creditPurchaseToCreate.TotalInstallment = (int)request.TotalInstallment;
-                    }
-                    else
-                    {
-                        creditPurchaseToCreate.TotalInstallment = creditPurchaseToUpdate.TotalInstallment;
-                    }
-                    if (request.Destination is not null)
-                    {
-                        creditPurchaseToCreate.Destination = request.Destination;
-                    }
-                    else
-                    {
-                        creditPurchaseToCreate.Destination = creditPurchaseToUpdate.Destination;
-                    }
-                    if (request.CreditCardId is not null)
-                    {
-                        creditPurchaseToCreate.CreditCardId = (long)request.CreditCardId;
-                    }
-                    else
-                    {
-                        creditPurchaseToCreate.CreditCardId = creditPurchaseToUpdate.CreditCardId;
-                    }
-                    if (request.TotalAmount is not null)
-                    {
-                        creditPurchaseToCreate.TotalAmount = (long)request.TotalAmount;
-                    }
-                    else
-                    {
-                        creditPurchaseToCreate.TotalAmount = (long)creditPurchaseToUpdate.TotalAmount;
-                    }
-                    creditPurchaseToCreate.CategoryId = (long)request.CategoryId;
-
-                    var result = await this.CreateCreditPurchaseAsync(creditPurchaseToCreate, userId);
-
-                    await _appDbContext.SaveChangesAsync();
-
-                    transaction.Commit();
-
-                    return result;
-                }
-                catch (Exception)
-                {
-                    transaction.Rollback();
-                    throw;
-                }
+                creditPurchaseToCreate.PurchaseDate = request.PurchaseDate;
             }
+            else
+            {
+                creditPurchaseToCreate.PurchaseDate = creditPurchaseToUpdate.PurchaseDate;
+            }
+            if (request.Description is not null)
+            {
+                creditPurchaseToCreate.Description = request.Description;
+            }
+            else
+            {
+                creditPurchaseToCreate.Description = creditPurchaseToUpdate.Description;
+            }
+            if (request.TotalInstallment is not null)
+            {
+                creditPurchaseToCreate.TotalInstallment = (int)request.TotalInstallment;
+            }
+            else
+            {
+                creditPurchaseToCreate.TotalInstallment = creditPurchaseToUpdate.TotalInstallment;
+            }
+            if (request.Destination is not null)
+            {
+                creditPurchaseToCreate.Destination = request.Destination;
+            }
+            else
+            {
+                creditPurchaseToCreate.Destination = creditPurchaseToUpdate.Destination;
+            }
+            if (request.CreditCardId is not null)
+            {
+                creditPurchaseToCreate.CreditCardId = (long)request.CreditCardId;
+            }
+            else
+            {
+                creditPurchaseToCreate.CreditCardId = creditPurchaseToUpdate.CreditCardId;
+            }
+            if (request.TotalAmount is not null)
+            {
+                creditPurchaseToCreate.TotalAmount = (long)request.TotalAmount;
+            }
+            else
+            {
+                creditPurchaseToCreate.TotalAmount = (long)creditPurchaseToUpdate.TotalAmount;
+            }
+            creditPurchaseToCreate.CategoryId = (long)request.CategoryId;
+
+
+
+            await this.DeleteCreditPurchaseAsync(creditPurchaseToUpdate.Id, userId);
+            var result = await this.CreateCreditPurchaseAsync(creditPurchaseToCreate, userId);
+
+            await _appDbContext.SaveChangesAsync();
+
+
+            return result;
         }
 
         public async Task<InfoCreditCardResponse[]> GetCreditCardInfo(int userId)
