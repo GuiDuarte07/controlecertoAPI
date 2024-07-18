@@ -83,15 +83,19 @@ namespace Finantech.Services
 
         public async Task<BalanceStatement> GetBalanceStatementAsync(int userId, DateTime? startDate, DateTime? endDate)
         {
+            DateTime currentUtc = DateTime.UtcNow;
             if (startDate == null) 
             {
-                startDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+                startDate = new DateTime(currentUtc.Year, currentUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             }
 
             if (endDate == null)
             {
-                endDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month+1, 1);
+                endDate = new DateTime(currentUtc.Year, currentUtc.Month+1, 1, 0, 0, 0, DateTimeKind.Utc);
             }
+
+            Console.WriteLine(startDate);
+            Console.WriteLine(endDate);
 
             double balance = await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false).SumAsync(a => a.Balance);
 

@@ -315,7 +315,7 @@ namespace Finantech.Services
                     {
                         var invoice = await _appDbContext.Invoices.FirstAsync(cp => cp.Id == expense.InvoiceId);
 
-                        if (invoice.IsPaid)
+                        if (invoice.IsPaid || (invoice.TotalAmount - invoice.TotalPaid) <= creditPurchaseToDelete.TotalAmount)
                         {
                             throw new Exception("Não é mais possível excluir esse registro pois a fatura já foi paga.");
                         }                        
