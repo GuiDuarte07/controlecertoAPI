@@ -1,0 +1,22 @@
+version: '3.4'
+
+services:
+  finantech:
+    image: ${DOCKER_REGISTRY-}finantech
+    build:
+      context: .
+      dockerfile: Finantech.Api/Dockerfile
+    ports:
+        - "8080:8080"
+        - "8081:8081"
+  database.pgs:
+    image: postgres:latest
+    container_name: database.pgs
+    environment:
+        - POSTGRES_DB=Finantech
+        - POSTGRES_USER=admin
+        - POSTGRES_PASSWORD=12345
+    volumes:
+      - ./.containers/Finantech-db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432

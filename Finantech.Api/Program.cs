@@ -1,3 +1,4 @@
+using Finantech.Extensions;
 using Finantech.Models.AppDbContext;
 using Finantech.Profiles;
 using Finantech.Services;
@@ -134,6 +135,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.ApplyMigrations();
 }
 
 app.UseCors("AnotherPolicy");
