@@ -1,6 +1,8 @@
 ﻿using Finantech.Decorators;
 using Finantech.DTOs.Transaction;
 using Finantech.DTOs.TransferenceDTO;
+using Finantech.Errors;
+using Finantech.Extensions;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection.Metadata;
@@ -23,15 +25,14 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var expense = await _transactionService.CreateTransactionAsync(request, userId);
+            var result = await _transactionService.CreateTransactionAsync(request, userId);
 
-                return Created("", expense);
-            } catch (Exception ex)
+            if(result.IsSuccess)
             {
-                return BadRequest(ex.Message);
+                return Created("GetTransactions", result.Value);
             }
+
+            return result.HandleReturnResult();
         }
 
         [HttpDelete("DeleteTransaction/{transactionId}")]
@@ -39,16 +40,8 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                await _transactionService.DeleteTransactionAsync(transactionId, userId);
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _transactionService.DeleteTransactionAsync(transactionId, userId);
+            return result.HandleReturnResult();
         }
 
         [HttpPatch("UpdateTransaction")]
@@ -56,16 +49,8 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var updatedExpense = await _transactionService.UpdateTransactionAsync(request, userId);
-
-                return Ok(updatedExpense);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _transactionService.UpdateTransactionAsync(request, userId);
+            return result.HandleReturnResult();
         }
 
         [HttpPost("CreateTransference")]
@@ -73,17 +58,14 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var transference = await _transactionService.CreateTransferenceAsync(request, userId);
+            var result = await _transactionService.CreateTransferenceAsync(request, userId);
 
-                return Created("", transference);
-            }
-            catch (Exception ex)
+            if (result.IsSuccess)
             {
-                return BadRequest(ex.Message);
+                return Created("GetTransactions", result.Value);
             }
 
+            return result.HandleReturnResult();
         }
 
         [HttpGet("GetTransactions")]
@@ -94,21 +76,14 @@ namespace Finantech.Controllers
             [FromQuery] int? accountId
         )
         {
-            Console.WriteLine(startDate.ToLocalTime());
             DateTime utcStartDate = startDate.ToUniversalTime();
             DateTime utcEndDate = endDate.ToUniversalTime();
 
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var transactions = await _transactionService.GetTransactionsAsync(userId, utcStartDate, utcEndDate, accountId);
+            var result = await _transactionService.GetTransactionsAsync(userId, utcStartDate, utcEndDate, accountId);
 
-                return Ok(transactions);
-            } catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return result.HandleReturnResult();
         }
     }
 }

@@ -17,7 +17,10 @@ namespace Finantech.Extensions
             {
                 ErrorTypeEnum.BusinessRule => new BadRequestObjectResult(result.Error.ErrorMessage),
                 ErrorTypeEnum.Validation => new UnprocessableEntityObjectResult(result.Error.ErrorMessage),
-                ErrorTypeEnum.InternalError => new StatusCodeResult(StatusCodes.Status500InternalServerError),
+                ErrorTypeEnum.NotFound => new NotFoundObjectResult(result.Error.ErrorMessage),
+                ErrorTypeEnum.Conflict => new BadRequestObjectResult(result.Error.ErrorMessage),
+                ErrorTypeEnum.NotImplemented => new ObjectResult(result.Error.ErrorMessage) { StatusCode = StatusCodes.Status501NotImplemented },
+                ErrorTypeEnum.InternalError => new ObjectResult(result.Error.ErrorMessage) { StatusCode = StatusCodes.Status500InternalServerError },
                 _ => new StatusCodeResult(StatusCodes.Status500InternalServerError),
             };
         }

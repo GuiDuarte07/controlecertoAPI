@@ -2,8 +2,11 @@
 {
     public enum ErrorTypeEnum
     {
+        NotFound,
         BusinessRule,
         Validation,
-        InternalError
+        InternalError,
+        Conflict,
+        NotImplemented
     }
 }
