@@ -1,4 +1,5 @@
 ﻿using Finantech.DTOs.User;
+using Finantech.Extensions;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,18 +18,17 @@ namespace Finantech.Controllers
 
         [AllowAnonymous]
         [HttpPost("CreateUser")]
-        public async Task<ActionResult> CreateUser([FromBody] CreateUserRequest data)
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest data)
         {
-            try 
-            {
-                var userInfo = await _userService.CreateUserAync(data);
-                return Created("", userInfo);
+            var result = await _userService.CreateUserAync(data);
 
-            } catch (Exception ex)
+            if (result.IsSuccess)
             {
-                return BadRequest(ex.Message);
+                return Created("Auth/Authenticate", result.Value);
             }
-            
+
+            return result.HandleReturnResult();
+
         }
     }
 }

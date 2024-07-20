@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using Finantech.DTOs.User;
+using Finantech.Enums;
+using Finantech.Errors;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
@@ -22,15 +24,13 @@ namespace Finantech.Services
             _categoryService = categoryService;
         }
 
-        public async Task<InfoUserResponse> CreateUserAync(CreateUserRequest userReq)
+        public async Task<Result<InfoUserResponse>> CreateUserAync(CreateUserRequest userReq)
         {
             var alreadyExistEmail = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Email == userReq.Email);
 
-            Console.WriteLine(alreadyExistEmail);
-
-            if (alreadyExistEmail != null) 
+            if (alreadyExistEmail is not null) 
             {
-                throw new Exception("Já existe uma conta com esse e-mail cadastrada!");
+                return new AppError("Já existe uma conta com esse e-mail cadastrada!", ErrorTypeEnum.Validation);
             }
 
             using (var transaction = _appDbContext.Database.BeginTransaction())

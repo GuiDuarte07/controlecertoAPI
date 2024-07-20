@@ -1,9 +1,10 @@
 ﻿using Finantech.DTOs.User;
+using Finantech.Errors;
 
 namespace Finantech.Services.Interfaces
 {
     public interface IUserService
     {
-        public Task<InfoUserResponse> CreateUserAync(CreateUserRequest userReq);
+        public Task<Result<InfoUserResponse>> CreateUserAync(CreateUserRequest userReq);
     }
 }
