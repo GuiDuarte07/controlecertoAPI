@@ -6,7 +6,7 @@ namespace Finantech.Extensions
 {
     public static class ResultExtensions
     {
-        public static IActionResult HandleError<T>(this Result<T> result)
+        public static IActionResult HandleReturnResult<T>(this Result<T> result)
         {
             if (result.IsSuccess)
             {

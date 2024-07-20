@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Finantech.DTOs.Category;
 using Finantech.Enums;
+using Finantech.Errors;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
@@ -18,7 +19,7 @@ namespace Finantech.Services
             _mapper = mapper;
         }
 
-        public async Task<InfoCategoryResponse> CreateCategoryAsync(CreateCategoryRequest request, int userId)
+        public async Task<Result<InfoCategoryResponse>> CreateCategoryAsync(CreateCategoryRequest request, int userId)
         {
             //FAZER O MAP
             var categoryToCreate = _mapper.Map<Category>(request);
@@ -26,17 +27,26 @@ namespace Finantech.Services
 
             var createdCategory = await _appDbContext.Categories.AddAsync(categoryToCreate);
 
+            if (createdCategory is null)
+            {
+                return new AppError("Não foi possível criar a categoria, aguarde um momento e tente novamente, caso persistir, entre em contato.", ErrorTypeEnum.InternalError);
+            }
+
             await _appDbContext.SaveChangesAsync();
 
             return _mapper.Map<InfoCategoryResponse>(createdCategory.Entity);
         }
 
-        public async Task DeleteCategoryAsync(int categoryId, int userId)
+        public async Task<Result<bool>> DeleteCategoryAsync(int categoryId, int userId)
         {
             var categoryToDelete = await _appDbContext.Categories
                 .Include(c => c.Transactions)
-                .FirstOrDefaultAsync(c => c.Id == categoryId) 
-                ?? throw new Exception("Categoria não encontrada");
+                .FirstAsync(c => c.Id == categoryId);
+
+            if (categoryToDelete is null)
+            {
+                return new AppError("Categoria não encontrada.", ErrorTypeEnum.Validation);
+            }
 
             if(!categoryToDelete.Transactions.Any())
             {
@@ -44,35 +54,36 @@ namespace Finantech.Services
                 await _appDbContext.SaveChangesAsync();
             } else
             {
-                throw new Exception("Essa categoria possui registros e portanto não pode ser excluido. Tente desativa-lo.");
+                return new AppError("Essa categoria possui registros e portanto não pode ser excluido. Tente desativa-lo.", ErrorTypeEnum.BusinessRule);
             }
 
-            return;
+            return true;
         }
 
-        public async Task<ICollection<InfoCategoryResponse>> GetAllCategoriesAsync(int userId, BillTypeEnum? type)
+        public async Task<Result<ICollection<InfoCategoryResponse>>> GetAllCategoriesAsync(int userId, BillTypeEnum? type)
         {
-            var catogories = await _appDbContext.Categories.Where(c => c.UserId == userId).ToListAsync();
+            var categories = await _appDbContext.Categories.Where(c => c.UserId == userId).ToListAsync();
 
             if (type.HasValue)
             {
-                catogories = catogories.Where(c => c.BillType == type.Value).ToList();
+                categories = categories.Where(c => c.BillType == type.Value).ToList();
             }
 
-            return _mapper.Map<ICollection<InfoCategoryResponse>>(catogories);
+            var collection = _mapper.Map<List<InfoCategoryResponse>>(categories);
+
+            return collection;
         }
 
-        public async Task<InfoCategoryResponse> UpdateCategoryAsync(UpdateCategoryRequest request, int userId)
+        public async Task<Result<InfoCategoryResponse>> UpdateCategoryAsync(UpdateCategoryRequest request, int userId)
         {
-            var categoryToUpdate = await _appDbContext.Categories.FirstOrDefaultAsync(e => e.Id == request.Id) 
-                ?? throw new Exception("Conta não encontrada.");
+            var categoryToUpdate = await _appDbContext.Categories.FirstAsync(e => e.Id == request.Id);
+            
+            if (categoryToUpdate is null || categoryToUpdate.UserId != userId)
+            {
+                return new AppError("Conta não encontrada.", ErrorTypeEnum.Validation);
+            }
 
             categoryToUpdate.UpdatedAt = DateTime.UtcNow;
-
-            if (categoryToUpdate.UserId != userId)
-            {
-                throw new Exception("Não autorizado: Categoria não pertence a usuário.");
-            }
 
             if (request.Icon is not null)
                 categoryToUpdate.Icon = request.Icon;

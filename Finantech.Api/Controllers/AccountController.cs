@@ -33,7 +33,7 @@ namespace Finantech.Controllers
             }
             else
             {
-                return result.HandleError();
+                return result.HandleReturnResult();
             }
 
         }
@@ -51,7 +51,7 @@ namespace Finantech.Controllers
             }
             else
             {
-                return result.HandleError();
+                return result.HandleReturnResult();
             }
 
         }
@@ -68,7 +68,7 @@ namespace Finantech.Controllers
                 return Ok(result.Value);
             } else
             {
-                return result.HandleError();
+                return result.HandleReturnResult();
             }
         }
 
@@ -85,7 +85,7 @@ namespace Finantech.Controllers
             }
             else
             {
-                return result.HandleError();
+                return result.HandleReturnResult();
             }
         }
 
@@ -107,7 +107,7 @@ namespace Finantech.Controllers
             }
             else
             {
-                return result.HandleError();
+                return result.HandleReturnResult();
             }
         }
 
@@ -125,7 +125,7 @@ namespace Finantech.Controllers
             }
             else
             {
-                return result.HandleError();
+                return result.HandleReturnResult();
             }
         }
 
@@ -142,7 +142,7 @@ namespace Finantech.Controllers
             }
             else
             {
-                return result.HandleError();
+                return result.HandleReturnResult();
             }
         }
     }

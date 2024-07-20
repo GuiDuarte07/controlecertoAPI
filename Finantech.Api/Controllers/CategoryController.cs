@@ -1,6 +1,8 @@
 ﻿using Finantech.Decorators;
 using Finantech.DTOs.Category;
 using Finantech.Enums;
+using Finantech.Errors;
+using Finantech.Extensions;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,17 +24,16 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var category = await _categoryService.CreateCategoryAsync(request, userId);
+            var result = await _categoryService.CreateCategoryAsync(request, userId);
 
-                return Created("", category);
-            }
-            catch (Exception ex)
+            if (result.IsSuccess)
             {
-                return BadRequest(ex.Message);
+                return Created("Category/GetAllCategories", result.Value);
             }
-
+            else 
+            {
+                return result.HandleReturnResult();
+            }
         }
 
         [HttpGet("GetAllCategories/{type?}")]
@@ -40,16 +41,9 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var categories = await _categoryService.GetAllCategoriesAsync(userId, type);
+            var result = await _categoryService.GetAllCategoriesAsync(userId, type);
 
-                return Ok(categories);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return result.HandleReturnResult();
         }
 
         [HttpPatch("UpdateCategory")]
@@ -57,16 +51,9 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var categoryUpdated = await _categoryService.UpdateCategoryAsync(request, userId);
+            var result = await _categoryService.UpdateCategoryAsync(request, userId);
 
-                return Ok(categoryUpdated);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return result.HandleReturnResult();
         }
 
         [HttpDelete("DeleteCategory/{categoryId}")]
@@ -74,16 +61,9 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                await _categoryService.DeleteCategoryAsync(categoryId, userId);
+            var result = await _categoryService.DeleteCategoryAsync(categoryId, userId);
 
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return result.HandleReturnResult();
         }
 
 
