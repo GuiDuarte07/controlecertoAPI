@@ -1,5 +1,7 @@
 ﻿using Finantech.Decorators;
 using Finantech.DTOs.Account;
+using Finantech.Errors;
+using Finantech.Extensions;
 using Finantech.Models.DTOs;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
@@ -23,14 +25,15 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var account = await _accountService.CreateAccountAsync(accountRequest, userId);
+            var result = await _accountService.CreateAccountAsync(accountRequest, userId);
 
-                return Created("", account);
-            } catch (Exception ex) 
+            if (result.IsSuccess)
             {
-                return BadRequest(ex.Message);
+                return Created($"Account/{userId}",result.Value);
+            }
+            else
+            {
+                return result.HandleError();
             }
 
         }
@@ -40,16 +43,15 @@ namespace Finantech.Controllers
         public async Task<IActionResult> DeleteAccount([FromRoute] int accountId)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var result = await _accountService.DeleteAccountAsync(accountId, userId);
 
-            try
+            if (result.IsSuccess)
             {
-                await _accountService.DeleteAccountAsync(accountId, userId);
-
                 return NoContent();
             }
-            catch (Exception ex)
+            else
             {
-                return BadRequest(ex.Message);
+                return result.HandleError();
             }
 
         }
@@ -59,16 +61,14 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var accounts = await _accountService.GetAccountsByUserIdAsync(userId);
+            var result = await _accountService.GetAccountsByUserIdAsync(userId);
 
-                return Ok(accounts);
-
-            }
-            catch (Exception ex)
+            if (result.IsSuccess)
             {
-                return BadRequest(ex.Message);
+                return Ok(result.Value);
+            } else
+            {
+                return result.HandleError();
             }
         }
 
@@ -77,16 +77,15 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
+            var result = await _accountService.GetAccountsWithoutCreditCardAsync(userId);
+
+            if (result.IsSuccess)
             {
-                var accounts = await _accountService.GetAccountsWithoutCreditCardAsync(userId);
-
-                return Ok(accounts);
-
+                return Ok(result.Value);
             }
-            catch (Exception ex)
+            else
             {
-                return BadRequest(ex.Message);
+                return result.HandleError();
             }
         }
 
@@ -100,16 +99,15 @@ namespace Finantech.Controllers
                 return BadRequest(ModelState);
             }
 
-            try
+            var result = await _accountService.UpdateAccountAsync(request, userId);
+
+            if (result.IsSuccess)
             {
-                var updatedAccount = await _accountService.UpdateAccountAsync(request, userId);
-
-                return Ok(updatedAccount);
-
+                return Ok(result.Value);
             }
-            catch (Exception ex)
+            else
             {
-                return BadRequest(ex.Message);
+                return result.HandleError();
             }
         }
 
@@ -119,16 +117,15 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
+            var result = await _accountService.GetBalanceStatementAsync(userId, null, null);
+
+            if (result.IsSuccess)
             {
-                var balance = await _accountService.GetBalanceStatementAsync(userId, null, null);
-
-                return Ok(balance);
-
+                return Ok(result.Value);
             }
-            catch (Exception ex)
+            else
             {
-                return BadRequest(ex.Message);
+                return result.HandleError();
             }
         }
 
@@ -137,16 +134,15 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
+            var result = await _accountService.GetAccountBalanceAsync(userId);
+
+            if (result.IsSuccess)
             {
-                var balance = await _accountService.GetAccountBalanceAsync(userId);
-
-                return Ok(balance);
-
+                return Ok(result.Value);
             }
-            catch (Exception ex)
+            else
             {
-                return BadRequest(ex.Message);
+                return result.HandleError();
             }
         }
     }

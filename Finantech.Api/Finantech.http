@@ -1,4 +1,4 @@
-@HostAddress = http://localhost:5037
+@HostAddress = http://localhost:8080
 @BearerToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjExIiwiZW1haWwiOiJ0ZXN0QHRlc3QuY29tIiwianRpIjoiYWMwMGE2ZjktZWM3Zi00MTFhLTk5MDYtMDI2ZjE2ZTdlYmY5IiwiZXhwIjoxNzQ1NTkyMDUwLCJpc3MiOiJmaW5hbnRlY2guY29tLmJyIiwiYXVkIjoiaHR0cDovL2ZpbmFudGVjaC5jb20uYnIifQ.A_gIWPGoA7cb4h0Kr5Qd-IYHTb3xmqpKsMYkF3LgZNM
 
 ###

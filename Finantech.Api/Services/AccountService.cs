@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Finantech.DTOs.Account;
 using Finantech.Enums;
+using Finantech.Errors;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.DTOs;
 using Finantech.Models.Entities;
@@ -20,7 +21,7 @@ namespace Finantech.Services
             _mapper = mapper;
         }
 
-        public async Task<InfoAccountResponse> CreateAccountAsync(CreateAccountRequest accountRequest, int userId)
+        public async Task<Result<InfoAccountResponse>> CreateAccountAsync(CreateAccountRequest accountRequest, int userId)
         {
             var createdAccount = _mapper.Map<Account>(accountRequest);
             createdAccount.UserId = userId;
@@ -29,7 +30,7 @@ namespace Finantech.Services
 
             if (account.Entity == null)
             {
-                throw new Exception("Um erro ocorreu ao criar a conta");
+                return new AppError("Um erro ocorreu ao criar a conta", ErrorTypeEnum.InternalError);
             }
 
             await _appDbContext.SaveChangesAsync();
@@ -39,13 +40,18 @@ namespace Finantech.Services
             return infoAccount;
         }
 
-        public async Task DeleteAccountAsync(int accountId, int userId)
+        public async Task<Result<bool>> DeleteAccountAsync(int accountId, int userId)
         {
-            var accountToDelete = await _appDbContext.Accounts.Include(a => a.CreditCard).Include(a => a.Transactions).Include(a => a.Transferences).Include(a => a.CreditCard).FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId) ?? throw new Exception("Conta não encontrada.");
+            var accountToDelete = await _appDbContext.Accounts.Include(a => a.CreditCard).Include(a => a.Transactions).Include(a => a.Transferences).Include(a => a.CreditCard).FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId) ?? null;
+
+            if (accountToDelete is null)
+            {
+                return new AppError("Conta não encontrada.", ErrorTypeEnum.Validation);
+            }
 
             if(accountToDelete.CreditCard is not null)
             {
-                throw new Exception("Conta não pode ser deletada pois possui cartão de crédito.");
+                return new AppError("Conta não pode ser deletada pois possui cartão de crédito.", ErrorTypeEnum.BusinessRule);
             }
 
             if (IsWithin24Hours(accountToDelete.CreatedAt, DateTime.UtcNow) && !accountToDelete.Transactions.Any() && !accountToDelete.Transferences.Any())
@@ -60,10 +66,10 @@ namespace Finantech.Services
                 await _appDbContext.SaveChangesAsync();
             }
 
-            return;
+            return true;
         }
 
-        public async Task<ICollection<InfoAccountResponse>> GetAccountsByUserIdAsync(int userId)
+        public async Task<Result<ICollection<InfoAccountResponse>>> GetAccountsByUserIdAsync(int userId)
         {
             var accounts = await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false).ToListAsync();
 
@@ -72,16 +78,16 @@ namespace Finantech.Services
             return accountsInfo;
         }
 
-        public async Task<ICollection<InfoAccountResponse>> GetAccountsWithoutCreditCardAsync(int userId)
+        public async Task<Result<ICollection<InfoAccountResponse>>> GetAccountsWithoutCreditCardAsync(int userId)
         {
-            var accounts = await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false && a.CreditCard == null).ToListAsync();
+            var accounts = await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false && a.CreditCard == null).ToListAsync() ?? [];
 
             var accountsInfo = _mapper.Map<List<InfoAccountResponse>>(accounts);
 
             return accountsInfo;
         }
 
-        public async Task<BalanceStatement> GetBalanceStatementAsync(int userId, DateTime? startDate, DateTime? endDate)
+        public async Task<Result<BalanceStatement>> GetBalanceStatementAsync(int userId, DateTime? startDate, DateTime? endDate)
         {
             DateTime currentUtc = DateTime.UtcNow;
             if (startDate == null) 
@@ -94,9 +100,6 @@ namespace Finantech.Services
                 endDate = new DateTime(currentUtc.Year, currentUtc.Month+1, 1, 0, 0, 0, DateTimeKind.Utc);
             }
 
-            Console.WriteLine(startDate);
-            Console.WriteLine(endDate);
-
             double balance = await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false).SumAsync(a => a.Balance);
 
             double expenses = await _appDbContext.Transactions.Where(t => t.Type == TransactionTypeEnum.EXPENSE &&  t.Account!.UserId == userId && t.PurchaseDate >= startDate && t.PurchaseDate <= endDate).SumAsync(e => e.Amount);
@@ -108,18 +111,18 @@ namespace Finantech.Services
             return new BalanceStatement(balance, incomes, expenses, invoices);
         }
 
-        public async Task<double> GetAccountBalanceAsync(int userId)
+        public async Task<Result<double>> GetAccountBalanceAsync(int userId)
         {
             return await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false).SumAsync(a => a.Balance);
         }
 
-        public async Task<InfoAccountResponse> UpdateAccountAsync(UpdateAccountRequest request, int userId)
+        public async Task<Result<InfoAccountResponse>> UpdateAccountAsync(UpdateAccountRequest request, int userId)
         {
-            var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == request.Id) ?? throw new Exception("Conta não encontrada.");
+            var account = await _appDbContext.Accounts.FirstAsync(a => a.Id == request.Id);
 
-            if (account.UserId != userId)
+            if (account is null || account.UserId != userId)
             {
-                throw new Exception("Não autorizado: Conta não pertence a usuário.");
+                return new AppError("Conta não encontrada.", ErrorTypeEnum.Validation);
             }
 
             if (request.Description != null)
