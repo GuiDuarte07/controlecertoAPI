@@ -3,11 +3,13 @@ using Finantech.DTOs.CreditCard;
 using Finantech.DTOs.CreditPurchase;
 using Finantech.DTOs.Invoice;
 using Finantech.Enums;
+using Finantech.Errors;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.DTOs;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Principal;
 
 namespace Finantech.Services
 {
@@ -21,15 +23,20 @@ namespace Finantech.Services
             _mapper = mapper;
         }
 
-        public async Task<InfoCreditCardResponse> CreateCreditCardAsync(CreateCreditCardRequest request, int userId)
+        public async Task<Result<InfoCreditCardResponse>> CreateCreditCardAsync(CreateCreditCardRequest request, int userId)
         {
             var creditCardToCreate = _mapper.Map<CreditCard>(request);
-            var account = await _appDbContext.Accounts.Include(a => a.CreditCard).FirstOrDefaultAsync(cd => cd.Id == creditCardToCreate.AccountId)
-                ?? throw new Exception("Conta não encontrada.");
+            var account = await _appDbContext.Accounts.Include(a => a.CreditCard).FirstAsync(cd => cd.Id == creditCardToCreate.AccountId);
 
-            if (account.UserId != userId) throw new Exception("Conta não pertence ao usuário.");
+            if (account is null || account.UserId != userId)
+            {
+                return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
+            }
 
-            if (account.CreditCard is not null) throw new Exception("Conta já possui um cartão.");
+            if (account.CreditCard is not null)
+            {
+                return new AppError("Conta já possui um cartão.", ErrorTypeEnum.Validation);
+            }
 
             var createdCreditCard = await _appDbContext.CreditCards.AddAsync(creditCardToCreate);
             await _appDbContext.SaveChangesAsync();
@@ -37,14 +44,17 @@ namespace Finantech.Services
             return _mapper.Map<InfoCreditCardResponse>(createdCreditCard.Entity);
         }
 
-        public async Task<InfoCreditCardResponse> UpdateCreditCardAsync(UpdateCreditCardRequest request, int userId)
+        public async Task<Result<InfoCreditCardResponse>> UpdateCreditCardAsync(UpdateCreditCardRequest request, int userId)
         {
             var creditCardToUpdate = await _appDbContext
                 .CreditCards.Include(cd => cd.Account)
-                .FirstOrDefaultAsync(cd => cd.Id == request.Id)
-                ?? throw new Exception("Conta não encontrada.");
+                .FirstAsync(cd => cd.Id == request.Id);
 
-            if (creditCardToUpdate.Account.UserId != userId) throw new Exception("Conta não pertence ao usuário.");
+            if (creditCardToUpdate is null || creditCardToUpdate.Account.UserId != userId)
+            {
+                return new AppError("Cartão de crédito não encontrada.", ErrorTypeEnum.NotFound);
+            }
+
 
             creditCardToUpdate.UpdatedAt = DateTime.UtcNow;
 
@@ -74,22 +84,31 @@ namespace Finantech.Services
         }
            
 
-        public async Task<InfoCreditPurchaseResponse> CreateCreditPurchaseAsync(CreateCreditPurchaseRequest request, int userId)
+        public async Task<Result<InfoCreditPurchaseResponse>> CreateCreditPurchaseAsync(CreateCreditPurchaseRequest request, int userId)
         {
             var creditPurchaseToCreate = _mapper.Map<CreditPurchase>(request);
 
-            var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstOrDefaultAsync(cc => cc.Id == request.CreditCardId && cc.Account.UserId == userId)
-                ?? throw new Exception("Cartão de Crédito não localizado ou não pertence ao usuário.");
+            var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstAsync(cc => cc.Id == request.CreditCardId && cc.Account.UserId == userId);
 
-            if(creditCard.TotalLimit - creditCard.UsedLimit < request.TotalAmount)
-                throw new Exception("Limite inferior ao valor da compra.");
+            if (creditCard is null)
+            {
+                return new AppError("Cartão de crédito não encontrada.", ErrorTypeEnum.NotFound);
+            }
 
-            var category = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId && c.UserId == userId)
-                ?? throw new Exception("Categoria informada não encontrada");
+            if (creditCard.TotalLimit - creditCard.UsedLimit < request.TotalAmount)
+                return new AppError("Limite inferior ao valor da compra.", ErrorTypeEnum.Validation);
+
+            var category = await _appDbContext.Categories.FirstAsync(c => c.Id == request.CategoryId && c.UserId == userId)
+
+            if (category is null)
+            {
+                return new AppError("Categoria informada não encontrada.", ErrorTypeEnum.NotFound);
+            }
 
             if (category.BillType != BillTypeEnum.EXPENSE)
-                throw new Exception("Essa categoria não é de gastos.");
-
+            {
+                return new AppError("Essa categoria não é de gastos.", ErrorTypeEnum.Validation);
+            }
 
             /*
              * ===== VALIDAR O FUNCIONAMENTO PARA REGISTRO DE COMPRAS ANTIGAS ======
@@ -202,12 +221,17 @@ namespace Finantech.Services
             }
         }
 
-        public async Task<IEnumerable<InfoInvoiceResponse>> GetInvoicesByDateAsync(int userId, DateTime startDate, DateTime endDate, long? creditCardId)
+        public async Task<Result<IEnumerable<InfoInvoiceResponse>>> GetInvoicesByDateAsync(int userId, DateTime startDate, DateTime endDate, long? creditCardId)
         {
             if (creditCardId.HasValue)
             {
-                var _ = await _appDbContext.CreditCards.FirstOrDefaultAsync(cc => cc.Id == creditCardId && cc.Account.UserId == userId) ??
-                    throw new Exception("Conta não encontrada.");
+                var creditCard = await _appDbContext.CreditCards.FirstAsync(cc => cc.Id == creditCardId && cc.Account.UserId == userId);
+
+                if (creditCard is null)
+                {
+                    return new AppError("Cartão de crédito não encontrado.", ErrorTypeEnum.NotFound);
+                }
+
             }
 
             var invoices = await _appDbContext.Invoices.Where(i =>
@@ -219,10 +243,10 @@ namespace Finantech.Services
             .OrderByDescending(a => a.DueDate)
             .ToListAsync();            
 
-            return _mapper.Map<ICollection<InfoInvoiceResponse>>(invoices);
+            return _mapper.Map<List<InfoInvoiceResponse>>(invoices);
         }
 
-        public async Task<InvoicePageResponse> GetInvoicesByIdAsync(long invoiceId, int userId)
+        public async Task<Result<InvoicePageResponse>> GetInvoicesByIdAsync(long invoiceId, int userId)
         {
             var invoice = await _appDbContext.Invoices
                 .Include(i => i.CreditCard)
@@ -232,8 +256,13 @@ namespace Finantech.Services
                     .ThenInclude(t => t.Category)
                 .Include(i => i.InvoicePayments)
                     .ThenInclude(ip => ip.Account)
-                .FirstOrDefaultAsync(i => i.Id == invoiceId && i.CreditCard.Account.UserId == userId) ??
-                    throw new Exception("Fatura não encontrada.");
+                .FirstAsync(i => i.Id == invoiceId && i.CreditCard.Account.UserId == userId);
+
+            if(invoice is null)
+            {
+                return new AppError("Fatura não encontrada.", ErrorTypeEnum.NotFound);
+            }
+                    
 
             DateTime nextInvoiceMonth = invoice.ClosingDate.AddMonths(1);
             DateTime prevInvoiceMonth = invoice.ClosingDate.AddMonths(-1);
@@ -245,25 +274,41 @@ namespace Finantech.Services
             return new InvoicePageResponse(_mapper.Map<InfoInvoiceResponse>(invoice), nextInvoice?.Id, prevInvoice?.Id);
         }
 
-        public async Task<InfoInvoicePaymentResponse> PayInvoiceAsync(CreteInvoicePaymentRequest invoicePaymentRequest, int userId)
+        public async Task<Result<InfoInvoicePaymentResponse>> PayInvoiceAsync(CreteInvoicePaymentRequest invoicePaymentRequest, int userId)
         {
             var invoicePayment = _mapper.Map<InvoicePayment>(invoicePaymentRequest);
 
             var invoice = await _appDbContext.Invoices.FirstAsync(
-                i => i.Id == invoicePayment.InvoiceId && 
+                i => i.Id == invoicePayment.InvoiceId &&
                 i.CreditCard.Account.UserId == userId
-            ) ?? throw new Exception("Fatura não encontrada.");
+            );
 
-            Account? account = null;
-            account = await _appDbContext.Accounts.FirstAsync(a => a.Id == invoicePayment.AccountId && a.UserId == userId) ??
-                throw new Exception("Conta não encontrada.");
+            if (invoice is null)
+            {
+                return new AppError("Fatura não encontrada.", ErrorTypeEnum.NotFound);
+            }
 
-            if (invoice.IsPaid) throw new Exception("Essa fatura já está paga.");
+            var account = await _appDbContext.Accounts.FirstAsync(a => a.Id == invoicePayment.AccountId && a.UserId == userId);
+
+            if (account is null)
+            {
+                return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
+            }
+
+            if (invoice.IsPaid)
+            {
+                return new AppError("Essa fatura já está paga.", ErrorTypeEnum.Validation);
+            }
 
             var amountRemainder = invoice.TotalAmount - invoice.TotalPaid;
 
-            if (invoicePayment.AmountPaid > amountRemainder) 
-                throw new Exception($"Quantidade a ser paga (R$ {invoicePayment.AmountPaid}) é maior que o valor da fatura restante (R$ {amountRemainder}).");
+            if (invoicePayment.AmountPaid > amountRemainder)
+            {
+                return new AppError(
+                    $"Quantidade a ser paga (R$ {invoicePayment.AmountPaid}) é maior que o valor da fatura restante (R$ {amountRemainder}).", 
+                    ErrorTypeEnum.Validation
+                );
+            }
 
             invoice.TotalPaid += invoicePayment.AmountPaid;
 
@@ -298,13 +343,22 @@ namespace Finantech.Services
 
             
         }
-        public async Task DeleteCreditPurchaseAsync(long purchaseId, int userId)
+        public async Task<Result<bool>> DeleteCreditPurchaseAsync(long purchaseId, int userId)
         {
-            var creditPurchaseToDelete = await _appDbContext.CreditPurchases.Include(cp => cp.Transactions).FirstAsync(cp => cp.Id == purchaseId && cp.CreditCard.Account.UserId == userId) ?? throw new Exception("Compra no cartão não localizado ou não pertence ao usuário.");
+            var creditPurchaseToDelete = await _appDbContext.CreditPurchases.Include(cp => cp.Transactions).FirstAsync(cp => cp.Id == purchaseId && cp.CreditCard.Account.UserId == userId);
 
-            var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstOrDefaultAsync(cc => cc.Id == creditPurchaseToDelete.CreditCardId && cc.Account.UserId == userId)
-                ?? throw new Exception("Cartão de Crédito não localizado ou não pertence ao usuário.");
-            //corrgir isso aqui
+            if (creditPurchaseToDelete is null)
+            {
+                return new AppError("Compra cartão não encontrada.", ErrorTypeEnum.NotFound);
+            }
+
+            var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstAsync(cc => cc.Id == creditPurchaseToDelete.CreditCardId && cc.Account.UserId == userId);
+
+            if (creditCard is null)
+            {
+                return new AppError("Cartão de Crédito não encontrado.", ErrorTypeEnum.NotFound);
+            }
+
             var creditExpenses = creditPurchaseToDelete.Transactions;
 
             using (var transaction = _appDbContext.Database.BeginTransaction())
@@ -315,10 +369,17 @@ namespace Finantech.Services
                     {
                         var invoice = await _appDbContext.Invoices.FirstAsync(cp => cp.Id == expense.InvoiceId);
 
-                        if (invoice.IsPaid || (invoice.TotalAmount - invoice.TotalPaid) <= creditPurchaseToDelete.TotalAmount)
+                        if (invoice.IsPaid)
                         {
-                            throw new Exception("Não é mais possível excluir esse registro pois a fatura já foi paga.");
-                        }                        
+                            return new AppError("Não é mais possível excluir esse registro pois a fatura já foi paga.", ErrorTypeEnum.BusinessRule);
+                        }
+                        
+                        if((invoice.TotalAmount - invoice.TotalPaid) <= creditPurchaseToDelete.TotalAmount)
+                        {
+                            return new AppError(
+                                $"Essa fatura tem um valor de ${(invoice.TotalAmount - invoice.TotalPaid):F2} a ser pago ainda e essa transação a ser deletada tem um valor de ${creditPurchaseToDelete.TotalAmount}, não será possível deletar esse registro pois ao fazer isso o valor total da fatura vai ser maior que o total que está pago. Para excluir esse registro será necessário excluir o pagamento dessa fatura.",
+                                ErrorTypeEnum.BusinessRule);
+                        }
 
                         invoice.TotalAmount -= expense.Amount;
 
@@ -339,7 +400,7 @@ namespace Finantech.Services
 
                     transaction.Commit();
 
-                    return;
+                    return true;
                 }
                 catch (Exception)
                 {
@@ -349,16 +410,21 @@ namespace Finantech.Services
             }
         }
 
-        public async Task<InfoTransactionResponse[]> GetCreditExpensesFromInvoice(int invoiceId, int userId)
+        public async Task<Result<InfoTransactionResponse[]>> GetCreditExpensesFromInvoice(int invoiceId, int userId)
         {
             var creditExpenses = await _appDbContext.Transactions.Where(ce =>ce.Type == TransactionTypeEnum.CREDITEXPENSE && ce.InvoiceId == invoiceId && ce.Account.UserId == userId).ToListAsync();
 
             return _mapper.Map<InfoTransactionResponse[]>(creditExpenses);
         }
 
-        public async Task<InfoCreditPurchaseResponse> UpdateCreditPurchaseAsync(UpdateCreditPurchaseRequest request, int userId)
+        public async Task<Result<InfoCreditPurchaseResponse>> UpdateCreditPurchaseAsync(UpdateCreditPurchaseRequest request, int userId)
         {
-            var creditPurchaseToUpdate = await _appDbContext.CreditPurchases.FirstOrDefaultAsync(cp => cp.Id == request.Id) ?? throw new Exception("Compra não localizada");
+            var creditPurchaseToUpdate = await _appDbContext.CreditPurchases.FirstAsync(cp => cp.Id == request.Id);
+
+            if (creditPurchaseToUpdate is null)
+            {
+                return new AppError("Compra não encontrada.", ErrorTypeEnum.Validation);
+            }
 
             var creditPurchaseToCreate = new CreateCreditPurchaseRequest();
 
@@ -410,20 +476,28 @@ namespace Finantech.Services
             {
                 creditPurchaseToCreate.TotalAmount = (long)creditPurchaseToUpdate.TotalAmount;
             }
+
             creditPurchaseToCreate.CategoryId = (long)request.CategoryId;
 
 
 
             await this.DeleteCreditPurchaseAsync(creditPurchaseToUpdate.Id, userId);
+
             var result = await this.CreateCreditPurchaseAsync(creditPurchaseToCreate, userId);
 
+            if(result.IsError)
+            {
+                // IMPLEMENTAR UM SISTEMA DE UNDO PARA O CASO DE DELETAR TER SIDO FEITO MAS HOUVER ERRO NA CRIAÇÃO.
+                return new AppError($"Houve um erro na hora de atualizar a transação e não foi possível recupera-la, dessa forma, ela foi excluida, mensagem de erro: {result.Error.ErrorMessage}", result.Error.ErrorType);
+
+            }
+
+
             await _appDbContext.SaveChangesAsync();
-
-
-            return result;
+            return result.Value;
         }
 
-        public async Task<InfoCreditCardResponse[]> GetCreditCardInfo(int userId)
+        public async Task<Result<InfoCreditCardResponse[]>> GetCreditCardInfo(int userId)
         {
             var creditCards = await _appDbContext.CreditCards.Include(cc => cc.Account).Where(cc => cc.Account.UserId == userId).ToListAsync();
 

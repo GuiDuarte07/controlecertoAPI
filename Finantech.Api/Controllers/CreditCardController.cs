@@ -2,6 +2,8 @@
 using Finantech.DTOs.CreditCard;
 using Finantech.DTOs.CreditPurchase;
 using Finantech.DTOs.Invoice;
+using Finantech.Errors;
+using Finantech.Extensions;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -24,16 +26,14 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var createdCreditCard = await _creditCardService.CreateCreditCardAsync(request, userId);
+            var result = await _creditCardService.CreateCreditCardAsync(request, userId);
 
-                return Created("", createdCreditCard);
-            }
-            catch (Exception ex)
+            if (result.IsSuccess)
             {
-                return BadRequest(ex.Message);
+                return Created("", result.Value);
             }
+
+            return result.HandleReturnResult();
         }
 
         [HttpPatch("UpdateCreditCard")]
@@ -41,16 +41,9 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var updatedCreditCard = await _creditCardService.UpdateCreditCardAsync(request, userId);
+            var result = await _creditCardService.UpdateCreditCardAsync(request, userId);
 
-                return Created("", updatedCreditCard);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return result.HandleReturnResult();
         }
 
         [HttpPost("CreateCreditPurchase")]
@@ -58,16 +51,14 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var updatedCreditCard = await _creditCardService.CreateCreditPurchaseAsync(request, userId);
+            var result = await _creditCardService.CreateCreditPurchaseAsync(request, userId);
 
-                return Created("", updatedCreditCard);
-            }
-            catch (Exception ex)
+            if (result.IsSuccess)
             {
-                return BadRequest(ex.Message);
+                return Created("", result.Value);
             }
+
+            return result.HandleReturnResult();
         }
 
         [HttpPatch("UpdateCreditPurchase")]
@@ -75,16 +66,9 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var updatedCreditCard = await _creditCardService.UpdateCreditPurchaseAsync(request, userId);
+            var result = await _creditCardService.UpdateCreditPurchaseAsync(request, userId);
 
-                return Created("", updatedCreditCard);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return result.HandleReturnResult();
         }
         
         [HttpGet("GetInvoicesByDate")]
@@ -100,16 +84,9 @@ namespace Finantech.Controllers
             DateTime startDateSet = startDate ?? DateTime.MinValue;
             DateTime endDateSet = endDate ?? DateTime.MaxValue;
 
-            try
-            {
-                var invoices = await _creditCardService.GetInvoicesByDateAsync(userId, startDateSet, endDateSet, creditCardId);
+            var result = await _creditCardService.GetInvoicesByDateAsync(userId, startDateSet, endDateSet, creditCardId);
 
-                return Ok(invoices);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return result.HandleReturnResult();
         }
 
         
@@ -121,32 +98,19 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var invoice = await _creditCardService.GetInvoicesByIdAsync(invoiceId, userId);
+            var result = await _creditCardService.GetInvoicesByIdAsync(invoiceId, userId);
 
-                return Ok(invoice);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return result.HandleReturnResult();
         }
 
         [HttpGet("GetCreditExpensesFromInvoice/{invoiceId}")]
         public async Task<IActionResult> GetCreditExpensesFromInvoice(int invoiceId)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
-            try
-            {
-                var creditExpenses = await _creditCardService.GetCreditExpensesFromInvoice(invoiceId, userId);
 
-                return Ok(creditExpenses);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _creditCardService.GetCreditExpensesFromInvoice(invoiceId, userId);
+
+            return result.HandleReturnResult();
         }
 
         [HttpPost("PayInvoice")]
@@ -154,16 +118,15 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                var invoicePayment = await _creditCardService.PayInvoiceAsync(request, userId);
+            var result = await _creditCardService.PayInvoiceAsync(request, userId);
 
-                return Created("", invoicePayment);
-            }
-            catch (Exception ex)
+            if (result.IsSuccess)
             {
-                return BadRequest(ex.Message);
+                return Created("", result.Value);
             }
+
+            return result.HandleReturnResult();
+
         }
 
         [HttpDelete("DeleteCreditPurchase/{creditPurchaseId}")]
@@ -171,32 +134,27 @@ namespace Finantech.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            try
-            {
-                await _creditCardService.DeleteCreditPurchaseAsync(creditPurchaseId, userId);
+           
+            var result = await _creditCardService.DeleteCreditPurchaseAsync(creditPurchaseId, userId);
 
+            if (result.IsSuccess)
+            {
                 return NoContent();
             }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+
+            return result.HandleReturnResult();
+
         }
 
         [HttpGet("GetCreditCardInfo")]
         public async Task<IActionResult> GetCreditCardInfo()
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
-            try
-            {
-                var creditCards = await _creditCardService.GetCreditCardInfo(userId);
 
-                return Ok(creditCards);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _creditCardService.GetCreditCardInfo(userId);
+
+            return result.HandleReturnResult();
+
         }
     }
 }
