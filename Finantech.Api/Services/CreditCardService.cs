@@ -98,7 +98,7 @@ namespace Finantech.Services
             if (creditCard.TotalLimit - creditCard.UsedLimit < request.TotalAmount)
                 return new AppError("Limite inferior ao valor da compra.", ErrorTypeEnum.Validation);
 
-            var category = await _appDbContext.Categories.FirstAsync(c => c.Id == request.CategoryId && c.UserId == userId)
+            var category = await _appDbContext.Categories.FirstAsync(c => c.Id == request.CategoryId && c.UserId == userId);
 
             if (category is null)
             {
