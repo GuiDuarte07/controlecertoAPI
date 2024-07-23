@@ -4,13 +4,13 @@ using Finantech.Profiles;
 using Finantech.Services;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 
 /*
@@ -127,6 +127,9 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // DbContext
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 builder.Services.AddDbContext<AppDbContext>();
+
+//RabbitMQ
+builder.Services.AddRabbitMQService(configuration);
 
 var app = builder.Build();
 

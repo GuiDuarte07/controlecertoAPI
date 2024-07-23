@@ -1,6 +1,8 @@
-﻿using Finantech.DTOs.User;
+﻿using Finantech.DTOs.Events;
+using Finantech.DTOs.User;
 using Finantech.Extensions;
 using Finantech.Services.Interfaces;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,9 +13,11 @@ namespace Finantech.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        public UserController(IUserService userService)
+        private readonly IBus _bus;
+        public UserController(IUserService userService,IBus bus)
         {
             _userService = userService;
+            _bus = bus;
         }
 
         [AllowAnonymous]
@@ -29,6 +33,15 @@ namespace Finantech.Controllers
 
             return result.HandleReturnResult();
 
+        }
+
+        [AllowAnonymous]
+        [HttpGet("messege/{message}")]
+        public IActionResult NewConsoleMessage(string message)
+        {
+            _bus.Publish(new ConsoleMessageEvent(message));
+
+            return Ok();
         }
     }
 }
