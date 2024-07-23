@@ -6,6 +6,7 @@ using Finantech.Models.AppDbContext;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace Finantech.Services
 {
@@ -97,21 +98,5 @@ namespace Finantech.Services
 
             return _mapper.Map<InfoCategoryResponse>(updatedCategory.Entity);
         }
-
-        public async Task SetAllDefaultCatogoriesAsync(int userId)
-        {
-            try
-            {
-                var categoriesFromDefaults = await _appDbContext.CategoriesDefault.Select(df => new Category(df, userId)).ToListAsync();
-
-                await _appDbContext.Categories.AddRangeAsync(categoriesFromDefaults);
-                await _appDbContext.SaveChangesAsync();
-
-            } catch (Exception ex)
-            {
-                throw;
-            }
-        }
-
     }
 }

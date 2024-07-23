@@ -9,6 +9,9 @@ services:
     ports:
         - "8080:8080"
         - "8081:8081"
+    depends_on:
+      - database.pgs
+      - rabbitmq
   database.pgs:
     image: postgres:latest
     container_name: database.pgs
@@ -17,6 +20,21 @@ services:
         - POSTGRES_USER=admin
         - POSTGRES_PASSWORD=12345
     volumes:
-      - ./.containers/Finantech-db:/var/lib/postgresql/data
+      - ./postgres-data:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - "5432:5432"
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=12345
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+networks:
+  default:
+    driver: bridge
+
+

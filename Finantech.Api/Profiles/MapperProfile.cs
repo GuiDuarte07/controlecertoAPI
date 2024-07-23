@@ -16,6 +16,10 @@ namespace Finantech.Profiles
     {
         public MapperProfile() 
         {
+            CreateMap<User, InfoUserResponse>();
+
+            CreateMap<Account, InfoAccountResponse>();
+
             CreateMap<CreateAccountRequest, Account>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())

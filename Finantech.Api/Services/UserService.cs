@@ -46,9 +46,36 @@ namespace Finantech.Services
 
                     await _appDbContext.SaveChangesAsync();
 
-                    await _categoryService.SetAllDefaultCatogoriesAsync(createdUser.Entity.Id);
+                    int userId = createdUser.Entity.Id;
 
-                    transaction.Commit();
+                    var initialCategories = new List<Category>([
+                        new Category("Casa", "home", "#00bfff", BillTypeEnum.EXPENSE, userId),
+                        new Category("Educação", "import_contacts", "#ba55d3", BillTypeEnum.EXPENSE, userId),
+                        new Category("Eletrônicos", "laptop_chromebook", "#ffef00", BillTypeEnum.EXPENSE, userId),
+                        new Category("Lazer", "beach_access", "#ff9f00", BillTypeEnum.EXPENSE, userId),
+                        new Category("Outros", "more_horiz", "#808080", BillTypeEnum.EXPENSE, userId),
+                        new Category("Presentes", "featured_seasonal_and_gifts", "#9dc209", BillTypeEnum.EXPENSE, userId),
+                        new Category("Restaurante", "restaurant", "#ae0c00", BillTypeEnum.EXPENSE, userId),
+                        new Category("Saúde", "syringe", "#98fb98", BillTypeEnum.EXPENSE, userId),
+                        new Category("Serviços", "work", "#228b22", BillTypeEnum.EXPENSE, userId),
+                        new Category("Supermercado", "shopping_cart", "#e32636", BillTypeEnum.EXPENSE, userId),
+                        new Category("Transporte", "local_taxi", "#00ced1", BillTypeEnum.EXPENSE, userId),
+                        new Category("Vestuário", "checkroom", "#008b8b", BillTypeEnum.EXPENSE, userId),
+                        new Category("Viagem", "travel", "#da70d6", BillTypeEnum.EXPENSE, userId),
+                        new Category("Investimento", "trending_up", "#00cccc",BillTypeEnum.INCOME, userId),
+                        new Category("Outros", "more_horiz", "#808080",BillTypeEnum.INCOME, userId),
+                        new Category("Presente", "featured_seasonal_and_gifts", "#9dc209",BillTypeEnum.INCOME, userId),
+                        new Category("Prêmio", "trophy", "#ffe135",BillTypeEnum.INCOME, userId),
+                        new Category("Salário", "payments", "#8b0000",BillTypeEnum.INCOME, userId)
+                    ]);
+
+                    await _appDbContext.Categories.AddRangeAsync(initialCategories);
+                    await _appDbContext.SaveChangesAsync();
+
+                    Console.WriteLine($"Categorias iniciais incluidas no usuário id: {userId}");
+
+
+                    await transaction.CommitAsync();
 
                     var userInfo = _mapper.Map<InfoUserResponse>(createdUser.Entity);
 

@@ -1,4 +1,5 @@
 ﻿using Finantech.Enums;
+using System.Reflection.Metadata;
 
 namespace Finantech.Models.Entities
 {
@@ -18,13 +19,15 @@ namespace Finantech.Models.Entities
 
         public Category() { }
 
-        public Category(CategoryDefault categoryDefault, int userId)
+        public Category(string name, string icon, string color, BillTypeEnum billType, int userId)
         {
-            Name = categoryDefault.Name;
-            Icon = categoryDefault.Icon;
-            Color = categoryDefault.Color;
-            BillType = categoryDefault.BillType;
+            Name = name;
+            Icon = icon;
+            Color = color;
+            BillType = billType;
             UserId = userId;
+            CreatedAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 

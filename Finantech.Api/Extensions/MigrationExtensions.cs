@@ -7,11 +7,11 @@ namespace Finantech.Extensions
     {
         public static void ApplyMigrations(this IApplicationBuilder app)
         {
-            using IServiceScope scope = app.ApplicationServices.CreateScope();
+            /*using IServiceScope scope = app.ApplicationServices.CreateScope();
 
             using AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            dbContext.Database.Migrate();
+            dbContext.Database.Migrate();*/
         }
     }
 }
