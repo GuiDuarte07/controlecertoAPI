@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using Finantech.DTOs.Events;
 using Finantech.DTOs.User;
 using Finantech.Enums;
 using Finantech.Errors;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 namespace Finantech.Services
@@ -14,14 +16,13 @@ namespace Finantech.Services
         private readonly AppDbContext _appDbContext;
         private readonly IMapper _mapper;
         private readonly IHashService _hashService;
-        private readonly ICategoryService _categoryService;
-
-        public UserService(AppDbContext appDbContext, IMapper mapper, IHashService hashService, ICategoryService categoryService)
+        private readonly IBus _bus;
+        public UserService(AppDbContext appDbContext, IMapper mapper, IHashService hashService, IBus bus)
         {
             _appDbContext = appDbContext;
             _mapper = mapper;
             _hashService = hashService;
-            _categoryService = categoryService;
+            _bus = bus;
         }
 
         public async Task<Result<InfoUserResponse>> CreateUserAync(CreateUserRequest userReq)
@@ -37,7 +38,6 @@ namespace Finantech.Services
             {
                 try
                 {
-
                     var passHash = _hashService.HashPassword(userReq.Password);
 
                     var user = new User { Email = userReq.Email, Name = userReq.Name, PasswordHash = passHash };
@@ -74,10 +74,11 @@ namespace Finantech.Services
 
                     Console.WriteLine($"Categorias iniciais incluidas no usuário id: {userId}");
 
-
                     await transaction.CommitAsync();
 
                     var userInfo = _mapper.Map<InfoUserResponse>(createdUser.Entity);
+
+                    await _bus.Publish(new ConfirmEmailEvent(userInfo));
 
                     return userInfo;
 

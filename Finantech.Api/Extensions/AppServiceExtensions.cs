@@ -12,6 +12,7 @@ namespace Finantech.Extensions
             {
                 busConfigurator.AddConsumer<ConsoleMessageEventConsumer>();
                 busConfigurator.AddConsumer<SendEmailEventConsumer>();
+                busConfigurator.AddConsumer<SendConfirmEmailEventConsumer>();
 
                 busConfigurator.UsingRabbitMq((ctx, cfg) =>
                 {

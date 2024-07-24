@@ -31,7 +31,7 @@ namespace Finantech.Services
             await _cache.RemoveAsync(key);
         }
 
-        private string GenerateRefreshTokenKey(string refreshToken) => $"refreshToken:{refreshToken}";
+        private string GenerateRefreshTokenKey(string refreshToken) => $"RefreshToken:{refreshToken}";
 
         public async Task SetRefreshTokenAsync(string userId, string refreshToken)
         {
@@ -61,7 +61,7 @@ namespace Finantech.Services
             }            
         }
 
-        private string GenerateConfirmEmailKey(string confirmEmailToken) => $"confirmEmail:{confirmEmailToken}";
+        private string GenerateConfirmEmailKey(string confirmEmailToken) => $"ConfirmEmail:{confirmEmailToken}";
 
         public async Task SetConfirmEmailTokenAsync(string email, string confirmEmailToken)
         {
@@ -72,7 +72,11 @@ namespace Finantech.Services
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
             };
 
-            await _cache.SetStringAsync(confirmEmailToken, email, options);
+            await _cache.SetStringAsync(confirmEmailTokenKey, email, options);
+
+            var teste = GetConfirmEmailTokenAsync(confirmEmailToken);
+            Console.WriteLine(teste);
+
         }
         public async Task<string?> GetConfirmEmailTokenAsync(string confirmEmailToken)
         {

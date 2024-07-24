@@ -133,6 +133,9 @@ builder.Services.AddDbContext<AppDbContext>();
 //RabbitMQ
 builder.Services.AddRabbitMQService(configuration);
 
+// Redis
+builder.Services.AddRedisCache(configuration);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
