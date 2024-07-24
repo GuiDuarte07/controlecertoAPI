@@ -1,5 +1,6 @@
 ﻿using Finantech.Bus;
 using MassTransit;
+using Microsoft.Extensions.Configuration;
 
 namespace Finantech.Extensions
 {
@@ -24,6 +25,15 @@ namespace Finantech.Extensions
                         cfg.ConfigureEndpoints(ctx);
                     });
                 });
+            });
+        }
+
+        public static void AddRedisCache(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = configuration.GetSection("Redis:Configuration").Value;
+                options.InstanceName = configuration.GetSection("Redis:InstanceName").Value;
             });
         }
     }

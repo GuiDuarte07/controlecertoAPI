@@ -7,7 +7,7 @@
 postgres-data
 
 #app settings
-appsettings
+appsettings*
 
 # User-specific files
 *.rsuser
