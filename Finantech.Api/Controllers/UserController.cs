@@ -43,5 +43,14 @@ namespace Finantech.Controllers
 
             return Ok();
         }
+
+        [AllowAnonymous]
+        [HttpPost("sendEmail")]
+        public IActionResult NewConsoleMessage([FromBody] EmailEvent email)
+        {
+            _bus.Publish(new EmailEvent(email.Emails, email.Subject, email.Body) );
+
+            return Ok();
+        }
     }
 }

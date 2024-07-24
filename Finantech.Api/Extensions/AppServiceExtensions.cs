@@ -10,6 +10,7 @@ namespace Finantech.Extensions
             services.AddMassTransit(busConfigurator =>
             {
                 busConfigurator.AddConsumer<ConsoleMessageEventConsumer>();
+                busConfigurator.AddConsumer<SendEmailEventConsumer>();
 
                 busConfigurator.UsingRabbitMq((ctx, cfg) =>
                 {

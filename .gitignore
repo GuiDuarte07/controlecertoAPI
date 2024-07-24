@@ -6,6 +6,9 @@
 #postgree db volume
 postgres-data
 
+#app settings
+appsettings
+
 # User-specific files
 *.rsuser
 *.suo
