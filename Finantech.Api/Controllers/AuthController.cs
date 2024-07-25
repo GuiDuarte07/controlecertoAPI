@@ -1,4 +1,5 @@
-﻿using Finantech.DTOs.Auth;
+﻿using Finantech.Decorators;
+using Finantech.DTOs.Auth;
 using Finantech.Extensions;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
@@ -36,6 +37,15 @@ namespace Finantech.Controllers
             var authResult = await _authService.GenerateAccessTokenAsync(refreshToken);
 
             return authResult.HandleReturnResult();
+        }
+
+        [ExtractTokenInfo]
+        [HttpGet("Logout/{refreshToken}")]
+        public async Task<IActionResult> Logout(string refreshToken)
+        {
+            await _authService.Logout(refreshToken);
+
+            return Ok();
         }
     }
 }

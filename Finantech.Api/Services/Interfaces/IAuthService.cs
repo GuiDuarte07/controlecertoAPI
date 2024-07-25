@@ -7,5 +7,6 @@ namespace Finantech.Services.Interfaces
     {
         public Task<Result<AuthResponse>> AuthenticateAsync(string email, string password);
         public Task<Result<string>> GenerateAccessTokenAsync(string refreshToken);
+        public Task Logout(string refreshToken);
     }
 }

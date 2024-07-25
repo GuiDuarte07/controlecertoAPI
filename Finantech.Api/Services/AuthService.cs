@@ -88,6 +88,11 @@ namespace Finantech.Services
             return accessToken;
         }
 
+        public async Task Logout(string refreshToken)
+        {
+            await _cacheService.RemoveRefreshTokenAsync(refreshToken);
+        }
+
         private string GenerateToken(User user)
         {
             var claims = new[]
