@@ -1,12 +1,11 @@
 ﻿using Finantech.DTOs.Auth;
-using Finantech.DTOs.User;
-using Finantech.Models.Entities;
+using Finantech.Errors;
 
 namespace Finantech.Services.Interfaces
 {
     public interface IAuthService
     {
-        public AuthResponse? Authenticate(string email, string password);
-        public string GenerateToken(User user);
+        public Task<Result<AuthResponse>> AuthenticateAsync(string email, string password);
+        public Task<Result<string>> GenerateAccessTokenAsync(string refreshToken);
     }
 }

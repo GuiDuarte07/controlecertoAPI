@@ -1,4 +1,5 @@
 ﻿using Finantech.DTOs.Auth;
+using Finantech.Extensions;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -20,19 +21,21 @@ namespace Finantech.Controllers
 
         [AllowAnonymous]
         [HttpPost("Authenticate")]
-        public ActionResult Authenticate([FromBody] AuthRequest data)
+        public async Task<IActionResult> AuthenticateAsync([FromBody] AuthRequest data)
         {
 
-            var authInfo = _authService.Authenticate(data.Email, data.Password);
+            var authInfo = await _authService.AuthenticateAsync(data.Email, data.Password);
 
-            if (authInfo == null)
-            {
-                return Unauthorized("Credenciais inválidas.");
-            }
+            return authInfo.HandleReturnResult();
+        }
 
-            return Ok(authInfo);
+        [AllowAnonymous]
+        [HttpGet("GenerateAccessToken{refreshToken}")]
+        public async Task<IActionResult> GenerateAccessToken(string refreshToken)
+        {
+            var authResult = await _authService.GenerateAccessTokenAsync(refreshToken);
 
-            
+            return authResult.HandleReturnResult();
         }
     }
 }
