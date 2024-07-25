@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using System.Security.Cryptography;
 
 namespace Finantech.Utils
 {
@@ -10,7 +11,7 @@ namespace Finantech.Utils
             using (var rng = RandomNumberGenerator.Create())
             {
                 rng.GetBytes(randomNumber);
-                return Convert.ToBase64String(randomNumber);
+                return WebEncoders.Base64UrlEncode(randomNumber);
             }
         }
     }

@@ -6,6 +6,7 @@ using Finantech.Errors;
 using Finantech.Models.AppDbContext;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
+using Finantech.Utils;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,12 +18,14 @@ namespace Finantech.Services
         private readonly IMapper _mapper;
         private readonly IHashService _hashService;
         private readonly IBus _bus;
-        public UserService(AppDbContext appDbContext, IMapper mapper, IHashService hashService, IBus bus)
+        private readonly ICacheService _cacheService;
+        public UserService(AppDbContext appDbContext, IMapper mapper, IHashService hashService, IBus bus, ICacheService cacheService)
         {
             _appDbContext = appDbContext;
             _mapper = mapper;
             _hashService = hashService;
             _bus = bus;
+            _cacheService = cacheService;
         }
 
         public async Task<Result<InfoUserResponse>> CreateUserAync(CreateUserRequest userReq)
@@ -89,6 +92,50 @@ namespace Finantech.Services
                     throw;
                 }
             }
+        }
+
+        public async Task<Result<bool>> ConfirmEmail(string token)
+        {
+            var email = await _cacheService.GetConfirmEmailTokenAsync(token);
+
+            if (email is null) 
+            {
+                return new AppError("Token não encontrado, por favor, gere outro token", ErrorTypeEnum.NotFound);
+            }
+
+            var user = await _appDbContext.Users.FirstAsync(u => u.Email == email);
+
+            if (user is null)
+            {
+                return new AppError("Nenhum usuário encontrado para esse email", ErrorTypeEnum.NotFound);
+            }
+
+            user.EmailConfirmed = true;
+
+            await _cacheService.RemoveConfirmEmailTokenAsync(token);
+
+            await _appDbContext.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<Result<bool>> GenerateConfirmEmailToken(int userId)
+        {
+            var user = await _appDbContext.Users.FirstAsync(u => u.Id == userId);
+
+            if (user is null)
+            {
+                return new AppError("Usuário não encontrado.", ErrorTypeEnum.NotFound);
+            }
+
+            if (user.EmailConfirmed is true)
+            {
+                return new AppError("Email já confirmado.", ErrorTypeEnum.Validation);
+            }
+
+            await _bus.Publish(new ConfirmEmailEvent(_mapper.Map<InfoUserResponse>(user)));
+
+            return true;
         }
     }
 }

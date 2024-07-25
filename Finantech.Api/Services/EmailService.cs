@@ -21,8 +21,8 @@ namespace Finantech.Services
         {
             string confirmEmailToken = RandomGenerate.Generate32BytesToken();
 
-            string frontEndHost = "localhost:4200";
-            string frontEndUrlPath = $"{frontEndHost}/confirm-email/${confirmEmailToken}";
+            string frontEndHost = "http://localhost:4200";
+            string frontEndUrlPath = $"{frontEndHost}/confirm-email/{confirmEmailToken}";
 
             _cacheService.SetConfirmEmailTokenAsync(user.Email, confirmEmailToken);
 
@@ -80,7 +80,7 @@ namespace Finantech.Services
                     <div class='content'>
                         <p>Olá {user.Name},</p>
                         <p>Obrigado por se registrar no Controle Certo! Por favor, confirme seu email clicando no botão abaixo:</p>
-                        <a class='button' href='{frontEndUrlPath}'>Confirmar Email</a>
+                        <a class='button' target='_blank' href='{frontEndUrlPath}'>Confirmar Email</a>
                         <p>Se você não se registrou em nosso site, por favor ignore este email.</p>
                     </div>
                     <div class='footer'>
@@ -123,7 +123,7 @@ namespace Finantech.Services
             smtpClient.Host = "smtp.gmail.com";
             smtpClient.Port = 587;
             smtpClient.EnableSsl = true;
-            smtpClient.Timeout = 10000;
+            smtpClient.Timeout = 100000;
             smtpClient.UseDefaultCredentials = false;
             smtpClient.Credentials = new NetworkCredential(
                 _configuration.GetConnectionString("MailAddress"),
