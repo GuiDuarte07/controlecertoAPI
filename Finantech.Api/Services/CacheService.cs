@@ -73,10 +73,6 @@ namespace Finantech.Services
             };
 
             await _cache.SetStringAsync(confirmEmailTokenKey, email, options);
-
-            var teste = GetConfirmEmailTokenAsync(confirmEmailToken);
-            Console.WriteLine(teste);
-
         }
         public async Task<string?> GetConfirmEmailTokenAsync(string confirmEmailToken)
         {
@@ -91,6 +87,37 @@ namespace Finantech.Services
             if (!string.IsNullOrEmpty(email))
             {
                 await _cache.RemoveAsync(confirmEmailTokenKey);
+            }
+        }
+
+
+        private string GenerateForgotPasswordKey(string forgotPasswordToken) => $"ForgotPassword:{forgotPasswordToken}";
+        public async Task SetForgotPasswordTokenAsync(string email, string forgotPasswordToken)
+        {
+            var forgotPasswordTokenKey = GenerateForgotPasswordKey(forgotPasswordToken);
+
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
+            };
+
+            await _cache.SetStringAsync(forgotPasswordTokenKey, email, options);
+        }
+
+        public async Task<string?> GetForgotPasswordTokenAsync(string forgotPasswordToken)
+        {
+            var forgotPasswordTokenKey = GenerateForgotPasswordKey(forgotPasswordToken);
+            return await _cache.GetStringAsync(forgotPasswordTokenKey);
+        }
+
+        public async Task RemoveForgotPasswordTokenAsync(string forgotPasswordToken)
+        {
+            var forgotPasswordTokenKey = GenerateConfirmEmailKey(forgotPasswordToken);
+            var email = await _cache.GetStringAsync(forgotPasswordTokenKey);
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                await _cache.RemoveAsync(forgotPasswordTokenKey);
             }
         }
     }

@@ -14,5 +14,9 @@ namespace Finantech.Services.Interfaces
         public Task SetConfirmEmailTokenAsync(string email, string confirmEmailToken);
         public Task<string?> GetConfirmEmailTokenAsync(string confirmEmailToken);
         public Task RemoveConfirmEmailTokenAsync(string confirmEmailToken);
+
+        public Task SetForgotPasswordTokenAsync(string email, string forgotPasswordToken);
+        public Task<string?> GetForgotPasswordTokenAsync(string forgotPasswordToken);
+        public Task RemoveForgotPasswordTokenAsync(string forgotPasswordToken);
     }
 }

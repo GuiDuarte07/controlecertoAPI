@@ -1,4 +1,5 @@
 ﻿using Finantech.DTOs.User;
+using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Finantech.Utils;
 using System.Net;
@@ -98,6 +99,83 @@ namespace Finantech.Services
             var mail = PrepareteMessage(emailsTo, subject, body);
 
             SendEmailBySmtp(mail);
+        }
+
+        public void SendForgotPasswordEmail(string email)
+        {
+            string forgotPasswordToken = RandomGenerate.Generate32BytesToken();
+
+            string frontEndHost = "http://localhost:4200";
+            string frontEndUrlPath = $"{frontEndHost}/forgot-password/{forgotPasswordToken}";
+
+            _cacheService.SetForgotPasswordTokenAsync(email, forgotPasswordToken);
+
+            var htmlBody = $@"
+            <html>
+            <head>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        background-color: #f4f4f9;
+                        color: #333;
+                        margin: 0;
+                        padding: 0;
+                    }}
+                    .container {{
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        background-color: #fff;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    }}
+                    .header {{
+                        text-align: center;
+                        padding: 10px 0;
+                        background-color: #4CAF50;
+                        color: #fff;
+                    }}
+                    .content {{
+                        padding: 20px;
+                    }}
+                    .button {{
+                        display: block;
+                        width: 200px;
+                        margin: 20px auto;
+                        padding: 10px 20px;
+                        background-color: #4CAF50;
+                        color: #fff;
+                        text-align: center;
+                        text-decoration: none;
+                        border-radius: 5px;
+                    }}
+                    .footer {{
+                        text-align: center;
+                        padding: 10px 0;
+                        font-size: 12px;
+                        color: #999;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>Redefinir senha</h1>
+                    </div>
+                    <div class='content'>
+                        <p>Olá!</p>
+                        <p>Uma solicitação de redefinição de senha foi enviada para o seu email.</p>
+                        <a class='button' target='_blank' href='{frontEndUrlPath}'>Redefinir Senha</a>
+                        <p>ATENÇÃO: Caso você não tenha feito essa solicitação, por favor, ignorar esse E-mail.</p>
+                    </div>
+                    <div class='footer'>
+                        <p>&copy; 2024 Controle Certo. Todos os direitos reservados.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            ";
+
+            SendEmail([email], "Redefinição de senha - Controle Certo", htmlBody);
         }
 
         private MailMessage PrepareteMessage(List<string> emailsTo, string subject, string body)

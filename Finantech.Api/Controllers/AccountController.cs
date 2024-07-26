@@ -5,12 +5,14 @@ using Finantech.Extensions;
 using Finantech.Models.DTOs;
 using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Finantech.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     [ExtractTokenInfo]
     public class AccountController : ControllerBase
     {

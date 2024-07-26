@@ -13,13 +13,13 @@ namespace Finantech.Bus
             _emailService = emailService;
         }
 
-        public async Task Consume(ConsumeContext<EmailEvent> context)
+        public Task Consume(ConsumeContext<EmailEvent> context)
         {
             var email = context.Message;
 
             _emailService.SendEmail(email.Emails, email.Subject, email.Body);
 
-            await Task.Delay(1);
+            return Task.CompletedTask;
         }
     }
 }

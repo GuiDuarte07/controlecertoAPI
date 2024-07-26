@@ -94,20 +94,20 @@ namespace Finantech.Services
             }
         }
 
-        public async Task<Result<bool>> ConfirmEmail(string token)
+        public async Task<Result<bool>> ConfirmEmailAsync(string token)
         {
             var email = await _cacheService.GetConfirmEmailTokenAsync(token);
 
             if (email is null) 
             {
-                return new AppError("Token não encontrado, por favor, gere outro token", ErrorTypeEnum.NotFound);
+                return new AppError("Token não encontrado, por favor, gere outro token.", ErrorTypeEnum.NotFound);
             }
 
             var user = await _appDbContext.Users.FirstAsync(u => u.Email == email);
 
             if (user is null)
             {
-                return new AppError("Nenhum usuário encontrado para esse email", ErrorTypeEnum.NotFound);
+                return new AppError("Nenhum usuário encontrado para esse email.", ErrorTypeEnum.NotFound);
             }
 
             user.EmailConfirmed = true;
@@ -119,7 +119,7 @@ namespace Finantech.Services
             return true;
         }
 
-        public async Task<Result<bool>> GenerateConfirmEmailToken(int userId)
+        public async Task<Result<bool>> GenerateConfirmEmailTokenAsync(int userId)
         {
             var user = await _appDbContext.Users.FirstAsync(u => u.Id == userId);
 
@@ -163,6 +163,72 @@ namespace Finantech.Services
             await _appDbContext.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<Result<bool>> GenerateForgotPasswordTokenAsync(string email)
+        {
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user is null)
+            {
+                return new AppError("E-mail não cadastrado no sistema.", ErrorTypeEnum.NotFound);
+            }
+
+            await _bus.Publish(new ForgotPasswordEvent(email));
+
+            return true;
+        }
+
+        public async Task<Result<bool>> ForgotPasswordAsync(string token, ForgotPasswordRequest forgotPasswordRequest)
+        {
+            var email = await _cacheService.GetForgotPasswordTokenAsync(token);
+
+            if (email is null)
+            {
+                return new AppError("Token não encontrado, por favor, gere outro token.", ErrorTypeEnum.NotFound);
+            }
+
+            var user = await _appDbContext.Users.FirstAsync(u => u.Email == email);
+
+            if (user is null)
+            {
+                return new AppError("Nenhum usuário encontrado para esse email.", ErrorTypeEnum.NotFound);
+            }
+
+            if (forgotPasswordRequest.Password != forgotPasswordRequest.ConfirmPassword)
+            {
+                return new AppError("As senhas não conferem.", ErrorTypeEnum.NotFound);
+            }
+
+            var newPassHashed = _hashService.HashPassword(forgotPasswordRequest.Password);
+
+            user.PasswordHash = newPassHashed;
+
+            _appDbContext.Update(user);
+            await _appDbContext.SaveChangesAsync();
+
+            await _cacheService.RemoveForgotPasswordTokenAsync(token);
+
+            return new Result<bool>(true);
+        }
+
+        public async Task<Result<bool>> VerifyForgotPasswordTokenAsync(string token)
+        {
+            var email = await _cacheService.GetForgotPasswordTokenAsync(token);
+
+            if (email is null)
+            {
+                return new AppError("Token não encontrado, por favor, gere outro token.", ErrorTypeEnum.NotFound);
+            }
+
+            var user = await _appDbContext.Users.FirstAsync(u => u.Email == email);
+
+            if (user is null)
+            {
+                return new AppError("Nenhum usuário encontrado para esse email.", ErrorTypeEnum.NotFound);
+            }
+
+            return new Result<bool>(true);
         }
     }
 }

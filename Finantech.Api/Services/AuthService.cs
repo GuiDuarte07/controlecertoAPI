@@ -106,14 +106,7 @@ namespace Finantech.Services
 
             var credentials = new SigningCredentials(privateKey, SecurityAlgorithms.HmacSha256);
 
-            var expiration = DateTime.Now.AddMinutes(2);
-            /*
-             * Descomentar isso VVVV
-             */
-            //var expiration = DateTime.UtcNow.AddMinutes(15);
-            Console.WriteLine($"Token generated at: {DateTime.UtcNow}");
-            Console.WriteLine($"Token generated at: {DateTime.Now}");
-            Console.WriteLine($"Token expires at: {expiration}");
+            var expiration = DateTime.UtcNow.AddMinutes(15);
 
             JwtSecurityToken token = new JwtSecurityToken(
                 issuer: _configuration["jwt:issuer"],
