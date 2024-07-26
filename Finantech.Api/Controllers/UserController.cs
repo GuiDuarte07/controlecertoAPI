@@ -54,6 +54,7 @@ namespace Finantech.Controllers
             return result.HandleReturnResult();
         }
 
+        [Authorize]
         [ExtractTokenInfo]
         [HttpPost("ChangePassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest changePasswordRequest)

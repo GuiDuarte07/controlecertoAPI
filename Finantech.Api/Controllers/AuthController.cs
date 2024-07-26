@@ -39,6 +39,7 @@ namespace Finantech.Controllers
             return authResult.HandleReturnResult();
         }
 
+        [Authorize]
         [ExtractTokenInfo]
         [HttpGet("Logout/{refreshToken}")]
         public async Task<IActionResult> Logout(string refreshToken)
