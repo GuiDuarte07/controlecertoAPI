@@ -1,4 +1,5 @@
-﻿using Finantech.DTOs.User;
+﻿using Finantech.Decorators;
+using Finantech.DTOs.User;
 using Finantech.Extensions;
 using Finantech.Services.Interfaces;
 using Finantech.Utils;
@@ -48,6 +49,17 @@ namespace Finantech.Controllers
         public async Task<IActionResult> GenerateConfirmEmailToken(int userId)
         {
             var result = await _userService.GenerateConfirmEmailToken(userId);
+
+            return result.HandleReturnResult();
+        }
+
+        [ExtractTokenInfo]
+        [HttpPost("ChangePassword")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest changePasswordRequest)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            var result = await _userService.ChangePasswordAsync(changePasswordRequest, userId);
 
             return result.HandleReturnResult();
         }

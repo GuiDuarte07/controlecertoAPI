@@ -137,5 +137,32 @@ namespace Finantech.Services
 
             return true;
         }
+
+        public async Task<Result<bool>> ChangePasswordAsync(ChangePasswordRequest changePasswordRequest, int userId)
+        {
+            var user = await _appDbContext.Users.FirstAsync(u => u.Id == userId);
+
+            if (user is null)
+            {
+                return new AppError("Usuário não encontrado.", ErrorTypeEnum.NotFound);
+            }
+
+            var oldPassHashed = _hashService.HashPassword(changePasswordRequest.OldPassword);
+
+            if (user.PasswordHash != oldPassHashed)
+            {
+                return new AppError("Senha incorreta.", ErrorTypeEnum.Validation);
+            }
+
+            var newPassHashed = _hashService.HashPassword(changePasswordRequest.NewPassword);
+
+            user.PasswordHash = newPassHashed;
+
+            _appDbContext.Update(user);
+
+            await _appDbContext.SaveChangesAsync();
+
+            return true;
+        }
     }
 }
