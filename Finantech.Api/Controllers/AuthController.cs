@@ -31,7 +31,7 @@ namespace Finantech.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("GenerateAccessToken{refreshToken}")]
+        [HttpGet("GenerateAccessToken/{refreshToken}")]
         public async Task<IActionResult> GenerateAccessToken(string refreshToken)
         {
             var authResult = await _authService.GenerateAccessTokenAsync(refreshToken);

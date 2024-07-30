@@ -45,10 +45,13 @@ namespace Finantech.Controllers
             return result.HandleReturnResult();
         }
 
-        [AllowAnonymous]
-        [HttpGet("SendConfirmEmail/{userId}")]
-        public async Task<IActionResult> GenerateConfirmEmailToken(int userId)
+        [Authorize]
+        [ExtractTokenInfo]
+        [HttpGet("SendConfirmEmail")]
+        public async Task<IActionResult> GenerateConfirmEmailToken()
         {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
             var result = await _userService.GenerateConfirmEmailTokenAsync(userId);
 
             return result.HandleReturnResult();

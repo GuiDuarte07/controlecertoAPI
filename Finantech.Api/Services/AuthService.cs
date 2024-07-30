@@ -65,7 +65,7 @@ namespace Finantech.Services
             return new AuthResponse { User = userResponse, AccessToken = accessToken, RefreshToken = refreshToken };
         }
 
-        public async Task<Result<string>> GenerateAccessTokenAsync(string refreshToken)
+        public async Task<Result<AccessTokenRequest>> GenerateAccessTokenAsync(string refreshToken)
         {
             string? userIdString = await _cacheService.GetRefreshTokenAsync(refreshToken);
 
@@ -85,7 +85,7 @@ namespace Finantech.Services
 
             var accessToken = GenerateToken(user);
 
-            return accessToken;
+            return new AccessTokenRequest { AccessToken = accessToken };
         }
 
         public async Task Logout(string refreshToken)
