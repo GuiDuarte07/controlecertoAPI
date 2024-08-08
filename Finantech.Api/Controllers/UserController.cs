@@ -20,6 +20,18 @@ namespace Finantech.Controllers
         {
             _userService = userService;
         }
+        
+        [Authorize]
+        [ExtractTokenInfo]
+        [HttpGet("GetUser")]
+        public async Task<IActionResult> GetUser()
+        {
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            
+            var result = await _userService.GetUserDetails(userId);
+
+            return result.HandleReturnResult();
+        }
 
         [AllowAnonymous]
         [HttpPost("CreateUser")]
@@ -27,13 +39,7 @@ namespace Finantech.Controllers
         {
             var result = await _userService.CreateUserAync(data);
 
-            if (result.IsSuccess)
-            {
-                return Created("Auth/Authenticate", result.Value);
-            }
-
-            return result.HandleReturnResult();
-
+            return result.IsSuccess ? Created("Auth/Authenticate", result.Value) : result.HandleReturnResult();
         }
 
         [AllowAnonymous]
@@ -50,7 +56,7 @@ namespace Finantech.Controllers
         [HttpGet("SendConfirmEmail")]
         public async Task<IActionResult> GenerateConfirmEmailToken()
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             var result = await _userService.GenerateConfirmEmailTokenAsync(userId);
 
@@ -62,7 +68,7 @@ namespace Finantech.Controllers
         [HttpPost("ChangePassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest changePasswordRequest)
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             var result = await _userService.ChangePasswordAsync(changePasswordRequest, userId);
 
@@ -79,7 +85,7 @@ namespace Finantech.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("VerifyForgotPasswordToken{token}")]
+        [HttpGet("VerifyForgotPasswordToken/{token}")]
         public async Task<IActionResult> VerifyForgotPasswordToken([FromRoute] string token)
         {
             var result = await _userService.VerifyForgotPasswordTokenAsync(token);
@@ -88,7 +94,7 @@ namespace Finantech.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("ForgotPassword{token}")]
+        [HttpPost("ForgotPassword/{token}")]
         public async Task<IActionResult> ForgotPassword([FromRoute] string token, [FromBody] ForgotPasswordRequest forgotPasswordRequest)
         {
             var result = await _userService.ForgotPasswordAsync(token, forgotPasswordRequest);

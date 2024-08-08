@@ -28,6 +28,18 @@ namespace Finantech.Services
             _cacheService = cacheService;
         }
 
+        public async Task<Result<DetailsUserResponse>> GetUserDetails(int userId)
+        {
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            
+            if (user is null) 
+            {
+                return new AppError("Usuário não encontrado.", ErrorTypeEnum.NotFound);
+            }
+
+            return _mapper.Map<DetailsUserResponse>(user);
+        }
+
         public async Task<Result<InfoUserResponse>> CreateUserAync(CreateUserRequest userReq)
         {
             var alreadyExistEmail = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Email == userReq.Email);
@@ -185,7 +197,7 @@ namespace Finantech.Services
 
             if (email is null)
             {
-                return new AppError("Token não encontrado, por favor, gere outro token.", ErrorTypeEnum.NotFound);
+                return new AppError("Token não encontrado ou já utilizado.", ErrorTypeEnum.NotFound);
             }
 
             var user = await _appDbContext.Users.FirstAsync(u => u.Email == email);

@@ -150,9 +150,8 @@ namespace Finantech.Services
 
             transactionToUpdate.UpdatedAt = DateTime.UtcNow;
 
-
+            var totalAmount = request.Amount ?? transactionToUpdate.Amount;
             double amountDifToAccount = 0;
-            bool justForRecord = transactionToUpdate.JustForRecord;
 
             if (request.Description is not null)
                 transactionToUpdate.Description = request.Description;
@@ -162,6 +161,21 @@ namespace Finantech.Services
                 transactionToUpdate.Observations = request.Observations;
             if (request.PurchaseDate is not null)
                 transactionToUpdate.PurchaseDate = (DateTime)request.PurchaseDate;
+
+
+            var justForRecord = request.JustForRecord;
+            
+            // Se null JustForRecord não foi atualizado, se true, JustForRecord foi atualizado de false para true, se false, foi atualizado de false para true
+            bool? recalculateBalanceFromJustForRecord = null;
+            if (request.JustForRecord is not null)
+            {
+                if (request.JustForRecord != transactionToUpdate.JustForRecord)
+                {
+                    recalculateBalanceFromJustForRecord = request.JustForRecord;
+                }
+                
+                transactionToUpdate.JustForRecord = (bool)request.JustForRecord;
+            }
 
             if (request.Amount is not null)
             {
@@ -200,16 +214,33 @@ namespace Finantech.Services
             {
                 try
                 {
-                    if (!justForRecord && amountDifToAccount != 0) {
+                    if (recalculateBalanceFromJustForRecord is not null || amountDifToAccount != 0) {
                     
-                        var account = await _appDbContext.Accounts.FirstAsync(x => x.Id == transactionToUpdate.AccountId);
+                        var account = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == transactionToUpdate.AccountId);
 
                         if (account is null)
                         {
                             return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
                         }
 
-                        account.Balance += amountDifToAccount;
+                        if (
+                            amountDifToAccount != 0 && 
+                            recalculateBalanceFromJustForRecord is null && 
+                            transactionToUpdate.JustForRecord == false
+                            )
+                        {
+                            account.Balance += amountDifToAccount;
+                        }
+
+                        switch (recalculateBalanceFromJustForRecord)
+                        {
+                            case false:
+                                account.Balance -= totalAmount;
+                                break;
+                            case true:
+                                account.Balance += totalAmount;
+                                break;
+                        }
 
                         _appDbContext.Update(account);
 

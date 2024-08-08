@@ -77,7 +77,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "FinanTech", Version = "v1" });
 
-    // Adiciona a definição do esquema de segurança para o Swagger UI
+    // Adiciona a definiï¿½ï¿½o do esquema de seguranï¿½a para o Swagger UI
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
@@ -87,7 +87,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer"
     });
 
-    // Adiciona um esquema de segurança global para todas as operações
+    // Adiciona um esquema de seguranï¿½a global para todas as operaï¿½ï¿½es
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -136,6 +136,12 @@ builder.Services.AddRabbitMQService(configuration);
 
 // Redis
 builder.Services.AddRedisCache(configuration);
+
+// Gerar Certificado
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(8080); // Porta para HTTP
+});
 
 var app = builder.Build();
 

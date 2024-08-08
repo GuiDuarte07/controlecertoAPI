@@ -17,6 +17,7 @@ namespace Finantech.Profiles
         public MapperProfile() 
         {
             CreateMap<User, InfoUserResponse>();
+            CreateMap<User, DetailsUserResponse>();
 
             CreateMap<Account, InfoAccountResponse>();
 

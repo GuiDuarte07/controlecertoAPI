@@ -134,17 +134,16 @@ namespace Finantech.Services
                     var createdCreditPurchase = await _appDbContext.CreditPurchases.AddAsync(creditPurchaseToCreate);
                     await _appDbContext.SaveChangesAsync();
 
-                    int today = DateTime.UtcNow.Day;
-                    bool isInClosingDate = today >= creditCard.CloseDay && today <= creditCard.DueDay;
-                    bool isAfterDueDate = today > creditCard.CloseDay;
+                    var purchaseDay = createdCreditPurchase.Entity.PurchaseDate.Day;
+                    var isInClosingDate = purchaseDay >= creditCard.CloseDay && purchaseDay <= creditCard.DueDay;
+                    var isAfterDueDate = purchaseDay > creditCard.CloseDay;
 
                     var actualClosingMonthDate = new DateTime(creditPurchaseToCreate.PurchaseDate.Year, creditPurchaseToCreate.PurchaseDate.Month, creditCard.CloseDay);
                     var actualDueMonthDate = new DateTime(creditPurchaseToCreate.PurchaseDate.Year, creditPurchaseToCreate.PurchaseDate.Month, creditCard.DueDay);
 
-
                     ICollection<Transaction> transactions = [];
 
-                    for (int i = 0; i < totalInstallment - installmentsPaid; i++)
+                    for (var i = 0; i < totalInstallment - installmentsPaid; i++)
                     {
                         var monthClosingInvoiceDate = actualClosingMonthDate.AddMonths(i);
                         var monthDueInvoiceDate = actualDueMonthDate.AddMonths(i);
@@ -419,7 +418,7 @@ namespace Finantech.Services
 
         public async Task<Result<InfoCreditPurchaseResponse>> UpdateCreditPurchaseAsync(UpdateCreditPurchaseRequest request, int userId)
         {
-            var creditPurchaseToUpdate = await _appDbContext.CreditPurchases.FirstAsync(cp => cp.Id == request.Id);
+            var creditPurchaseToUpdate = await _appDbContext.CreditPurchases.FirstOrDefaultAsync(cp => cp.Id == request.Id);
 
             if (creditPurchaseToUpdate is null)
             {

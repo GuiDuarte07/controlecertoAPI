@@ -20,6 +20,8 @@ namespace Finantech.DTOs.Transaction
 
         [MaxLength(300, ErrorMessage = "Campo 'Observations' pode conter até 300 caracteres")]
         public String? Observations { get; set; }
+        
+        public bool? JustForRecord { get; set; }
 
         public long? CategoryId { get; set; }
     }

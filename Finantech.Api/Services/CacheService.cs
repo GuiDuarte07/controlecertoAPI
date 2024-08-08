@@ -112,7 +112,7 @@ namespace Finantech.Services
 
         public async Task RemoveForgotPasswordTokenAsync(string forgotPasswordToken)
         {
-            var forgotPasswordTokenKey = GenerateConfirmEmailKey(forgotPasswordToken);
+            var forgotPasswordTokenKey = GenerateForgotPasswordKey(forgotPasswordToken);
             var email = await _cache.GetStringAsync(forgotPasswordTokenKey);
 
             if (!string.IsNullOrEmpty(email))

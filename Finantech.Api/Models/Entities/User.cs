@@ -8,7 +8,7 @@
         public string PasswordHash { get; set; }
         public bool EmailConfirmed { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<Account> Accounts { get; set; }
         public ICollection<Category> Categories { get; set; }

@@ -5,6 +5,7 @@ namespace Finantech.Services.Interfaces
 {
     public interface IUserService
     {
+        public Task<Result<DetailsUserResponse>> GetUserDetails(int userId);
         public Task<Result<InfoUserResponse>> CreateUserAync(CreateUserRequest userReq);
         public Task<Result<bool>> ConfirmEmailAsync(string token);
         public Task<Result<bool>> GenerateConfirmEmailTokenAsync(int userId);
