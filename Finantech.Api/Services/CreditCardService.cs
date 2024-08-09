@@ -26,7 +26,7 @@ namespace Finantech.Services
         public async Task<Result<InfoCreditCardResponse>> CreateCreditCardAsync(CreateCreditCardRequest request, int userId)
         {
             var creditCardToCreate = _mapper.Map<CreditCard>(request);
-            var account = await _appDbContext.Accounts.Include(a => a.CreditCard).FirstAsync(cd => cd.Id == creditCardToCreate.AccountId);
+            var account = await _appDbContext.Accounts.Include(a => a.CreditCard).FirstOrDefaultAsync(cd => cd.Id == creditCardToCreate.AccountId);
 
             if (account is null || account.UserId != userId)
             {
@@ -48,7 +48,7 @@ namespace Finantech.Services
         {
             var creditCardToUpdate = await _appDbContext
                 .CreditCards.Include(cd => cd.Account)
-                .FirstAsync(cd => cd.Id == request.Id);
+                .FirstOrDefaultAsync(cd => cd.Id == request.Id);
 
             if (creditCardToUpdate is null || creditCardToUpdate.Account.UserId != userId)
             {
@@ -88,7 +88,7 @@ namespace Finantech.Services
         {
             var creditPurchaseToCreate = _mapper.Map<CreditPurchase>(request);
 
-            var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstAsync(cc => cc.Id == request.CreditCardId && cc.Account.UserId == userId);
+            var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstOrDefaultAsync(cc => cc.Id == request.CreditCardId && cc.Account.UserId == userId);
 
             if (creditCard is null)
             {
@@ -98,7 +98,7 @@ namespace Finantech.Services
             if (creditCard.TotalLimit - creditCard.UsedLimit < request.TotalAmount)
                 return new AppError("Limite inferior ao valor da compra.", ErrorTypeEnum.Validation);
 
-            var category = await _appDbContext.Categories.FirstAsync(c => c.Id == request.CategoryId && c.UserId == userId);
+            var category = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId && c.UserId == userId);
 
             if (category is null)
             {
@@ -138,32 +138,37 @@ namespace Finantech.Services
                     var isInClosingDate = purchaseDay >= creditCard.CloseDay && purchaseDay <= creditCard.DueDay;
                     var isAfterDueDate = purchaseDay > creditCard.CloseDay;
 
-                    var actualClosingMonthDate = new DateTime(creditPurchaseToCreate.PurchaseDate.Year, creditPurchaseToCreate.PurchaseDate.Month, creditCard.CloseDay);
-                    var actualDueMonthDate = new DateTime(creditPurchaseToCreate.PurchaseDate.Year, creditPurchaseToCreate.PurchaseDate.Month, creditCard.DueDay);
+                    var actualMonthInvoice = new DateTime(createdCreditPurchase.Entity.PurchaseDate.Year,
+                        createdCreditPurchase.Entity.PurchaseDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                    var actualClosingMonthDate = new DateTime(creditPurchaseToCreate.PurchaseDate.Year, creditPurchaseToCreate.PurchaseDate.Month, creditCard.CloseDay, 0, 0, 0, DateTimeKind.Utc);
+                    var actualDueMonthDate = new DateTime(creditPurchaseToCreate.PurchaseDate.Year, creditPurchaseToCreate.PurchaseDate.Month, creditCard.DueDay, 0, 0, 0, DateTimeKind.Utc);
 
                     ICollection<Transaction> transactions = [];
 
                     for (var i = 0; i < totalInstallment - installmentsPaid; i++)
                     {
+                        var monthInvoiceDate = actualMonthInvoice.AddMonths(i);
                         var monthClosingInvoiceDate = actualClosingMonthDate.AddMonths(i);
                         var monthDueInvoiceDate = actualDueMonthDate.AddMonths(i);
 
                         // Se essa fatura já está na sua data de fechamento, entra pra próxima.
                         if (isInClosingDate || isAfterDueDate)
                         {
+                            monthInvoiceDate = actualMonthInvoice.AddMonths(i);
                             monthClosingInvoiceDate = monthClosingInvoiceDate.AddMonths(1);
                             monthDueInvoiceDate = monthDueInvoiceDate.AddMonths(1);
                         }
 
                         var monthInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync
                         (
-                            i => i.CreditCard.AccountId.Equals(creditCard.AccountId) && i.ClosingDate.Equals(monthClosingInvoiceDate)
+                            invoice => invoice.CreditCard.AccountId.Equals(creditCard.AccountId) && invoice.InvoiceDate.Equals(monthInvoiceDate)
                         );
 
                         if(monthInvoice is null)
                         {
                             var newInvoice = new Invoice
                             {
+                                InvoiceDate = monthInvoiceDate,
                                 ClosingDate = monthClosingInvoiceDate,
                                 DueDate = monthDueInvoiceDate,
                                 CreditCardId = creditCard.Id,
@@ -186,7 +191,7 @@ namespace Finantech.Services
                             InstallmentNumber = i + 1 + installmentsPaid,
                             InvoiceId = monthInvoice.Id,
                             Description = request.Description + 
-                                (totalInstallment > 1 ? $" {i + 1 + installmentsPaid}/{(totalInstallment -                  installmentsPaid)}" : ""),
+                                (totalInstallment > 1 ? $" {i + 1 + installmentsPaid}/{(totalInstallment - installmentsPaid)}" : ""),
                             Destination = request.Destination,
                             PurchaseDate = request.PurchaseDate ?? DateTime.UtcNow,
                         };
@@ -224,7 +229,7 @@ namespace Finantech.Services
         {
             if (creditCardId.HasValue)
             {
-                var creditCard = await _appDbContext.CreditCards.FirstAsync(cc => cc.Id == creditCardId && cc.Account.UserId == userId);
+                var creditCard = await _appDbContext.CreditCards.FirstOrDefaultAsync(cc => cc.Id == creditCardId && cc.Account.UserId == userId);
 
                 if (creditCard is null)
                 {
@@ -235,11 +240,11 @@ namespace Finantech.Services
 
             var invoices = await _appDbContext.Invoices.Where(i =>
                 i.CreditCard.Account.UserId == userId &&
-                i.DueDate >= startDate &&
-                i.DueDate <= endDate && 
+                i.InvoiceDate >= startDate &&
+                i.InvoiceDate <= endDate && 
                 i.CreditCard.Id == (creditCardId ?? i.CreditCard.Id)
             )
-            .OrderByDescending(a => a.DueDate)
+            .OrderByDescending(a => a.InvoiceDate)
             .ToListAsync();            
 
             return _mapper.Map<List<InfoInvoiceResponse>>(invoices);
@@ -255,7 +260,7 @@ namespace Finantech.Services
                     .ThenInclude(t => t.Category)
                 .Include(i => i.InvoicePayments)
                     .ThenInclude(ip => ip.Account)
-                .FirstAsync(i => i.Id == invoiceId && i.CreditCard.Account.UserId == userId);
+                .FirstOrDefaultAsync(i => i.Id == invoiceId && i.CreditCard.Account.UserId == userId);
 
             if(invoice is null)
             {
@@ -263,12 +268,12 @@ namespace Finantech.Services
             }
                     
 
-            DateTime nextInvoiceMonth = invoice.ClosingDate.AddMonths(1);
-            DateTime prevInvoiceMonth = invoice.ClosingDate.AddMonths(-1);
+            var nextInvoiceMonth = invoice.InvoiceDate.AddMonths(1);
+            var prevInvoiceMonth = invoice.InvoiceDate.AddMonths(-1);
 
-            var nextInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync(i => i.CreditCardId == invoice.CreditCardId && i.ClosingDate.Year == nextInvoiceMonth.Year && i.ClosingDate.Month == nextInvoiceMonth.Month);
+            var nextInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync(i => i.CreditCardId == invoice.CreditCardId && i.InvoiceDate == nextInvoiceMonth);
 
-            var prevInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync(i => i.CreditCardId == invoice.CreditCardId && i.ClosingDate.Year == prevInvoiceMonth.Year && i.ClosingDate.Month == prevInvoiceMonth.Month);
+            var prevInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync(i => i.CreditCardId == invoice.CreditCardId && i.InvoiceDate == prevInvoiceMonth);
 
             return new InvoicePageResponse(_mapper.Map<InfoInvoiceResponse>(invoice), nextInvoice?.Id, prevInvoice?.Id);
         }
@@ -277,7 +282,7 @@ namespace Finantech.Services
         {
             var invoicePayment = _mapper.Map<InvoicePayment>(invoicePaymentRequest);
 
-            var invoice = await _appDbContext.Invoices.FirstAsync(
+            var invoice = await _appDbContext.Invoices.FirstOrDefaultAsync(
                 i => i.Id == invoicePayment.InvoiceId &&
                 i.CreditCard.Account.UserId == userId
             );
@@ -287,7 +292,7 @@ namespace Finantech.Services
                 return new AppError("Fatura não encontrada.", ErrorTypeEnum.NotFound);
             }
 
-            var account = await _appDbContext.Accounts.FirstAsync(a => a.Id == invoicePayment.AccountId && a.UserId == userId);
+            var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == invoicePayment.AccountId && a.UserId == userId);
 
             if (account is null)
             {
@@ -299,7 +304,7 @@ namespace Finantech.Services
                 return new AppError("Essa fatura já está paga.", ErrorTypeEnum.Validation);
             }
 
-            var amountRemainder = invoice.TotalAmount - invoice.TotalPaid;
+            var amountRemainder = Math.Round(invoice.TotalAmount - invoice.TotalPaid, 2);
 
             if (invoicePayment.AmountPaid > amountRemainder)
             {
@@ -309,18 +314,23 @@ namespace Finantech.Services
                 );
             }
 
-            invoice.TotalPaid += invoicePayment.AmountPaid;
+            invoice.TotalPaid =  Math.Round(invoice.TotalPaid + invoicePayment.AmountPaid);
 
-            if (invoice.TotalPaid == invoice.TotalAmount)
+            const double lowerDiff = 1e-4;
+            
+            if (Math.Abs(invoice.TotalPaid - invoice.TotalAmount) < lowerDiff)
+            {
                 invoice.IsPaid = true;
+            }
 
             using (var transaction = _appDbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    if (account is not null && !invoicePaymentRequest.JustForRecord)
+                    if (!invoicePaymentRequest.JustForRecord)
                     {
-                        account.Balance -= invoicePayment.AmountPaid;
+                        account.Balance = Math.Round(
+                            account.Balance - invoicePayment.AmountPaid, 2);
                         _appDbContext.Update(account);
                         await _appDbContext.SaveChangesAsync();
 
@@ -344,14 +354,14 @@ namespace Finantech.Services
         }
         public async Task<Result<bool>> DeleteCreditPurchaseAsync(long purchaseId, int userId)
         {
-            var creditPurchaseToDelete = await _appDbContext.CreditPurchases.Include(cp => cp.Transactions).FirstAsync(cp => cp.Id == purchaseId && cp.CreditCard.Account.UserId == userId);
+            var creditPurchaseToDelete = await _appDbContext.CreditPurchases.Include(cp => cp.Transactions).FirstOrDefaultAsync(cp => cp.Id == purchaseId && cp.CreditCard.Account.UserId == userId);
 
             if (creditPurchaseToDelete is null)
             {
                 return new AppError("Compra cartão não encontrada.", ErrorTypeEnum.NotFound);
             }
 
-            var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstAsync(cc => cc.Id == creditPurchaseToDelete.CreditCardId && cc.Account.UserId == userId);
+            var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstOrDefaultAsync(cc => cc.Id == creditPurchaseToDelete.CreditCardId && cc.Account.UserId == userId);
 
             if (creditCard is null)
             {
@@ -366,23 +376,32 @@ namespace Finantech.Services
                 {
                     foreach (var expense in creditExpenses)
                     {
-                        var invoice = await _appDbContext.Invoices.FirstAsync(cp => cp.Id == expense.InvoiceId);
-
+                        var invoice = await _appDbContext.Invoices.FirstOrDefaultAsync(cp => cp.Id == expense.InvoiceId);
+                        
+                        if (invoice is null)
+                        {
+                            return new AppError("Fatura não encontrada.", ErrorTypeEnum.NotFound);
+                        }
+                        
                         if (invoice.IsPaid)
                         {
                             return new AppError("Não é mais possível excluir esse registro pois a fatura já foi paga.", ErrorTypeEnum.BusinessRule);
                         }
                         
-                        if((invoice.TotalAmount - invoice.TotalPaid) <= creditPurchaseToDelete.TotalAmount)
+                        if(Math.Round(invoice.TotalAmount - invoice.TotalPaid) <= creditPurchaseToDelete.TotalAmount)
                         {
                             return new AppError(
-                                $"Essa fatura tem um valor de ${(invoice.TotalAmount - invoice.TotalPaid):F2} a ser pago ainda e essa transação a ser deletada tem um valor de ${creditPurchaseToDelete.TotalAmount}, não será possível deletar esse registro pois ao fazer isso o valor total da fatura vai ser maior que o total que está pago. Para excluir esse registro será necessário excluir o pagamento dessa fatura.",
+                                $"Essa fatura tem um valor de ${(invoice.TotalAmount - invoice.TotalPaid):F2} a ser pago ainda e essa transação a ser deletada " +
+                                $"tem um valor de ${creditPurchaseToDelete.TotalAmount}, " +
+                                $"não será possível deletar esse registro pois ao fazer isso o valor total " +
+                                $"da fatura vai ser maior que o total que está pago. Para excluir esse registro " +
+                                $"será necessário excluir o pagamento dessa fatura.",
                                 ErrorTypeEnum.BusinessRule);
                         }
 
-                        invoice.TotalAmount -= expense.Amount;
+                        invoice.TotalAmount = Math.Round(invoice.TotalAmount - expense.Amount);
 
-                        if ((invoice.TotalAmount - invoice.TotalPaid).Equals(0))
+                        if ((Math.Round(invoice.TotalAmount - invoice.TotalPaid, 2)).Equals(0.00d))
                         {
                             invoice.IsPaid = true;
                         }
@@ -425,70 +444,45 @@ namespace Finantech.Services
                 return new AppError("Compra não encontrada.", ErrorTypeEnum.Validation);
             }
 
-            var creditPurchaseToCreate = new CreateCreditPurchaseRequest();
-
-            if (request.PurchaseDate is not null)
-            {
-                creditPurchaseToCreate.PurchaseDate = request.PurchaseDate;
-            }
-            else
-            {
-                creditPurchaseToCreate.PurchaseDate = creditPurchaseToUpdate.PurchaseDate;
-            }
-            if (request.Description is not null)
-            {
-                creditPurchaseToCreate.Description = request.Description;
-            }
-            else
-            {
-                creditPurchaseToCreate.Description = creditPurchaseToUpdate.Description;
-            }
-            if (request.TotalInstallment is not null)
-            {
-                creditPurchaseToCreate.TotalInstallment = (int)request.TotalInstallment;
-            }
-            else
-            {
-                creditPurchaseToCreate.TotalInstallment = creditPurchaseToUpdate.TotalInstallment;
-            }
-            if (request.Destination is not null)
-            {
-                creditPurchaseToCreate.Destination = request.Destination;
-            }
-            else
-            {
-                creditPurchaseToCreate.Destination = creditPurchaseToUpdate.Destination;
-            }
-            if (request.CreditCardId is not null)
-            {
-                creditPurchaseToCreate.CreditCardId = (long)request.CreditCardId;
-            }
-            else
-            {
-                creditPurchaseToCreate.CreditCardId = creditPurchaseToUpdate.CreditCardId;
-            }
-            if (request.TotalAmount is not null)
-            {
-                creditPurchaseToCreate.TotalAmount = (long)request.TotalAmount;
-            }
-            else
-            {
-                creditPurchaseToCreate.TotalAmount = (long)creditPurchaseToUpdate.TotalAmount;
-            }
-
-            creditPurchaseToCreate.CategoryId = (long)request.CategoryId;
+            var creditPurchaseToCreate = new CreateCreditPurchaseRequest
+                {
+                    PurchaseDate = request.PurchaseDate ??
+                                   creditPurchaseToUpdate.PurchaseDate,
+                    Description = request.Description ??
+                                  creditPurchaseToUpdate.Description,
+                    TotalInstallment = request.TotalInstallment ?? creditPurchaseToUpdate.TotalInstallment,
+                    Destination = request.Destination ??
+                                  creditPurchaseToUpdate.Destination,
+                    CreditCardId = request.CreditCardId ?? creditPurchaseToUpdate.CreditCardId,
+                    TotalAmount = request.TotalAmount is not null
+                        ? (long)request.TotalAmount
+                        : (long)creditPurchaseToUpdate.TotalAmount,
+                    CategoryId = request.CategoryId
+                };
 
 
+            var deleteResult = await this.DeleteCreditPurchaseAsync(creditPurchaseToUpdate.Id, userId);
 
-            await this.DeleteCreditPurchaseAsync(creditPurchaseToUpdate.Id, userId);
+            if (deleteResult.IsError)
+            {
+                return deleteResult.Error;
+            }
 
             var result = await this.CreateCreditPurchaseAsync(creditPurchaseToCreate, userId);
 
             if(result.IsError)
             {
-                // IMPLEMENTAR UM SISTEMA DE UNDO PARA O CASO DE DELETAR TER SIDO FEITO MAS HOUVER ERRO NA CRIAÇÃO.
-                return new AppError($"Houve um erro na hora de atualizar a transação e não foi possível recupera-la, dessa forma, ela foi excluida, mensagem de erro: {result.Error.ErrorMessage}", result.Error.ErrorType);
+                var undoOldPurchase =
+                    await this.CreateCreditPurchaseAsync(_mapper.Map<CreateCreditPurchaseRequest>(creditPurchaseToUpdate),
+                        userId);
 
+                if (undoOldPurchase.IsError)
+                {
+                    return new AppError(
+                        $"Houve um erro ao recriar a transação e não foi possível recupera-la, será necessário refaze-la, erro: {result.Error.ErrorMessage}",
+                        result.Error.ErrorType);
+                }
+                return new AppError($"Não foi possível atualizar a transação: {result.Error.ErrorMessage}", result.Error.ErrorType);
             }
 
 

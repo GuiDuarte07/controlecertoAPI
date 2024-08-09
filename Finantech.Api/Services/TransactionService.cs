@@ -83,7 +83,7 @@ namespace Finantech.Services
 
         public async Task<Result<bool>> DeleteTransactionAsync(int expenseId, int userId)
         {
-            var transactionToDelete = await _appDbContext.Transactions.FirstAsync(e => e.Id == expenseId);
+            var transactionToDelete = await _appDbContext.Transactions.FirstOrDefaultAsync(e => e.Id == expenseId);
 
             if (transactionToDelete is null)
             {
@@ -110,12 +110,16 @@ namespace Finantech.Services
                             return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
                         }
 
-                        if (transactionToDelete.Type == TransactionTypeEnum.INCOME)
+                        switch (transactionToDelete.Type)
                         {
-                            account.Balance -= transactionToDelete.Amount;
-                        } else if (transactionToDelete.Type == TransactionTypeEnum.INCOME)
-                        {
-                        account.Balance += transactionToDelete.Amount;
+                            case TransactionTypeEnum.INCOME:
+                                account.Balance -= transactionToDelete.Amount;
+                                break;
+                            case TransactionTypeEnum.EXPENSE:
+                                account.Balance += transactionToDelete.Amount;
+                                break;
+                            default:
+                                return new AppError("Tipo de transação não suportado.", ErrorTypeEnum.BusinessRule);
                         }
 
                         _appDbContext.Update(account);
@@ -141,7 +145,7 @@ namespace Finantech.Services
 
         public async Task<Result<InfoTransactionResponse>> UpdateTransactionAsync(UpdateTransactionRequest request, int userId)
         {
-            var transactionToUpdate = await _appDbContext.Transactions.Include(e => e.Account).FirstAsync(e => e.Id == request.Id);
+            var transactionToUpdate = await _appDbContext.Transactions.Include(e => e.Account).FirstOrDefaultAsync(e => e.Id == request.Id);
 
             if (transactionToUpdate is null || transactionToUpdate.Account!.UserId != userId)
             {
@@ -191,7 +195,7 @@ namespace Finantech.Services
 
             if (request.CategoryId is not null)
             {
-                var category = await _appDbContext.Categories.FirstAsync(c => c.Id == request.CategoryId);
+                var category = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId);
 
                 if (category is null)
                 {
@@ -231,14 +235,28 @@ namespace Finantech.Services
                         {
                             account.Balance += amountDifToAccount;
                         }
-
+                        
                         switch (recalculateBalanceFromJustForRecord)
                         {
                             case false:
-                                account.Balance -= totalAmount;
+                                if (transactionToUpdate.Type == TransactionTypeEnum.INCOME)
+                                {
+                                    account.Balance += totalAmount;
+                                }
+                                else
+                                {
+                                    account.Balance -= totalAmount;
+                                }
                                 break;
                             case true:
-                                account.Balance += totalAmount;
+                                if (transactionToUpdate.Type == TransactionTypeEnum.INCOME)
+                                {
+                                    account.Balance -= totalAmount;
+                                }
+                                else
+                                {
+                                    account.Balance += totalAmount;
+                                }
                                 break;
                         }
 

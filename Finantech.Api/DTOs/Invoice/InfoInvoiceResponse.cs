@@ -9,6 +9,7 @@ namespace Finantech.DTOs.Invoice
         public double TotalAmount { get; set; }
         public double TotalPaid { get; set; }
         public bool IsPaid { get; set; }
+        public DateTime InvoiceDate { get; set; }
         public DateTime ClosingDate { get; set; }
         public DateTime DueDate { get; set; }
 
