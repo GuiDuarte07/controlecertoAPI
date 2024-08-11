@@ -6,5 +6,6 @@
         INCOME,
         CREDITEXPENSE,
         TRANSFERENCE,
+        INVOICEPAYMENT
     }
 }

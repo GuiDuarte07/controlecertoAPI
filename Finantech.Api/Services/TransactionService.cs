@@ -10,6 +10,7 @@ using Finantech.Models.Entities;
 using Finantech.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
+using MassTransit.Initializers;
 
 namespace Finantech.Services
 {
@@ -354,7 +355,14 @@ namespace Finantech.Services
                     t.Account!.UserId == userId &&
                     t.PurchaseDate >= startDate &&
                     t.PurchaseDate <= endDate)
-                .OrderByDescending(t => t.PurchaseDate)
+                .ToListAsync();
+
+            var invoicePayments = await _appDbContext.InvoicePayments
+                .Include(ip => ip.Account)
+                .Where(ip =>
+                    ip.Account!.UserId == userId &&
+                    ip.PaymentDate >= startDate &&
+                    ip.PaymentDate <= endDate)
                 .ToListAsync();
 
             var invoices = await _appDbContext.Invoices
@@ -365,8 +373,6 @@ namespace Finantech.Services
                .Include(i => i.Transactions)
                     .ThenInclude(t => t.Account)
                 .Include(i => i.CreditCard)
-                .Include(i => i.InvoicePayments)
-                    .ThenInclude(ip => ip.Account)
                 .Where(i => i.CreditCard.Account!.UserId == userId &&
                     i.ClosingDate >= startDate &&
                     i.ClosingDate <= endDate)
@@ -375,7 +381,7 @@ namespace Finantech.Services
             if (accountId.HasValue)
             {
 
-                var account = await _appDbContext.Accounts.FirstAsync(a => a.Id == accountId && a.UserId == userId);
+                var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId);
 
                 if (account is null)
                 {
@@ -384,13 +390,20 @@ namespace Finantech.Services
 
 
                 transactions = transactions.Where(t => t.AccountId == accountId).ToList();
+                invoicePayments = invoicePayments.Where(t => t.AccountId == accountId).ToList();
                 invoices = invoices.Where(t => t.CreditCard.AccountId == accountId).ToList();
             }
+
+            var allTransactions =
+                _mapper.Map<List<InfoTransactionResponse>>(transactions);
+            
+            allTransactions.AddRange(invoicePayments
+                .Select(ip => new InfoTransactionResponse(ip)));
 
             return
                 new TransactionList
                 {
-                    Transactions = _mapper.Map<List<InfoTransactionResponse>>(transactions),
+                    Transactions = allTransactions,
                     Invoices = _mapper.Map<List<InfoInvoiceResponse>>(invoices)
                 };
         }
