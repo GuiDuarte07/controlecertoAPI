@@ -25,6 +25,11 @@ namespace Finantech.Services
 
         public async Task<Result<InfoCreditCardResponse>> CreateCreditCardAsync(CreateCreditCardRequest request, int userId)
         {
+            if (request.CloseDay > request.DueDay)
+            {
+                return new AppError("O sistema não suporta data de vencimento maior que a data de fechamento.", ErrorTypeEnum.BusinessRule);
+            }
+            
             var creditCardToCreate = _mapper.Map<CreditCard>(request);
             var account = await _appDbContext.Accounts.Include(a => a.CreditCard).FirstOrDefaultAsync(cd => cd.Id == creditCardToCreate.AccountId);
 
@@ -52,10 +57,9 @@ namespace Finantech.Services
 
             if (creditCardToUpdate is null || creditCardToUpdate.Account.UserId != userId)
             {
-                return new AppError("Cartão de crédito não encontrada.", ErrorTypeEnum.NotFound);
+                return new AppError("Cartão de crédito não encontrado.", ErrorTypeEnum.NotFound);
             }
-
-
+            
             creditCardToUpdate.UpdatedAt = DateTime.UtcNow;
 
             if (request.Description is not null)
@@ -64,7 +68,7 @@ namespace Finantech.Services
                 creditCardToUpdate.TotalLimit = (double)request.TotalLimit;
 
             /*
-             * Será feito posteriormente a lógica em mudar o TotalLimit, UsedLimit, DueDate e CloseDate
+             * Será feito posteriormente a lógica em mudar o UsedLimit, DueDate e CloseDate
              */
 
             /*
@@ -82,8 +86,7 @@ namespace Finantech.Services
 
             return _mapper.Map<InfoCreditCardResponse>(updatedCreditCard.Entity);
         }
-           
-
+        
         public async Task<Result<InfoCreditPurchaseResponse>> CreateCreditPurchaseAsync(CreateCreditPurchaseRequest request, int userId)
         {
             var creditPurchaseToCreate = _mapper.Map<CreditPurchase>(request);
@@ -135,8 +138,9 @@ namespace Finantech.Services
                     await _appDbContext.SaveChangesAsync();
 
                     var purchaseDay = createdCreditPurchase.Entity.PurchaseDate.Day;
+                    
                     var isInClosingDate = purchaseDay >= creditCard.CloseDay && purchaseDay <= creditCard.DueDay;
-                    var isAfterDueDate = purchaseDay > creditCard.CloseDay;
+                    var isAfterDueDate = purchaseDay > creditCard.DueDay;
 
                     var actualMonthInvoice = new DateTime(createdCreditPurchase.Entity.PurchaseDate.Year,
                         createdCreditPurchase.Entity.PurchaseDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -155,8 +159,8 @@ namespace Finantech.Services
                         if (isInClosingDate || isAfterDueDate)
                         {
                             monthInvoiceDate = actualMonthInvoice.AddMonths(i);
-                            monthClosingInvoiceDate = monthClosingInvoiceDate.AddMonths(1);
-                            monthDueInvoiceDate = monthDueInvoiceDate.AddMonths(1);
+                            monthClosingInvoiceDate = monthClosingInvoiceDate.AddMonths(i);
+                            monthDueInvoiceDate = monthDueInvoiceDate.AddMonths(i);
                         }
 
                         var monthInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync
@@ -282,7 +286,7 @@ namespace Finantech.Services
         {
             var invoicePayment = _mapper.Map<InvoicePayment>(invoicePaymentRequest);
 
-            var invoice = await _appDbContext.Invoices.FirstOrDefaultAsync(
+            var invoice = await _appDbContext.Invoices.Include(i => i.CreditCard).FirstOrDefaultAsync(
                 i => i.Id == invoicePayment.InvoiceId &&
                 i.CreditCard.Account.UserId == userId
             );
@@ -315,6 +319,7 @@ namespace Finantech.Services
             }
 
             invoice.TotalPaid =  Math.Round(invoice.TotalPaid + invoicePayment.AmountPaid);
+            invoice.CreditCard.UsedLimit -= invoicePayment.AmountPaid;
 
             const double lowerDiff = 1e-4;
             
@@ -337,6 +342,7 @@ namespace Finantech.Services
                     }
                     var createdInvoicePayment = await _appDbContext.InvoicePayments.AddAsync(invoicePayment);
                     _appDbContext.Update(invoice);
+                    
 
                     await _appDbContext.SaveChangesAsync();
 
@@ -388,7 +394,7 @@ namespace Finantech.Services
                             return new AppError("Não é mais possível excluir esse registro pois a fatura já foi paga.", ErrorTypeEnum.BusinessRule);
                         }
                         
-                        if(Math.Round(invoice.TotalAmount - invoice.TotalPaid) <= creditPurchaseToDelete.TotalAmount)
+                        if(Math.Round(invoice.TotalAmount - invoice.TotalPaid) < creditPurchaseToDelete.TotalAmount)
                         {
                             return new AppError(
                                 $"Essa fatura tem um valor de ${(invoice.TotalAmount - invoice.TotalPaid):F2} a ser pago ainda e essa transação a ser deletada " +
