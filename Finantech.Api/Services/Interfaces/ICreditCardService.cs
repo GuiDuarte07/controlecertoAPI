@@ -17,8 +17,10 @@ namespace Finantech.Services.Interfaces
         public Task<Result<bool>> DeleteCreditPurchaseAsync(long purchaseId, int userId);
         public Task<Result<IEnumerable<InfoInvoiceResponse>>> GetInvoicesByDateAsync(int userId, DateTime startDate, DateTime endDate, long? creditCardId);
         public Task<Result<InvoicePageResponse>> GetInvoicesByIdAsync(long invoiceId,  int userId);
-        public Task<Result<InfoInvoicePaymentResponse>> PayInvoiceAsync(CreteInvoicePaymentRequest invoicePaymentRequest, int userId);
         public Task<Result<InfoTransactionResponse[]>> GetCreditExpensesFromInvoice(int invoiceId, int userId);
+        public Task<Result<InfoInvoicePaymentResponse>> PayInvoiceAsync(CreteInvoicePaymentRequest invoicePaymentRequest, int userId);
+        public Task<Result<bool>> DeleteInvoicePaymentAsync(
+            long invoicePaymentId, int userId);
 
     }
 }

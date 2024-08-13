@@ -31,5 +31,5 @@ services:
     - "/home/guiduarte/RiderProjects/Finantech_backend:/src:rw"
     - "/home/guiduarte/.local/share/JetBrains/RiderRemoteDebugger/2024.1.4/Linux64:/opt/rider-debugger"
     - "/home/guiduarte/Programs/JetBrains.Rider/bin:/etc/opt/rider-debugger/backend-log.xml"
-    - "/home/guiduarte/.cache/JetBrains/Rider2024.1/log/DebuggerWorker/JetBrains.Debugger.Worker.2024_8_12_15_04_52:/var/opt/rider-debugger:rw"
+    - "/home/guiduarte/.cache/JetBrains/Rider2024.1/log/DebuggerWorker/JetBrains.Debugger.Worker.2024_8_13_15_23_39:/var/opt/rider-debugger:rw"
     working_dir: "/app"

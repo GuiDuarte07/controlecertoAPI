@@ -358,6 +358,54 @@ namespace Finantech.Services
 
             
         }
+
+        public async Task<Result<bool>> DeleteInvoicePaymentAsync(long invoicePaymentId, int userId)
+        {
+            using var transaction = await _appDbContext.Database.BeginTransactionAsync();
+
+            try
+            {
+                var invoicePaymentToDelete =
+                    await _appDbContext.InvoicePayments
+                        .Include(ip => ip.Account)
+                        .Include(ip => ip.Invoice)
+                        .FirstOrDefaultAsync(ip =>
+                            ip.Id == invoicePaymentId);
+
+                if (invoicePaymentToDelete is null)
+                    return new AppError("Pagamento de fatura não encontrado.",
+                        ErrorTypeEnum.NotFound);
+
+                var account = invoicePaymentToDelete.Account;
+                account.Balance = Math.Round(
+                    invoicePaymentToDelete.Account.Balance +
+                    invoicePaymentToDelete.AmountPaid, 2);
+
+                _appDbContext.Update(account);
+
+                var invoice = invoicePaymentToDelete.Invoice;
+                invoice.IsPaid = false;
+                invoice.TotalPaid =
+                    Math.Round(
+                        invoice.TotalPaid - invoicePaymentToDelete.AmountPaid, 2);
+            
+                _appDbContext.Update(invoice);
+
+                _appDbContext.Remove(invoicePaymentToDelete);
+
+                await _appDbContext.SaveChangesAsync();
+                
+                await transaction.CommitAsync();
+
+                return true;
+            } catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+
+                return new AppError("Ocorreu um erro ao deletar o pagamento da fatura.", ErrorTypeEnum.InternalError);
+            }
+        }
+
         public async Task<Result<bool>> DeleteCreditPurchaseAsync(long purchaseId, int userId)
         {
             var creditPurchaseToDelete = await _appDbContext.CreditPurchases.Include(cp => cp.Transactions).FirstOrDefaultAsync(cp => cp.Id == purchaseId && cp.CreditCard.Account.UserId == userId);
@@ -405,7 +453,7 @@ namespace Finantech.Services
                                 ErrorTypeEnum.BusinessRule);
                         }
 
-                        invoice.TotalAmount = Math.Round(invoice.TotalAmount - expense.Amount);
+                        invoice.TotalAmount = Math.Round(invoice.TotalAmount - expense.Amount, 2);
 
                         if ((Math.Round(invoice.TotalAmount - invoice.TotalPaid, 2)).Equals(0.00d))
                         {

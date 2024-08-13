@@ -26,7 +26,7 @@ namespace Finantech.Controllers
         [HttpPost("CreateCreditCard")]
         public async Task<IActionResult> CreateCreditCard([FromBody] CreateCreditCardRequest request)
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             var result = await _creditCardService.CreateCreditCardAsync(request, userId);
 
@@ -41,7 +41,7 @@ namespace Finantech.Controllers
         [HttpPatch("UpdateCreditCard")]
         public async Task<IActionResult> UpdateCreditCard([FromBody] UpdateCreditCardRequest request)
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             var result = await _creditCardService.UpdateCreditCardAsync(request, userId);
 
@@ -51,7 +51,7 @@ namespace Finantech.Controllers
         [HttpPost("CreateCreditPurchase")]
         public async Task<IActionResult> CreateCreditPurchase([FromBody] CreateCreditPurchaseRequest request)
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             var result = await _creditCardService.CreateCreditPurchaseAsync(request, userId);
 
@@ -66,7 +66,7 @@ namespace Finantech.Controllers
         [HttpPatch("UpdateCreditPurchase")]
         public async Task<IActionResult> UpdateCreditPurchase([FromBody] UpdateCreditPurchaseRequest request)
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             var result = await _creditCardService.UpdateCreditPurchaseAsync(request, userId);
 
@@ -81,7 +81,7 @@ namespace Finantech.Controllers
             [FromQuery] long? creditCardId
         )
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             DateTime startDateSet = startDate ?? DateTime.MinValue;
             DateTime endDateSet = endDate ?? DateTime.MaxValue;
@@ -98,7 +98,7 @@ namespace Finantech.Controllers
             long invoiceId
         )
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             var result = await _creditCardService.GetInvoicesByIdAsync(invoiceId, userId);
 
@@ -108,7 +108,7 @@ namespace Finantech.Controllers
         [HttpGet("GetCreditExpensesFromInvoice/{invoiceId}")]
         public async Task<IActionResult> GetCreditExpensesFromInvoice(int invoiceId)
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             var result = await _creditCardService.GetCreditExpensesFromInvoice(invoiceId, userId);
 
@@ -118,7 +118,7 @@ namespace Finantech.Controllers
         [HttpPost("PayInvoice")]
         public async Task<IActionResult> PayInvoice([FromBody] CreteInvoicePaymentRequest request)
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             var result = await _creditCardService.PayInvoiceAsync(request, userId);
 
@@ -131,10 +131,21 @@ namespace Finantech.Controllers
 
         }
 
+        [HttpDelete("DeleteInvoicePayment/{id:long}")]
+        public async Task<IActionResult> DeleteInvoicePayment(
+            long id)
+        {
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            var result = await _creditCardService.DeleteInvoicePaymentAsync(id, userId);
+
+            return result.HandleReturnResult();
+        }
+
         [HttpDelete("DeleteCreditPurchase/{creditPurchaseId}")]
         public async Task<IActionResult> DeleteCreditPurchase([FromRoute] int creditPurchaseId)
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
            
             var result = await _creditCardService.DeleteCreditPurchaseAsync(creditPurchaseId, userId);
@@ -151,7 +162,7 @@ namespace Finantech.Controllers
         [HttpGet("GetCreditCardInfo")]
         public async Task<IActionResult> GetCreditCardInfo()
         {
-            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             var result = await _creditCardService.GetCreditCardInfo(userId);
 
