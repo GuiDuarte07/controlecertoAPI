@@ -242,7 +242,9 @@ namespace Finantech.Services
 
             }
 
-            var invoices = await _appDbContext.Invoices.Where(i =>
+            var invoices = await _appDbContext.Invoices
+                .Include(i => i.CreditCard)
+                .Where(i =>
                 i.CreditCard.Account.UserId == userId &&
                 i.InvoiceDate >= startDate &&
                 i.InvoiceDate <= endDate && 

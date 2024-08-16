@@ -83,8 +83,11 @@ namespace Finantech.Controllers
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            DateTime startDateSet = startDate ?? DateTime.MinValue;
-            DateTime endDateSet = endDate ?? DateTime.MaxValue;
+            var startDateSet = startDate ?? DateTime.MinValue;
+            var endDateSet = endDate ?? DateTime.MaxValue;
+            
+            startDateSet = new DateTime(startDateSet.Year, startDateSet.Month, startDateSet.Day, 0, 0, 0);
+            endDateSet = new DateTime(endDateSet.Year, endDateSet.Month, endDateSet.Day, 0, 0, 0);
 
             var result = await _creditCardService.GetInvoicesByDateAsync(userId, startDateSet, endDateSet, creditCardId);
 
