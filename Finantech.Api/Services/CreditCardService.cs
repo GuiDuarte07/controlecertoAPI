@@ -350,7 +350,7 @@ namespace Finantech.Services
                 );
             }
 
-            invoice.TotalPaid =  Math.Round(invoice.TotalPaid + invoicePayment.AmountPaid);
+            invoice.TotalPaid =  Math.Round(invoice.TotalPaid + invoicePayment.AmountPaid, 2);
             invoice.CreditCard.UsedLimit -= invoicePayment.AmountPaid;
 
             const double lowerDiff = 1e-4;
@@ -400,6 +400,7 @@ namespace Finantech.Services
                 var invoicePaymentToDelete =
                     await _appDbContext.InvoicePayments
                         .Include(ip => ip.Account)
+                            .ThenInclude(a => a.CreditCard)
                         .Include(ip => ip.Invoice)
                         .FirstOrDefaultAsync(ip =>
                             ip.Id == invoicePaymentId);
@@ -411,6 +412,18 @@ namespace Finantech.Services
                 var account = invoicePaymentToDelete.Account;
                 account.Balance = Math.Round(
                     invoicePaymentToDelete.Account.Balance +
+                    invoicePaymentToDelete.AmountPaid, 2);
+
+                var creditCard = account.CreditCard!;
+
+                if (creditCard is null)
+                {
+                    return new AppError("Cartão de crédito não encontrado.",
+                        ErrorTypeEnum.NotFound);
+                }
+
+                creditCard.UsedLimit = Math.Round(
+                    creditCard.UsedLimit +
                     invoicePaymentToDelete.AmountPaid, 2);
 
                 _appDbContext.Update(account);
