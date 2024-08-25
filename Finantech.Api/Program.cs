@@ -138,10 +138,10 @@ builder.Services.AddRabbitMQService(configuration);
 builder.Services.AddRedisCache(configuration);
 
 // Gerar Certificado
-builder.WebHost.ConfigureKestrel(options =>
+/*builder.WebHost.ConfigureKestrel(options =>
 {
     options.ListenAnyIP(8080); // Porta para HTTP
-});
+});*/
 
 var app = builder.Build();
 

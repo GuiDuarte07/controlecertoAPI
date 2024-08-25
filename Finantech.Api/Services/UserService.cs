@@ -77,11 +77,13 @@ namespace Finantech.Services
                         new Category("Transporte", "local_taxi", "#00bfff", BillTypeEnum.EXPENSE, userId),
                         new Category("Vestuário", "checkroom", "#008b8b", BillTypeEnum.EXPENSE, userId),
                         new Category("Viagem", "travel", "#da70d6", BillTypeEnum.EXPENSE, userId),
+                        new Category("Ajustes", "build", "ff5a1f", BillTypeEnum.EXPENSE, userId),
                         new Category("Investimento", "trending_up", "#00cccc",BillTypeEnum.INCOME, userId),
                         new Category("Outros", "more_horiz", "#808080",BillTypeEnum.INCOME, userId),
                         new Category("Presente", "featured_seasonal_and_gifts", "#9dc209",BillTypeEnum.INCOME, userId),
                         new Category("Prêmio", "trophy", "#ffe135",BillTypeEnum.INCOME, userId),
-                        new Category("Salário", "payments", "#ae0c00",BillTypeEnum.INCOME, userId)
+                        new Category("Salário", "payments", "#ae0c00",BillTypeEnum.INCOME, userId),
+                        new Category("Ajustes", "build", "ff5a1f", BillTypeEnum.INCOME, userId),
                     ]);
 
                     await _appDbContext.Categories.AddRangeAsync(initialCategories);

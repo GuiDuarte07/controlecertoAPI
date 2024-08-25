@@ -137,39 +137,70 @@ namespace Finantech.Services
                     var createdCreditPurchase = await _appDbContext.CreditPurchases.AddAsync(creditPurchaseToCreate);
                     await _appDbContext.SaveChangesAsync();
 
-                    var purchaseDay = createdCreditPurchase.Entity.PurchaseDate.Day;
+                    // Encerramento e Fechamento da Fatura
+                    int invoiceCloseDay = creditCard.CloseDay; 
+                    var invoiceDueDay = creditCard.DueDay; 
                     
-                    var isInClosingDate = purchaseDay >= creditCard.CloseDay && purchaseDay <= creditCard.DueDay;
-                    var isAfterDueDate = purchaseDay > creditCard.DueDay;
+                    var purchaseDay = createdCreditPurchase.Entity.PurchaseDate.Day; 
 
                     var actualMonthInvoice = new DateTime(createdCreditPurchase.Entity.PurchaseDate.Year,
                         createdCreditPurchase.Entity.PurchaseDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-                    var actualClosingMonthDate = new DateTime(creditPurchaseToCreate.PurchaseDate.Year, creditPurchaseToCreate.PurchaseDate.Month, creditCard.CloseDay, 0, 0, 0, DateTimeKind.Utc);
-                    var actualDueMonthDate = new DateTime(creditPurchaseToCreate.PurchaseDate.Year, creditPurchaseToCreate.PurchaseDate.Month, creditCard.DueDay, 0, 0, 0, DateTimeKind.Utc);
+
+                    // Pegar o dia de encerramento e fechamento da fatura do mês da compra
+                    var purchaseMonthInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync(i => i.InvoiceDate == actualMonthInvoice);
+
+                    if (purchaseMonthInvoice is not null)
+                    {
+                        invoiceCloseDay = purchaseMonthInvoice.ClosingDate.Day;
+                        invoiceDueDay = purchaseMonthInvoice.DueDate.Day;
+                    }
+
+                    var isInClosingDate = purchaseDay >= invoiceCloseDay && purchaseDay <= invoiceDueDay;
+                    var isAfterDueDate = purchaseDay > invoiceDueDay;
+
+                    /*if (isInClosingDate == false && isAfterDueDate == false)
+                    {
+                        actualMonthInvoice = actualMonthInvoice.AddMonths(-1);
+                    }*/
+
+                    // Se essa fatura já está na sua data de fechamento, entra pra próxima.
+                    if (isInClosingDate || isAfterDueDate)
+                    {
+                        actualMonthInvoice = actualMonthInvoice.AddMonths(1);
+                    }
 
                     ICollection<Transaction> transactions = [];
 
                     for (var i = 0; i < totalInstallment - installmentsPaid; i++)
                     {
                         var monthInvoiceDate = actualMonthInvoice.AddMonths(i);
-                        var monthClosingInvoiceDate = actualClosingMonthDate.AddMonths(i);
-                        var monthDueInvoiceDate = actualDueMonthDate.AddMonths(i);
-
-                        // Se essa fatura já está na sua data de fechamento, entra pra próxima.
-                        if (isInClosingDate || isAfterDueDate)
-                        {
-                            monthInvoiceDate = actualMonthInvoice.AddMonths(i);
-                            monthClosingInvoiceDate = monthClosingInvoiceDate.AddMonths(i);
-                            monthDueInvoiceDate = monthDueInvoiceDate.AddMonths(i);
-                        }
 
                         var monthInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync
                         (
                             invoice => invoice.CreditCard.AccountId.Equals(creditCard.AccountId) && invoice.InvoiceDate.Equals(monthInvoiceDate)
                         );
 
+
                         if(monthInvoice is null)
                         {
+                            var monthClosingInvoiceDate = new DateTime(monthInvoiceDate.Year, monthInvoiceDate.Month, creditCard.CloseDay, 0, 0, 0, DateTimeKind.Utc);
+                            var monthDueInvoiceDate = new DateTime(monthInvoiceDate.Year, monthInvoiceDate.Month, creditCard.DueDay, 0, 0, 0, DateTimeKind.Utc);
+
+                            bool allowClosingOnWeekend = false; // ADICIONAR NOVO CAMPO
+                            if(!allowClosingOnWeekend)
+                            {
+                                if (monthClosingInvoiceDate.DayOfWeek == DayOfWeek.Saturday)
+                                {
+                                    monthClosingInvoiceDate = monthClosingInvoiceDate.AddDays(2);
+                                    monthDueInvoiceDate = monthDueInvoiceDate.AddDays(2);
+                                }
+                                else if (monthClosingInvoiceDate.DayOfWeek == DayOfWeek.Sunday)
+                                {
+                                    monthClosingInvoiceDate = monthClosingInvoiceDate.AddDays(1);
+                                    monthDueInvoiceDate = monthDueInvoiceDate.AddDays(1);
+                                }
+                            }
+
                             var newInvoice = new Invoice
                             {
                                 InvoiceDate = monthInvoiceDate,
@@ -443,8 +474,8 @@ namespace Finantech.Services
                         {
                             return new AppError("Não é mais possível excluir esse registro pois a fatura já foi paga.", ErrorTypeEnum.BusinessRule);
                         }
-                        
-                        if(Math.Round(invoice.TotalAmount - invoice.TotalPaid) < creditPurchaseToDelete.TotalAmount)
+
+                        if (Math.Round(invoice.TotalAmount - invoice.TotalPaid, 2) < creditPurchaseToDelete.TotalAmount)
                         {
                             return new AppError(
                                 $"Essa fatura tem um valor de ${(invoice.TotalAmount - invoice.TotalPaid):F2} a ser pago ainda e essa transação a ser deletada " +
