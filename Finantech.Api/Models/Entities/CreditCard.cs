@@ -8,6 +8,7 @@
         public string Description { get; set; }
         public int DueDay { get; set; }
         public int CloseDay { get; set; }
+        public bool SkipWeekend { get; set; }
         public long AccountId { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

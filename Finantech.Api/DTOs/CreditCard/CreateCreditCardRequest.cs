@@ -21,6 +21,9 @@ namespace Finantech.DTOs.CreditCard
         [Required(ErrorMessage = "Campo 'DueDay' não informado.")]
         [Range(2, 28, ErrorMessage = "Data de fechamento precisa está entre o dia 2 e o dia 28")]
         public int DueDay { get; set; }
-        
+
+        [Required(ErrorMessage = "Campo 'SkipWeekend' não informado.")]
+        public bool SkipWeekend { get; set; }
+
     }
 }

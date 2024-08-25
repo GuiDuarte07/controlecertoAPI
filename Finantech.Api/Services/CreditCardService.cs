@@ -186,8 +186,7 @@ namespace Finantech.Services
                             var monthClosingInvoiceDate = new DateTime(monthInvoiceDate.Year, monthInvoiceDate.Month, creditCard.CloseDay, 0, 0, 0, DateTimeKind.Utc);
                             var monthDueInvoiceDate = new DateTime(monthInvoiceDate.Year, monthInvoiceDate.Month, creditCard.DueDay, 0, 0, 0, DateTimeKind.Utc);
 
-                            bool allowClosingOnWeekend = false; // ADICIONAR NOVO CAMPO
-                            if(!allowClosingOnWeekend)
+                            if(creditCard.SkipWeekend)
                             {
                                 if (monthClosingInvoiceDate.DayOfWeek == DayOfWeek.Saturday)
                                 {
