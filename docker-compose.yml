@@ -1,22 +1,36 @@
 version: '3.4'
 
 services:
-  finantech:
-    image: ${DOCKER_REGISTRY-}finantech
+  controlecerto:
+    image: ${DOCKER_REGISTRY-}controlecerto
     build:
       context: .
-      dockerfile: Finantech.Api/Dockerfile
+      dockerfile: ControleCerto.Api/Dockerfile
     ports:
         - "8080:8080"
         - "8081:8081"
-  database.pgs:
-    image: postgres:latest
-    container_name: database.pgs
+    depends_on:
+      - rabbitmq
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
     environment:
-        - POSTGRES_DB=Finantech
-        - POSTGRES_USER=admin
-        - POSTGRES_PASSWORD=12345
-    volumes:
-      - ./.containers/Finantech-db:/var/lib/postgresql/data
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=12345
     ports:
-      - 5432:5432
+      - "5672:5672"
+      - "15672:15672"
+  cache:
+    image: redis:7.2-alpine
+    container_name: cache
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes: 
+      - cache:/data
+
+networks:
+  default:
+    driver: bridge
+
+

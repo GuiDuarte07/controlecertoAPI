@@ -7,7 +7,7 @@
     <ProjectGuid>355e08b6-0353-426f-98c5-dcbd1b6bf665</ProjectGuid>
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/swagger</DockerServiceUrl>
-    <DockerServiceName>finantech</DockerServiceName>
+    <DockerServiceName>controlecerto</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.override.yml">
