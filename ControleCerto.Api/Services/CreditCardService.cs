@@ -554,8 +554,8 @@ namespace ControleCerto.Services
                                   creditPurchaseToUpdate.Destination,
                     CreditCardId = request.CreditCardId ?? creditPurchaseToUpdate.CreditCardId,
                     TotalAmount = request.TotalAmount is not null
-                        ? (long)request.TotalAmount
-                        : (long)creditPurchaseToUpdate.TotalAmount,
+                        ? (double)request.TotalAmount
+                        : (double)creditPurchaseToUpdate.TotalAmount,
                     CategoryId = request.CategoryId
                 };
 
