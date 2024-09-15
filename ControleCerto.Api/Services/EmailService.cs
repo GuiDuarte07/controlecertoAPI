@@ -18,11 +18,18 @@ namespace ControleCerto.Services
             _cacheService = cacheService;
         }
 
+        public void SendEmail(List<string> emailsTo, string subject, string body)
+        {
+            var mail = PrepareteMessage(emailsTo, subject, body);
+
+            SendEmailBySmtp(mail);
+        }
+
         public void SendConfirmationEmail(InfoUserResponse user)
         {
             string confirmEmailToken = RandomGenerate.Generate32BytesToken();
 
-            string frontEndHost = "http://localhost:4200";
+            string frontEndHost = _configuration.GetConnectionString("WebSiteUrl")!;
             string frontEndUrlPath = $"{frontEndHost}/confirm-email/{confirmEmailToken}";
 
             _cacheService.SetConfirmEmailTokenAsync(user.Email, confirmEmailToken);
@@ -94,18 +101,11 @@ namespace ControleCerto.Services
             SendEmail([user.Email], "Confirme seu E-mail na Controle Certo", htmlBody);
         }
 
-        public void SendEmail(List<string> emailsTo, string subject, string body)
-        {
-            var mail = PrepareteMessage(emailsTo, subject, body);
-
-            SendEmailBySmtp(mail);
-        }
-
         public void SendForgotPasswordEmail(string email)
         {
             string forgotPasswordToken = RandomGenerate.Generate32BytesToken();
 
-            string frontEndHost = "http://localhost:4200";
+            string frontEndHost = _configuration.GetConnectionString("WebSiteUrl")!;
             string frontEndUrlPath = $"{frontEndHost}/forgot-password/{forgotPasswordToken}";
 
             _cacheService.SetForgotPasswordTokenAsync(email, forgotPasswordToken);
@@ -180,8 +180,9 @@ namespace ControleCerto.Services
 
         private MailMessage PrepareteMessage(List<string> emailsTo, string subject, string body)
         {
+            
             var mail = new MailMessage();
-            mail.From = new MailAddress(_configuration.GetConnectionString("MailAddress")!, "Controle Certo");
+            mail.From = new MailAddress(_configuration.GetSection("MailConfig:Address").Value!, "Controle Certo");
 
             mail.Subject = subject;
             mail.Body = body;
@@ -204,8 +205,8 @@ namespace ControleCerto.Services
             smtpClient.Timeout = 100000;
             smtpClient.UseDefaultCredentials = false;
             smtpClient.Credentials = new NetworkCredential(
-                _configuration.GetConnectionString("MailAddress"),
-                _configuration.GetConnectionString("MailPassword")
+                _configuration.GetSection("MailConfig:Address").Value!,
+                _configuration.GetSection("MailConfig:Password").Value!
             );
 
             smtpClient.Send(mail);

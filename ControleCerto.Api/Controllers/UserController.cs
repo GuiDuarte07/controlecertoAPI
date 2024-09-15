@@ -77,7 +77,7 @@ namespace ControleCerto.Controllers
 
         [AllowAnonymous]
         [HttpPost("SendForgotPasswordEmail")]
-        public async Task<IActionResult> ChangePassword([FromBody] ForgotPasswordEvent forgotPasswordEmail)
+        public async Task<IActionResult> SendForgotPasswordEmail([FromBody] ForgotPasswordEvent forgotPasswordEmail)
         {
             var result = await _userService.GenerateForgotPasswordTokenAsync(forgotPasswordEmail.Email);
 

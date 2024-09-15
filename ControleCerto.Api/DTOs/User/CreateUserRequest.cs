@@ -5,7 +5,7 @@ namespace ControleCerto.DTOs.User
     public class CreateUserRequest
     {
         [Required(ErrorMessage = "Campo 'Name' não informado.")]
-        [MinLength(7, ErrorMessage = "Campo 'Name' precisa conter pelo menos 7 caracteres")]
+        [MinLength(5, ErrorMessage = "Campo 'Name' precisa conter pelo menos 7 caracteres")]
         [MaxLength(100, ErrorMessage = "Campo 'Name' pode conter até 100 caracteres")]
         public string Name { get; set; }
 

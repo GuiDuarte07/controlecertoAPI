@@ -9,9 +9,6 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 
-# Install curl and wget
-RUN apt-get update && apt-get install -y curl wget
-
 WORKDIR /src
 COPY ["ControleCerto.Api/ControleCerto.csproj", "ControleCerto.Api/"]
 RUN dotnet restore "./ControleCerto.Api/ControleCerto.csproj"
