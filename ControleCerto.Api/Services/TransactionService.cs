@@ -347,6 +347,8 @@ namespace ControleCerto.Services
 
         public async Task<Result<TransactionList>> GetTransactionsAsync(int userId, DateTime startDate, DateTime endDate, int? accountId)
         {
+            var startDateInvoiceFilter = new DateTime(startDate.Year, startDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
             var transactions = await _appDbContext.Transactions
                 .Include(i => i.Category)
                 .Include(t => t.Account)
@@ -374,8 +376,7 @@ namespace ControleCerto.Services
                     .ThenInclude(t => t.Account)
                 .Include(i => i.CreditCard)
                 .Where(i => i.CreditCard.Account!.UserId == userId &&
-                    i.ClosingDate >= startDate &&
-                    i.ClosingDate <= endDate)
+                    i.InvoiceDate.Equals(startDateInvoiceFilter))
                 .ToListAsync();
 
             if (accountId.HasValue)

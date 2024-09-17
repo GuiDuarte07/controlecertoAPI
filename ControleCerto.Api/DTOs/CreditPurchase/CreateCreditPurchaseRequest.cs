@@ -15,7 +15,7 @@ namespace ControleCerto.DTOs.CreditPurchase
         public int InstallmentsPaid { get; set; } = 0;
 
         [Required(ErrorMessage = "Campo 'PurchaseDate' não informado.")]
-        public DateTime? PurchaseDate { get; set; }
+        public DateTime PurchaseDate { get; set; }
 
         [Required(ErrorMessage = "Campo 'Destination' não informado.")]
         [MaxLength(80, ErrorMessage = "Campo 'Destination' pode conter até 80 caracteres")]

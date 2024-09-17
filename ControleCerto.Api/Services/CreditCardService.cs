@@ -25,11 +25,6 @@ namespace ControleCerto.Services
 
         public async Task<Result<InfoCreditCardResponse>> CreateCreditCardAsync(CreateCreditCardRequest request, int userId)
         {
-            if (request.CloseDay > request.DueDay)
-            {
-                return new AppError("O sistema não suporta data de vencimento maior que a data de fechamento.", ErrorTypeEnum.BusinessRule);
-            }
-            
             var creditCardToCreate = _mapper.Map<CreditCard>(request);
             var account = await _appDbContext.Accounts.Include(a => a.CreditCard).FirstOrDefaultAsync(cd => cd.Id == creditCardToCreate.AccountId);
 
@@ -59,7 +54,7 @@ namespace ControleCerto.Services
             {
                 return new AppError("Cartão de crédito não encontrado.", ErrorTypeEnum.NotFound);
             }
-            
+
             creditCardToUpdate.UpdatedAt = DateTime.UtcNow;
 
             if (request.Description is not null)
@@ -86,7 +81,7 @@ namespace ControleCerto.Services
 
             return _mapper.Map<InfoCreditCardResponse>(updatedCreditCard.Entity);
         }
-        
+
         public async Task<Result<InfoCreditPurchaseResponse>> CreateCreditPurchaseAsync(CreateCreditPurchaseRequest request, int userId)
         {
             var creditPurchaseToCreate = _mapper.Map<CreditPurchase>(request);
@@ -124,96 +119,24 @@ namespace ControleCerto.Services
                     double TotalAmount = request.TotalAmount;
                     int totalInstallment = request.TotalInstallment;
                     int installmentsPaid = request.InstallmentsPaid;
-                    double installmentAmount = TotalAmount / (request.TotalInstallment - installmentsPaid);
-
-                    /*
-                     * Detalhes sobre implementação:
-                     * - Se a data de fechamento da fatura é dia 20 p.e., as compras do dia 20 a 27 entram na fatura do próximo mês
-                     * - Se a compra foi feito antes do fechamento, ex: dia 19, a primeira parcela da compra já entra na fatura do mês
-                     * * Por enquanto estamos supondo que o dia de vencimento possa ser entre dia 8 e 28 ---------
-                     *   (ou seja, não corre o risco de a fatura do mês acaber sendo paga no começo do outro mês).
-                     */
+                    double installmentAmount = Math.Round(TotalAmount / (request.TotalInstallment - installmentsPaid), 2);
 
                     var createdCreditPurchase = await _appDbContext.CreditPurchases.AddAsync(creditPurchaseToCreate);
-                    await _appDbContext.SaveChangesAsync();
-
-                    // Encerramento e Fechamento da Fatura
-                    int invoiceCloseDay = creditCard.CloseDay; 
-                    var invoiceDueDay = creditCard.DueDay; 
-                    
-                    var purchaseDay = createdCreditPurchase.Entity.PurchaseDate.Day; 
-
-                    var actualMonthInvoice = new DateTime(createdCreditPurchase.Entity.PurchaseDate.Year,
-                        createdCreditPurchase.Entity.PurchaseDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-
-                    // Pegar o dia de encerramento e fechamento da fatura do mês da compra
-                    var purchaseMonthInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync(i => i.InvoiceDate == actualMonthInvoice);
-
-                    if (purchaseMonthInvoice is not null)
-                    {
-                        invoiceCloseDay = purchaseMonthInvoice.ClosingDate.Day;
-                        invoiceDueDay = purchaseMonthInvoice.DueDate.Day;
-                    }
-
-                    var isInClosingDate = purchaseDay >= invoiceCloseDay && purchaseDay <= invoiceDueDay;
-                    var isAfterDueDate = purchaseDay > invoiceDueDay;
-
-                    /*if (isInClosingDate == false && isAfterDueDate == false)
-                    {
-                        actualMonthInvoice = actualMonthInvoice.AddMonths(-1);
-                    }*/
-
-                    // Se essa fatura já está na sua data de fechamento, entra pra próxima.
-                    if (isInClosingDate || isAfterDueDate)
-                    {
-                        actualMonthInvoice = actualMonthInvoice.AddMonths(1);
-                    }
+                    await _appDbContext.SaveChangesAsync(); 
 
                     ICollection<Transaction> transactions = [];
 
+                    Invoice? actualMonthInvoice = null;
+
                     for (var i = 0; i < totalInstallment - installmentsPaid; i++)
                     {
-                        var monthInvoiceDate = actualMonthInvoice.AddMonths(i);
-
-                        var monthInvoice = await _appDbContext.Invoices.FirstOrDefaultAsync
-                        (
-                            invoice => invoice.CreditCard.AccountId.Equals(creditCard.AccountId) && invoice.InvoiceDate.Equals(monthInvoiceDate)
-                        );
-
-
-                        if(monthInvoice is null)
+                        var actualMonthInvoiceResult = await GetInvoiceByPurchaseDateAndInstallment(creditCard, request.PurchaseDate, actualMonthInvoice?.InvoiceDate ?? null);
+                        if (actualMonthInvoiceResult.IsError)
                         {
-                            var monthClosingInvoiceDate = new DateTime(monthInvoiceDate.Year, monthInvoiceDate.Month, creditCard.CloseDay, 0, 0, 0, DateTimeKind.Utc);
-                            var monthDueInvoiceDate = new DateTime(monthInvoiceDate.Year, monthInvoiceDate.Month, creditCard.DueDay, 0, 0, 0, DateTimeKind.Utc);
-
-                            if(creditCard.SkipWeekend)
-                            {
-                                if (monthClosingInvoiceDate.DayOfWeek == DayOfWeek.Saturday)
-                                {
-                                    monthClosingInvoiceDate = monthClosingInvoiceDate.AddDays(2);
-                                    monthDueInvoiceDate = monthDueInvoiceDate.AddDays(2);
-                                }
-                                else if (monthClosingInvoiceDate.DayOfWeek == DayOfWeek.Sunday)
-                                {
-                                    monthClosingInvoiceDate = monthClosingInvoiceDate.AddDays(1);
-                                    monthDueInvoiceDate = monthDueInvoiceDate.AddDays(1);
-                                }
-                            }
-
-                            var newInvoice = new Invoice
-                            {
-                                InvoiceDate = monthInvoiceDate,
-                                ClosingDate = monthClosingInvoiceDate,
-                                DueDate = monthDueInvoiceDate,
-                                CreditCardId = creditCard.Id,
-                            };
-
-                            var invoiceCreated = await _appDbContext.Invoices.AddAsync(newInvoice);
-                            await _appDbContext.SaveChangesAsync();
-
-                            monthInvoice = invoiceCreated.Entity;
+                            return actualMonthInvoiceResult.Error;
                         }
-                        
+
+                        actualMonthInvoice = actualMonthInvoiceResult.Value;
 
                         var newTransaction = new Transaction
                         {
@@ -223,21 +146,20 @@ namespace ControleCerto.Services
                             CategoryId = request.CategoryId,
                             Amount = installmentAmount,
                             InstallmentNumber = i + 1 + installmentsPaid,
-                            InvoiceId = monthInvoice.Id,
-                            Description = request.Description + 
+                            InvoiceId = actualMonthInvoice.Id,
+                            Description = request.Description +
                                 (totalInstallment > 1 ? $" {i + 1 + installmentsPaid}/{(totalInstallment - installmentsPaid)}" : ""),
                             Destination = request.Destination,
-                            PurchaseDate = request.PurchaseDate ?? DateTime.UtcNow,
+                            PurchaseDate = request.PurchaseDate,
                         };
 
-
                         transactions.Add(newTransaction);
-                        monthInvoice.TotalAmount += installmentAmount;
-                        if(monthInvoice.IsPaid)
+                        actualMonthInvoice.TotalAmount += installmentAmount;
+                        if (actualMonthInvoice.IsPaid)
                         {
-                            monthInvoice.IsPaid = false;
+                            actualMonthInvoice.IsPaid = false;
                         }
-                        _appDbContext.Invoices.Update(monthInvoice);
+                        _appDbContext.Invoices.Update(actualMonthInvoice);
                     }
 
 
@@ -257,6 +179,143 @@ namespace ControleCerto.Services
                     throw;
                 }
             }
+        }
+
+        private async Task<Result<Invoice>> GetOrCreateInvoice(CreditCard creditCard, DateTime invoiceDate) //repository method
+        {
+            var monthInvoiceDate = new DateTime(invoiceDate.Year, invoiceDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+            var invoice = await _appDbContext.Invoices.FirstOrDefaultAsync
+                (
+                    invoice => invoice.CreditCard.Id.Equals(creditCard.Id) && invoice.InvoiceDate.Equals(monthInvoiceDate)
+                );
+
+            if (invoice is not null)
+            {
+                return invoice;
+            }
+
+
+
+            // Aqui, está assumido que a data de vencimento está entre o dia 1 e o dia 27.
+            var monthDueInvoiceDate = new DateTime(monthInvoiceDate.Year, monthInvoiceDate.Month, creditCard.DueDay, 0, 0, 0, DateTimeKind.Utc);
+
+
+
+            //Hardcoded 7 dias de diferença entre o vencimento e o fechamento.
+            //Pode ser necessário permitir a escolha de dias entre vencimento e fechamento.
+            var monthClosingInvoiceDate = monthDueInvoiceDate.AddDays(-7);
+
+            if (creditCard.SkipWeekend)
+            {
+                if (monthDueInvoiceDate.DayOfWeek == DayOfWeek.Saturday)
+                {
+                    monthClosingInvoiceDate = monthClosingInvoiceDate.AddDays(2);
+                    monthDueInvoiceDate = monthDueInvoiceDate.AddDays(2);
+                }
+                else if (monthDueInvoiceDate.DayOfWeek == DayOfWeek.Sunday)
+                {
+                    monthClosingInvoiceDate = monthClosingInvoiceDate.AddDays(1);
+                    monthDueInvoiceDate = monthDueInvoiceDate.AddDays(1);
+                }
+            }
+
+            var newInvoice = new Invoice
+            {
+                InvoiceDate = monthInvoiceDate,
+                ClosingDate = monthClosingInvoiceDate,
+                DueDate = monthDueInvoiceDate,
+                CreditCardId = creditCard.Id,
+            };
+
+            var invoiceCreated = await _appDbContext.Invoices.AddAsync(newInvoice);
+            await _appDbContext.SaveChangesAsync();
+
+            return invoiceCreated.Entity;
+        }
+
+        private async Task<Result<Invoice>> GetInvoiceByPurchaseDateAndInstallment(CreditCard creditCard, DateTime purchaseDate, DateTime? firstPurchaseInvoiceDate)
+        {
+            // Essa variavel é usada para não precisar calcular mais de uma vez qual a fatura inicial dessa compra
+            // Uma vez calculado a primeira fatura, basta só somar a parcela em mêses e retornar a proxima fatura.
+            if (firstPurchaseInvoiceDate.HasValue)
+            {
+                var date = firstPurchaseInvoiceDate.Value;
+                var monthInvoiceDate = date.AddMonths(1);
+
+                var invoiceResult = await GetOrCreateInvoice(creditCard, monthInvoiceDate);
+
+                if (invoiceResult.IsError)
+                {
+                    return new AppError("Erro desconhecido ao criar faturas dessa despesa.", ErrorTypeEnum.InternalError);
+                }
+
+                return invoiceResult.Value;
+            }
+
+            /*
+            * Detalhes sobre implementação:
+            * - Se a data de fechamento da fatura é dia 20 p.e., as compras do dia 20 a 27 entram na fatura do próximo mês
+            * - Se a compra foi feita antes do fechamento, ex: dia 19, a primeira parcela da compra já entra na fatura do mês
+            */
+
+            var adjustedPurchaseDate = purchaseDate; //Nessa parte tinha o AddMonths(installment)
+
+
+            /*
+             * ACREDITO QUE NÃO TENHA PERIGO DE UMA COMPRA FEITA NO MÊS M ENTRAR PARA A FATURA DO MÊS M-1
+             * POIS O MÊS DA FATURA SEMPRE SERÁ NO MÊS DA SUA DATA DE VENCIMENTO.
+             * ENTÃO MESMO QUE A COMPRA TENHA SIDO DIA 01/MM E O VENCIMENTO SEJA O DIA 01, JÁ FINALIZOU OU
+             * ESTÁ NO TEMPO DE ENCERRAMENTO DA FATURA ANTERIOR
+             */
+
+            // Pegar o dia de encerramento e fechamento da fatura do mês da compra
+
+            Invoice actualInvoice;
+            DateTime actualMonthInvoiceDate;
+
+            var initialMonthInvoiceDate = new DateTime(adjustedPurchaseDate.Year,
+                adjustedPurchaseDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+            int addMonthCount = 0;
+            while (true)
+            {
+                // Prevenir loop infinito.
+                if (addMonthCount > 10)
+                {
+                    return new AppError("Ocorreu um erro ao encontrar a fatura,", ErrorTypeEnum.InternalError);
+                }
+
+
+                actualMonthInvoiceDate = initialMonthInvoiceDate.AddMonths(addMonthCount);
+                var actualInvoiceResult = await GetOrCreateInvoice(creditCard, actualMonthInvoiceDate);
+
+                if (actualInvoiceResult.IsError)
+                {
+                    return actualInvoiceResult.Error;
+                }
+
+                actualInvoice = actualInvoiceResult.Value;
+
+                var invoiceDueDate = actualInvoice.DueDate;
+                var invoiceCloseDate = actualInvoice.ClosingDate;
+
+                bool isInClosingDate = adjustedPurchaseDate >= invoiceCloseDate && adjustedPurchaseDate <= invoiceDueDate;
+                bool isAfterDueDate = adjustedPurchaseDate > invoiceDueDate;
+
+                // Se essa fatura já está na sua data de fechamento, entra pra próxima.
+                if (isInClosingDate || isAfterDueDate)
+                {
+                    addMonthCount++;
+                    continue;
+                } else
+                {
+                    break;
+                }
+            }
+            
+
+            return actualInvoice;
         }
 
         public async Task<Result<IEnumerable<InfoInvoiceResponse>>> GetInvoicesByDateAsync(int userId, DateTime startDate, DateTime endDate, long? creditCardId)
