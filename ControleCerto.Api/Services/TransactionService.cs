@@ -345,11 +345,13 @@ namespace ControleCerto.Services
          * ========= GET TRANSACTIONS
          */
 
-        public async Task<Result<TransactionList>> GetTransactionsAsync(int userId, DateTime startDate, DateTime endDate, int? accountId)
+        public async Task<Result<TransactionList>> GetTransactionsAsync(int userId, DateTime startDate, DateTime endDate, bool? seeInvoices, int? accountId)
         {
             var startDateInvoiceFilter = new DateTime(startDate.Year, startDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
-            var transactions = await _appDbContext.Transactions
+            if (seeInvoices is null || seeInvoices is true)
+            {
+                var transactions = await _appDbContext.Transactions
                 .Include(i => i.Category)
                 .Include(t => t.Account)
                 .Where(t =>
@@ -357,56 +359,94 @@ namespace ControleCerto.Services
                     t.Account!.UserId == userId &&
                     t.PurchaseDate >= startDate &&
                     t.PurchaseDate <= endDate)
+                .OrderByDescending(t => t.PurchaseDate)
                 .ToListAsync();
 
-            var invoicePayments = await _appDbContext.InvoicePayments
-                .Include(ip => ip.Account)
-                .Where(ip =>
-                    ip.Account!.UserId == userId &&
-                    ip.PaymentDate >= startDate &&
-                    ip.PaymentDate <= endDate)
-                .ToListAsync();
+                var invoicePayments = await _appDbContext.InvoicePayments
+                    .Include(ip => ip.Account)
+                    .Where(ip =>
+                        ip.Account!.UserId == userId &&
+                        ip.PaymentDate >= startDate &&
+                        ip.PaymentDate <= endDate)
+                    .OrderByDescending(t => t.PaymentDate)
+                    .ToListAsync();
 
-            var invoices = await _appDbContext.Invoices
-                .Include(i => i.Transactions)
-                    .ThenInclude(t => t.Category)
-                .Include(i => i.Transactions)
-                    .ThenInclude(t => t.CreditPurchase)
-               .Include(i => i.Transactions)
-                    .ThenInclude(t => t.Account)
-                .Include(i => i.CreditCard)
-                .Where(i => i.CreditCard.Account!.UserId == userId &&
-                    i.InvoiceDate.Equals(startDateInvoiceFilter))
-                .ToListAsync();
+                var invoices = await _appDbContext.Invoices
+                    .Include(i => i.Transactions)
+                        .ThenInclude(t => t.Category)
+                    .Include(i => i.Transactions)
+                        .ThenInclude(t => t.CreditPurchase)
+                   .Include(i => i.Transactions)
+                        .ThenInclude(t => t.Account)
+                    .Include(i => i.CreditCard)
+                    .Where(i => i.CreditCard.Account!.UserId == userId &&
+                        i.InvoiceDate.Equals(startDateInvoiceFilter))
+                    .ToListAsync();
 
-            if (accountId.HasValue)
-            {
-
-                var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId);
-
-                if (account is null)
+                if (accountId.HasValue)
                 {
-                    return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
+
+                    var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId);
+
+                    if (account is null)
+                    {
+                        return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
+                    }
+
+
+                    transactions = transactions.Where(t => t.AccountId == accountId).ToList();
+                    invoicePayments = invoicePayments.Where(t => t.AccountId == accountId).ToList();
+                    invoices = invoices.Where(t => t.CreditCard.AccountId == accountId).ToList();
                 }
 
+                var allTransactions =
+                    _mapper.Map<List<InfoTransactionResponse>>(transactions);
 
-                transactions = transactions.Where(t => t.AccountId == accountId).ToList();
-                invoicePayments = invoicePayments.Where(t => t.AccountId == accountId).ToList();
-                invoices = invoices.Where(t => t.CreditCard.AccountId == accountId).ToList();
-            }
+                allTransactions.AddRange(invoicePayments
+                    .Select(ip => new InfoTransactionResponse(ip)));
 
-            var allTransactions =
-                _mapper.Map<List<InfoTransactionResponse>>(transactions);
-            
-            allTransactions.AddRange(invoicePayments
-                .Select(ip => new InfoTransactionResponse(ip)));
+                return
+                    new TransactionList
+                    {
+                        Transactions = allTransactions,
+                        Invoices = _mapper.Map<List<InfoInvoiceResponse>>(invoices)
+                    };
+            } else
+            {
+                var transactions = await _appDbContext.Transactions
+                .Include(i => i.Category)
+                .Include(t => t.Account)
+                .Where(t =>
+                    t.Account!.UserId == userId &&
+                    t.PurchaseDate >= startDate &&
+                    t.PurchaseDate <= endDate)
+                .OrderByDescending(t => t.PurchaseDate)
+                .ToListAsync();
 
-            return
-                new TransactionList
+                if (accountId.HasValue)
                 {
-                    Transactions = allTransactions,
-                    Invoices = _mapper.Map<List<InfoInvoiceResponse>>(invoices)
-                };
+
+                    var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId);
+
+                    if (account is null)
+                    {
+                        return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
+                    }
+
+
+                    transactions = transactions.Where(t => t.AccountId == accountId).ToList();
+                }
+
+                var allTransactions =
+                    _mapper.Map<List<InfoTransactionResponse>>(transactions);
+
+                return
+                    new TransactionList
+                    {
+                        Transactions = allTransactions,
+                        Invoices = []
+                    };
+            }
         }
         
     }
