@@ -25,8 +25,10 @@ namespace ControleCerto.Services
         {
             var createdAccount = _mapper.Map<Account>(accountRequest);
             createdAccount.UserId = userId;
+            createdAccount.Balance = Math.Round(createdAccount.Balance, 2);
 
             var account = await _appDbContext.Accounts.AddAsync(createdAccount);
+
 
             if (account.Entity == null)
             {
@@ -89,6 +91,7 @@ namespace ControleCerto.Services
 
         public async Task<Result<BalanceStatement>> GetBalanceStatementAsync(int userId, DateTime? startDate, DateTime? endDate)
         {
+
             DateTime currentUtc = DateTime.UtcNow;
             if (startDate == null) 
             {
@@ -106,8 +109,8 @@ namespace ControleCerto.Services
 
             double incomes = await _appDbContext.Transactions.Where(t => t.Type == TransactionTypeEnum.INCOME && t.Account!.UserId == userId && t.PurchaseDate >= startDate && t.PurchaseDate <= endDate).SumAsync(i => i.Amount);
 
-            double invoices = await _appDbContext.Invoices.Where(i => i.CreditCard.Account.UserId == userId && i.ClosingDate >= startDate && i.ClosingDate <= endDate).SumAsync(i => i.TotalAmount - i.TotalPaid);
-
+            double invoices = await _appDbContext.Invoices.Where(i => i.CreditCard.Account.UserId == userId && i.InvoiceDate >= startDate && i.InvoiceDate < endDate).SumAsync(i => i.TotalAmount);
+            //double invoices = await _appDbContext.Invoices.Where(i => i.CreditCard.Account.UserId == userId && i.InvoiceDate >= startDate && i.InvoiceDate <= endDate).SumAsync(i => i.TotalAmount - i.TotalPaid);
             return new BalanceStatement(balance, incomes, expenses, invoices);
         }
 
@@ -125,6 +128,8 @@ namespace ControleCerto.Services
                 return new AppError("Conta não encontrada.", ErrorTypeEnum.Validation);
             }
 
+            if (request.Balance != null)
+                account.Balance = Math.Round((double)request.Balance, 2);
             if (request.Description != null)
                 account.Description = request.Description;
             if (request.Bank != null)
