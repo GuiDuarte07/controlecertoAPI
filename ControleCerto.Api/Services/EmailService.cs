@@ -209,8 +209,20 @@ namespace ControleCerto.Services
                 _configuration.GetSection("MailConfig:Password").Value!
             );
 
-            smtpClient.Send(mail);
-            smtpClient.Dispose();
+            try
+            {
+                smtpClient.Send(mail);
+                
+            } catch(Exception error)
+            {
+                Console.WriteLine(error);
+            } 
+            finally
+            {
+                smtpClient.Dispose();
+            }
+
+            
 
         }
     }
