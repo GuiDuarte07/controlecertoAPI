@@ -9,10 +9,10 @@ namespace ControleCerto.Models.MapConfig
         public void Configure(EntityTypeBuilder<Account> builder)
         {
             builder.HasKey(a => a.Id);
-            builder.Property(a => a.Balance).HasColumnType("decimal(10,2)");
-            builder.Property(a => a.Description).HasMaxLength(100);
-            builder.Property(a => a.Bank).HasMaxLength(45);
-            builder.Property(a => a.Color).HasMaxLength(10);
+            builder.Property(a => a.Balance).HasColumnType("decimal(10,2)").IsRequired();
+            builder.Property(a => a.Description).HasMaxLength(100).IsRequired(false);
+            builder.Property(a => a.Bank).HasMaxLength(45).IsRequired();
+            builder.Property(a => a.Color).HasMaxLength(10).IsRequired();
             builder.Property(a => a.Deleted).HasDefaultValue(false);
             //builder.Property(ce => ce.CreatedAt).HasColumnType("datetime");
             //builder.Property(ce => ce.UpdatedAt).HasColumnType("datetime");

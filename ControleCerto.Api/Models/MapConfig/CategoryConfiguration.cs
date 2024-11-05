@@ -8,9 +8,9 @@ namespace ControleCerto.Models.MapConfig
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-            builder.Property(c => c.Name).HasMaxLength(60);
-            builder.Property(c => c.Icon).HasMaxLength(100);
-            builder.Property(c => c.Color).HasMaxLength(10);
+            builder.Property(c => c.Name).HasMaxLength(60).IsRequired();
+            builder.Property(c => c.Icon).HasMaxLength(100).IsRequired();
+            builder.Property(c => c.Color).HasMaxLength(10).IsRequired();
             //builder.Property(c => c.CreatedAt).HasColumnType("datetime");
             //builder.Property(c => c.UpdatedAt).HasColumnType("datetime");
 

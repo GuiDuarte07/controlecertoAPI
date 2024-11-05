@@ -11,9 +11,9 @@ namespace ControleCerto.Models.MapConfig
             builder.Property(t => t.Description).HasMaxLength(100).IsRequired();
             builder.Property(t => t.Amount).HasColumnType("decimal(10,2)").IsRequired();
             //builder.Property(e => e.PurchaseDate).HasColumnType("datetime");
-            builder.Property(t => t.Destination).HasMaxLength(80);
+            builder.Property(t => t.Destination).HasMaxLength(80).IsRequired(false);
             builder.Property(t => t.JustForRecord).HasDefaultValue(false);
-            builder.Property(t => t.Observations).HasMaxLength(300);
+            builder.Property(t => t.Observations).HasMaxLength(300).IsRequired(false);
             //builder.Property(e => e.CreatedAt).HasColumnType("datetime");
             //builder.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
