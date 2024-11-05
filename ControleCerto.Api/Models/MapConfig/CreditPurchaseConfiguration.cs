@@ -8,11 +8,11 @@ namespace ControleCerto.Models.MapConfig
     {
         public void Configure(EntityTypeBuilder<CreditPurchase> builder)
         {
-            builder.Property(cp => cp.TotalAmount).HasColumnType("decimal(10,2)");
+            builder.Property(cp => cp.TotalAmount).HasColumnType("decimal(10,2)").IsRequired();
             //builder.Property(cp => cp.PurchaseDate).HasColumnType("datetime");
             builder.Property(cp => cp.Paid).HasColumnType("boolean");
-            builder.Property(cp => cp.Destination).HasMaxLength(80);
-            builder.Property(cp => cp.Description).HasMaxLength(100);
+            builder.Property(cp => cp.Destination).HasMaxLength(80).IsRequired(false);
+            builder.Property(cp => cp.Description).HasMaxLength(100).IsRequired();
             //builder.Property(cp => cp.CreatedAt).HasColumnType("datetime");
             //builder.Property(cp => cp.UpdatedAt).HasColumnType("datetime");
 

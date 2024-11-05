@@ -8,9 +8,9 @@ namespace ControleCerto.Models.MapConfig
     {
         public void Configure(EntityTypeBuilder<Invoice> builder)
         {
-            builder.Property(i => i.TotalAmount).HasColumnType("decimal(10,2)");
-            builder.Property(i => i.TotalPaid).HasColumnType("decimal(10,2)");
-            builder.Property(i => i.IsPaid).HasColumnType("boolean");
+            builder.Property(i => i.TotalAmount).HasColumnType("decimal(10,2)").IsRequired();
+            builder.Property(i => i.TotalPaid).HasColumnType("decimal(10,2)").IsRequired();
+            builder.Property(i => i.IsPaid).HasColumnType("boolean").IsRequired();
             //builder.Property(i => i.ClosingDate).HasColumnType("datetime");
             //builder.Property(i => i.DueDate).HasColumnType("datetime");
             //builder.Property(i => i.CreatedAt).HasColumnType("datetime");

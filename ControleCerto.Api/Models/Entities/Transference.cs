@@ -3,7 +3,7 @@
     public class Transference
     {
         public long Id { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
         public double Amount { get; set; }
         public string PurchaseDate { get; set; }
         public long AccountDestinyId { get; set; }

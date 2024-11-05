@@ -8,10 +8,10 @@ namespace ControleCerto.Models.MapConfig
     {
         public void Configure(EntityTypeBuilder<CreditCard> builder)
         {
-            builder.Property(cc => cc.TotalLimit).HasColumnType("decimal(10,2)");
-            builder.Property(cc => cc.UsedLimit).HasColumnType("decimal(10,2)");
-            builder.Property(cc => cc.Description).HasMaxLength(100);
-            builder.Property(cc => cc.SkipWeekend).HasDefaultValue(true);
+            builder.Property(cc => cc.TotalLimit).HasColumnType("decimal(10,2)").IsRequired();
+            builder.Property(cc => cc.UsedLimit).HasColumnType("decimal(10,2)").IsRequired();
+            builder.Property(cc => cc.Description).HasMaxLength(100).IsRequired();
+            builder.Property(cc => cc.SkipWeekend).HasDefaultValue(true).IsRequired();
             //builder.Property(cc => cc.CreatedAt).HasColumnType("datetime");
             //builder.Property(cc => cc.UpdatedAt).HasColumnType("datetime");
 

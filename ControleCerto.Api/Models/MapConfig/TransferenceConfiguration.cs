@@ -8,7 +8,7 @@ namespace ControleCerto.Models.MapConfig
     {
         public void Configure(EntityTypeBuilder<Transference> builder)
         {
-            builder.Property(t => t.Description).HasMaxLength(100);
+            builder.Property(t => t.Description).HasMaxLength(100).IsRequired(false);
             builder.Property(t => t.Amount).HasColumnType("decimal(10,2)");
             builder.Property(t => t.PurchaseDate).HasMaxLength(45);
             //builder.Property(t => t.CreatedAt).HasColumnType("datetime");

@@ -307,7 +307,7 @@ namespace ControleCerto.Services
                 return new AppError("Conta origem não encontrada.", ErrorTypeEnum.NotFound);
             }
 
-            if (accountOrigin.Balance < request.Amount)
+            if (accountOrigin.Balance < Math.Round(request.Amount, 2))
             {
                 return new AppError("Conta origem não possui saldo suficiente para essa transferência.", ErrorTypeEnum.BusinessRule);
             }
@@ -316,8 +316,8 @@ namespace ControleCerto.Services
             {
                 try
                 {
-                    accountDestiny.Balance += request.Amount;
-                    accountOrigin.Balance -= request.Amount;
+                    accountDestiny.Balance = Math.Round(accountDestiny.Balance, 2) + Math.Round(request.Amount, 2);
+                    accountOrigin.Balance = Math.Round(accountOrigin.Balance, 2) - Math.Round(request.Amount, 2);
 
                     _appDbContext.Update(accountOrigin);
                     _appDbContext.Update(accountDestiny);
