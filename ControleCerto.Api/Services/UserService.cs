@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using ControleCerto.DTOs.Account;
 using ControleCerto.DTOs.Events;
 using ControleCerto.DTOs.User;
 using ControleCerto.Enums;
@@ -243,6 +244,35 @@ namespace ControleCerto.Services
             }
 
             return new Result<bool>(true);
+        }
+
+        public async Task<Result<DetailsUserResponse>> UpdateUserAsync(UpdateUserRequest userToUpdate, int userId)
+        {
+            if (userToUpdate.Id != userId)
+            {
+                return new AppError("Id no Bearer Token não condiz com o id do usuário a ser editado.", ErrorTypeEnum.BusinessRule);
+            }
+
+            var user = await _appDbContext.Users.FirstAsync(a => a.Id == userToUpdate.Id);
+
+            if (user is null)
+            {
+                return new AppError("Usuário não encontrado.", ErrorTypeEnum.Validation);
+            }
+
+            if (userToUpdate.Name != null)
+                user.Name = userToUpdate.Name;
+
+            if (userToUpdate.Email != null)
+            {
+                user.Email = userToUpdate.Email;
+                user.EmailConfirmed = false;
+            }
+
+            var updatedUser = _appDbContext.Users.Update(user);
+            await _appDbContext.SaveChangesAsync();
+
+            return _mapper.Map<DetailsUserResponse>(updatedUser.Entity);
         }
     }
 }

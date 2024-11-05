@@ -86,8 +86,8 @@ namespace ControleCerto.Controllers
             var startDateSet = startDate ?? DateTime.MinValue;
             var endDateSet = endDate ?? DateTime.MaxValue;
             
-            startDateSet = new DateTime(startDateSet.Year, startDateSet.Month, startDateSet.Day, 0, 0, 0);
-            endDateSet = new DateTime(endDateSet.Year, endDateSet.Month, endDateSet.Day, 0, 0, 0);
+            startDateSet = new DateTime(startDateSet.Year, startDateSet.Month, 1, 0, 0, 0);
+            endDateSet = new DateTime(endDateSet.Year, endDateSet.Month, 1, 0, 0, 0);
 
             var result = await _creditCardService.GetInvoicesByDateAsync(userId, startDateSet, endDateSet, creditCardId);
 

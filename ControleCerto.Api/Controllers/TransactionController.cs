@@ -75,6 +75,7 @@ namespace ControleCerto.Controllers
         (
             [FromQuery] DateTime startDate,
             [FromQuery] DateTime endDate,
+            [FromQuery] bool seeInvoices,
             [FromQuery] int? accountId
         )
         {
@@ -83,7 +84,7 @@ namespace ControleCerto.Controllers
 
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            var result = await _transactionService.GetTransactionsAsync(userId, utcStartDate, utcEndDate, accountId);
+            var result = await _transactionService.GetTransactionsAsync(userId, utcStartDate, utcEndDate, seeInvoices, accountId);
 
             return result.HandleReturnResult();
         }

@@ -101,5 +101,29 @@ namespace ControleCerto.Controllers
 
             return result.HandleReturnResult();
         }
+
+        [Authorize]
+        [ExtractTokenInfo]
+        [HttpPatch("Update")]
+        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
+        {
+        int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _userService.UpdateUserAsync(request, userId);
+
+            if (result.IsSuccess)
+            {
+                return Ok(result.Value);
+            }
+            else
+            {
+                return result.HandleReturnResult();
+            }
+        }
     }
 }

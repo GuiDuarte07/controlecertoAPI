@@ -336,7 +336,7 @@ namespace ControleCerto.Services
                 .Where(i =>
                 i.CreditCard.Account.UserId == userId &&
                 i.InvoiceDate >= startDate &&
-                i.InvoiceDate <= endDate && 
+                i.InvoiceDate <= endDate &&
                 i.CreditCard.Id == (creditCardId ?? i.CreditCard.Id)
             )
             .OrderByDescending(a => a.InvoiceDate)

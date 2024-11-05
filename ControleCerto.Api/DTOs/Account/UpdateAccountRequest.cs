@@ -7,6 +7,7 @@ namespace ControleCerto.DTOs.Account
     {
         [Required(ErrorMessage = "Campo 'Id' não informado.")]
         public int Id { get; set; }
+        public double? Balance { get; set; }
 
         [MaxLength(100, ErrorMessage = "Campo 'Description' pode conter até 100 caracteres")]
         public string? Description { get; set; }
