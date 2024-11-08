@@ -118,7 +118,7 @@ namespace ControleCerto.Services
                 return new AppError("Token não encontrado, por favor, gere outro token.", ErrorTypeEnum.NotFound);
             }
 
-            var user = await _appDbContext.Users.FirstAsync(u => u.Email == email);
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
 
             if (user is null)
             {
@@ -136,7 +136,7 @@ namespace ControleCerto.Services
 
         public async Task<Result<bool>> GenerateConfirmEmailTokenAsync(int userId)
         {
-            var user = await _appDbContext.Users.FirstAsync(u => u.Id == userId);
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user is null)
             {
@@ -155,7 +155,7 @@ namespace ControleCerto.Services
 
         public async Task<Result<bool>> ChangePasswordAsync(ChangePasswordRequest changePasswordRequest, int userId)
         {
-            var user = await _appDbContext.Users.FirstAsync(u => u.Id == userId);
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user is null)
             {
@@ -203,7 +203,7 @@ namespace ControleCerto.Services
                 return new AppError("Token não encontrado ou já utilizado.", ErrorTypeEnum.NotFound);
             }
 
-            var user = await _appDbContext.Users.FirstAsync(u => u.Email == email);
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
 
             if (user is null)
             {
@@ -236,7 +236,7 @@ namespace ControleCerto.Services
                 return new AppError("Token não encontrado, por favor, gere outro token.", ErrorTypeEnum.NotFound);
             }
 
-            var user = await _appDbContext.Users.FirstAsync(u => u.Email == email);
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
 
             if (user is null)
             {
@@ -253,7 +253,7 @@ namespace ControleCerto.Services
                 return new AppError("Id no Bearer Token não condiz com o id do usuário a ser editado.", ErrorTypeEnum.BusinessRule);
             }
 
-            var user = await _appDbContext.Users.FirstAsync(a => a.Id == userToUpdate.Id);
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(a => a.Id == userToUpdate.Id);
 
             if (user is null)
             {

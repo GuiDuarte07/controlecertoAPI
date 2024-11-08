@@ -10,5 +10,6 @@ namespace ControleCerto.DTOs.Category
         public string? Name { get; set; }
         public string? Icon { get; set; }
         public string? Color { get; set; }
+
     }
 }

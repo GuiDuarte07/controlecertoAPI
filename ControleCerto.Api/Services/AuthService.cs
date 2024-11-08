@@ -76,7 +76,7 @@ namespace ControleCerto.Services
 
             int userId = int.Parse(userIdString);
 
-            var user = await _appDbContext.Users.FirstAsync(u => u.Id == userId);
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user is null)
             {

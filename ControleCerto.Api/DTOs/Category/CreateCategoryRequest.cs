@@ -5,6 +5,8 @@ namespace ControleCerto.DTOs.Category
 {
     public class CreateCategoryRequest
     {
+        public long? parentId { get; set; }
+
         [Required(ErrorMessage = "Campo 'Name' não informado.")]
         [MaxLength(60, ErrorMessage = "Campo 'Name' pode conter até 60 caracteres")]
         public string Name { get; set; }
@@ -14,5 +16,6 @@ namespace ControleCerto.DTOs.Category
         public BillTypeEnum BillType { get; set; }
         [Required(ErrorMessage = "Campo 'Color' não informado.")]
         public string Color { get; set; }
+
     }
 }

@@ -121,7 +121,7 @@ namespace ControleCerto.Services
 
         public async Task<Result<InfoAccountResponse>> UpdateAccountAsync(UpdateAccountRequest request, int userId)
         {
-            var account = await _appDbContext.Accounts.FirstAsync(a => a.Id == request.Id);
+            var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == request.Id);
 
             if (account is null || account.UserId != userId)
             {

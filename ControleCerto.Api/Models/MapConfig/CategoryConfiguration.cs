@@ -20,6 +20,10 @@ namespace ControleCerto.Models.MapConfig
             builder.HasOne(c => c.User)
                 .WithMany(u => u.Categories)
                 .HasForeignKey(c => c.UserId);
+            builder.HasOne(c => c.Parent)
+                .WithMany()
+                .HasForeignKey(c => c.ParentId)
+                .IsRequired(false);
         }
     }
 }
