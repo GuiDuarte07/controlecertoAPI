@@ -93,23 +93,30 @@ namespace ControleCerto.Services
         {
 
             DateTime currentUtc = DateTime.UtcNow;
-            if (startDate == null) 
-            {
-                startDate = new DateTime(currentUtc.Year, currentUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-            }
-
-            if (endDate == null)
-            {
-                endDate = new DateTime(currentUtc.Year, currentUtc.Month+1, 1, 0, 0, 0, DateTimeKind.Utc);
-            }
+            DateTime startDateSet = startDate ?? new DateTime(currentUtc.Year, currentUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime endDateSet = endDate ?? startDateSet.AddMonths(1);
 
             double balance = await _appDbContext.Accounts.Where(a => a.UserId == userId && a.Deleted == false).SumAsync(a => a.Balance);
 
-            double expenses = await _appDbContext.Transactions.Where(t => t.Type == TransactionTypeEnum.EXPENSE &&  t.Account!.UserId == userId && t.PurchaseDate >= startDate && t.PurchaseDate <= endDate).SumAsync(e => e.Amount);
+            double expenses = await _appDbContext.Transactions.Where(t => 
+                t.Type == TransactionTypeEnum.EXPENSE &&  
+                t.Account!.UserId == userId && 
+                t.PurchaseDate >= startDateSet && 
+                t.PurchaseDate <= endDateSet)
+            .SumAsync(e => e.Amount);
 
-            double incomes = await _appDbContext.Transactions.Where(t => t.Type == TransactionTypeEnum.INCOME && t.Account!.UserId == userId && t.PurchaseDate >= startDate && t.PurchaseDate <= endDate).SumAsync(i => i.Amount);
+            double incomes = await _appDbContext.Transactions.Where(t => 
+                t.Type == TransactionTypeEnum.INCOME && 
+                t.Account!.UserId == userId && 
+                t.PurchaseDate >= startDateSet && 
+                t.PurchaseDate <= endDateSet)
+            .SumAsync(i => i.Amount);
 
-            double invoices = await _appDbContext.Invoices.Where(i => i.CreditCard.Account.UserId == userId && i.InvoiceDate >= startDate && i.InvoiceDate < endDate).SumAsync(i => i.TotalAmount);
+            double invoices = await _appDbContext.Invoices.Where(i => 
+                i.CreditCard.Account.UserId == userId && 
+                i.InvoiceDate >= startDateSet && 
+                i.InvoiceDate < endDateSet)
+            .SumAsync(i => i.TotalAmount);
             //double invoices = await _appDbContext.Invoices.Where(i => i.CreditCard.Account.UserId == userId && i.InvoiceDate >= startDate && i.InvoiceDate <= endDate).SumAsync(i => i.TotalAmount - i.TotalPaid);
             return new BalanceStatement(balance, incomes, expenses, invoices);
         }

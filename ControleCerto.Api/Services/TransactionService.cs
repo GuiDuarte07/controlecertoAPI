@@ -93,7 +93,7 @@ namespace ControleCerto.Services
 
             bool justForRecord = transactionToDelete.JustForRecord;
 
-            if (transactionToDelete.Type == TransactionTypeEnum.CREDITEXPENSE || transactionToDelete.Type == TransactionTypeEnum.TRANSFERENCE) 
+            if (transactionToDelete.Type == TransactionTypeEnum.TRANSFERENCE) 
             {
                 return new AppError("Exclusão de transação não implementada para esse tipo ainda.", ErrorTypeEnum.NotImplemented);
             }

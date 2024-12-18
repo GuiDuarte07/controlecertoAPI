@@ -71,7 +71,7 @@ namespace ControleCerto.Services
 
             if(categoryToDelete.HasTransaction)
             {
-                return new AppError("Essa categoria possui registros e portanto não pode ser excluído. Tente desativa-lo.", ErrorTypeEnum.BusinessRule);    
+                return new AppError("Essa categoria possui registros e portanto não pode ser excluído.", ErrorTypeEnum.BusinessRule);    
             }
 
             if (categoryToDelete.Category.ParentId is null)
