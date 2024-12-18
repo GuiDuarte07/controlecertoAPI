@@ -26,6 +26,21 @@ namespace ControleCerto.Services
             var categoryToCreate = _mapper.Map<Category>(request);
             categoryToCreate.UserId = userId;
 
+            if (categoryToCreate.ParentId is not null)
+            {
+                var parentCategory = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id  == categoryToCreate.ParentId);
+
+                if (parentCategory is null)
+                {
+                    return new AppError("Categoria pai não encontrada.", ErrorTypeEnum.NotFound);
+                }
+
+                if (parentCategory.BillType != categoryToCreate.BillType)
+                {
+                    return new AppError("Tipo da categoria diferente da categoria pai.", ErrorTypeEnum.BusinessRule);
+                }
+            }
+
             var createdCategory = await _appDbContext.Categories.AddAsync(categoryToCreate);
 
             if (createdCategory is null)
@@ -41,27 +56,41 @@ namespace ControleCerto.Services
         public async Task<Result<bool>> DeleteCategoryAsync(int categoryId, int userId)
         {
             var categoryToDelete = await _appDbContext.Categories
-                .Include(c => c.Transactions)
-                .FirstAsync(c => c.Id == categoryId);
-
-            if (categoryToDelete is null)
+            .Where(c => c.Id == categoryId)
+            .Select(c => new
             {
-                return new AppError("Categoria não encontrada.", ErrorTypeEnum.Validation);
+                Category = c,
+                HasTransaction = c.Transactions.Count != 0
+            })
+            .FirstOrDefaultAsync();
+
+            if (categoryToDelete is null || categoryToDelete.Category is null)
+            {
+                return new AppError("Categoria não encontrada.", ErrorTypeEnum.NotFound);
             }
 
-            if(!categoryToDelete.Transactions.Any())
+            if(categoryToDelete.HasTransaction)
             {
-                _appDbContext.Categories.Remove(categoryToDelete);
-                await _appDbContext.SaveChangesAsync();
-            } else
-            {
-                return new AppError("Essa categoria possui registros e portanto não pode ser excluido. Tente desativa-lo.", ErrorTypeEnum.BusinessRule);
+                return new AppError("Essa categoria possui registros e portanto não pode ser excluído.", ErrorTypeEnum.BusinessRule);    
             }
+
+            if (categoryToDelete.Category.ParentId is null)
+            {
+                var subcategories = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.ParentId == categoryToDelete.Category.Id);
+
+                if (subcategories is not null) 
+                {
+                    return new AppError("Essa categoria possui sub-categorias e portanto não pode ser excluída.", ErrorTypeEnum.Validation);
+                }
+            }
+
+            _appDbContext.Categories.Remove(categoryToDelete.Category);
+            await _appDbContext.SaveChangesAsync();
 
             return true;
         }
 
-        public async Task<Result<ICollection<InfoCategoryResponse>>> GetAllCategoriesAsync(int userId, BillTypeEnum? type)
+        public async Task<Result<ICollection<InfoParentCategoryResponse>>> GetAllCategoriesAsync(int userId, BillTypeEnum? type)
         {
             var categories = await _appDbContext.Categories.Where(c => c.UserId == userId).ToListAsync();
 
@@ -70,14 +99,36 @@ namespace ControleCerto.Services
                 categories = categories.Where(c => c.BillType == type.Value).ToList();
             }
 
-            var collection = _mapper.Map<List<InfoCategoryResponse>>(categories);
+            var parentCategories = categories
+                .Where(c => c.ParentId == null)
+                .Select(c => new InfoParentCategoryResponse
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Icon = c.Icon,
+                    BillType = c.BillType,
+                    Color = c.Color,
+                    SubCategories = categories
+                        .Where(sc => sc.ParentId == c.Id)
+                        .Select(sc => new InfoCategoryResponse
+                        {
+                            Id = sc.Id,
+                            parentId = sc.ParentId,
+                            Name = sc.Name,
+                            Icon = sc.Icon,
+                            BillType = sc.BillType,
+                            Color = sc.Color
+                        })
+                .ToList()
+                })
+                .ToList();
 
-            return collection;
+            return parentCategories;
         }
 
         public async Task<Result<InfoCategoryResponse>> UpdateCategoryAsync(UpdateCategoryRequest request, int userId)
         {
-            var categoryToUpdate = await _appDbContext.Categories.FirstAsync(e => e.Id == request.Id);
+            var categoryToUpdate = await _appDbContext.Categories.FirstOrDefaultAsync(e => e.Id == request.Id);
             
             if (categoryToUpdate is null || categoryToUpdate.UserId != userId)
             {

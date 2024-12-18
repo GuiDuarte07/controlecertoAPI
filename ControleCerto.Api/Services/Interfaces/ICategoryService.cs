@@ -10,6 +10,6 @@ namespace ControleCerto.Services.Interfaces
         public Task<Result<InfoCategoryResponse>> CreateCategoryAsync(CreateCategoryRequest request, int userId);
         public Task<Result<InfoCategoryResponse>> UpdateCategoryAsync(UpdateCategoryRequest request, int userId);
         public Task<Result<bool>> DeleteCategoryAsync(int categoryId, int userId);
-        public Task<Result<ICollection<InfoCategoryResponse>>> GetAllCategoriesAsync(int userId, BillTypeEnum? type);
+        public Task<Result<ICollection<InfoParentCategoryResponse>>> GetAllCategoriesAsync(int userId, BillTypeEnum? type);
     }
 }

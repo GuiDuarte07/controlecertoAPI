@@ -114,7 +114,7 @@ namespace ControleCerto.Controllers
         }
 
 
-        [HttpGet("GetBalanceStatementAsync")]
+        [HttpGet("GetBalanceStatement")]
         public async Task<IActionResult> GetBalanceStatementAsync()
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;

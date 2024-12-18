@@ -38,7 +38,7 @@ namespace ControleCerto.Services
                 try
                 {
                     if (!justForRecord) {
-                        var account = await _appDbContext.Accounts.FirstAsync(x => x.Id == transactionToCreate.AccountId);
+                        var account = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == transactionToCreate.AccountId);
 
                         if (account is null)
                         {
@@ -93,7 +93,7 @@ namespace ControleCerto.Services
 
             bool justForRecord = transactionToDelete.JustForRecord;
 
-            if (transactionToDelete.Type == TransactionTypeEnum.CREDITEXPENSE || transactionToDelete.Type == TransactionTypeEnum.TRANSFERENCE) 
+            if (transactionToDelete.Type == TransactionTypeEnum.TRANSFERENCE) 
             {
                 return new AppError("Exclusão de transação não implementada para esse tipo ainda.", ErrorTypeEnum.NotImplemented);
             }
@@ -104,7 +104,7 @@ namespace ControleCerto.Services
                 {
                     if (!justForRecord)
                     {
-                        var account = await _appDbContext.Accounts.FirstAsync(x => x.Id == transactionToDelete.AccountId);
+                        var account = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == transactionToDelete.AccountId);
 
                         if (account is null)
                         {
@@ -293,14 +293,14 @@ namespace ControleCerto.Services
         {
             var transferenceToCreate = _mapper.Map<Transference>(request);
 
-            var accountDestiny = await _appDbContext.Accounts.FirstAsync(x => x.Id == request.AccountDestinyId);
+            var accountDestiny = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == request.AccountDestinyId);
 
             if (accountDestiny is null)
             {
                 return new AppError("Conta destino não encontrada.", ErrorTypeEnum.NotFound);
             }
 
-            var accountOrigin = await _appDbContext.Accounts.FirstAsync(x => x.Id == request.AccountOriginId);
+            var accountOrigin = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == request.AccountOriginId);
 
             if (accountOrigin is null)
             {
