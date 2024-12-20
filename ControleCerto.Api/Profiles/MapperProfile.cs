@@ -4,6 +4,7 @@ using ControleCerto.DTOs.Category;
 using ControleCerto.DTOs.CreditCard;
 using ControleCerto.DTOs.CreditPurchase;
 using ControleCerto.DTOs.Invoice;
+using ControleCerto.DTOs.Notification;
 using ControleCerto.DTOs.Transaction;
 using ControleCerto.DTOs.TransferenceDTO;
 using ControleCerto.DTOs.User;
@@ -111,6 +112,9 @@ namespace ControleCerto.Profiles
                     dest.CreatedAt = DateTime.UtcNow;
                     dest.UpdatedAt = DateTime.UtcNow;
                 });
+
+            CreateMap<CreateNotificationRequest, Notification>();
+            CreateMap<Notification, InfoNotificationResponse>();
         }
     }
 }

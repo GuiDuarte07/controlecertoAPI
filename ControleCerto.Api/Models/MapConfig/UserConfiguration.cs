@@ -8,10 +8,11 @@ namespace ControleCerto.Models.MapConfig
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder.Property(u => u.Name).IsRequired().HasMaxLength(100);
-            builder.Property(u => u.Email).IsRequired().HasMaxLength(60);
-            builder.Property(u => u.PasswordHash).HasMaxLength(60);
+            builder.Property(u => u.Name).IsRequired().HasMaxLength(100).IsRequired();
+            builder.Property(u => u.Email).IsRequired().HasMaxLength(60).IsRequired();
+            builder.Property(u => u.PasswordHash).HasMaxLength(60).IsRequired();
             builder.Property(u => u.EmailConfirmed).HasColumnType("boolean");
+            builder.Property(u => u.IsAdmin).HasColumnType("boolean");
             //builder.Property(u => u.CreatedAt).HasColumnType("datetime");
             //builder.Property(u => u.UpdatedAt).HasColumnType("datetime");
 
@@ -21,6 +22,9 @@ namespace ControleCerto.Models.MapConfig
             builder.HasMany(u => u.Categories)
                 .WithOne(c => c.User)
                 .HasForeignKey(c => c.UserId);
+            builder.HasMany(u => u.Notifications)
+                .WithOne(n => n.User)
+                .HasForeignKey(n => n.UserId);
         }
     }
 }
