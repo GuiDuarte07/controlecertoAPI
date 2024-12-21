@@ -67,11 +67,18 @@ namespace ControleCerto.Services
             return notifications;
         }
 
-        public async Task<Result<InfoNotificationResponse>> SendUserNotificationAsync(CreateNotificationRequest notification)
+        public async Task<Result<InfoNotificationResponse>> SendUserNotificationAsync(CreateNotificationRequest notification, int userId)
         {
             try
             {
                 //Depois fazer a validação de usuário!!!
+                var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (user is null || userId != notification.UserId || user.IsAdmin == false)
+                {
+                    return new AppError("Usuário não autorizado.", ErrorTypeEnum.Validation);
+                }
+
 
                 var notificationToCreate = _mapper.Map<Notification>(notification);
 
