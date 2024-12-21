@@ -49,7 +49,7 @@ namespace ControleCerto.Controllers
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            var result = await _notificationService.SendUserNotificationAsync(notification);
+            var result = await _notificationService.SendUserNotificationAsync(notification, userId);
 
             return result.HandleReturnResult();
         }
