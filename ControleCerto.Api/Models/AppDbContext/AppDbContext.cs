@@ -23,6 +23,7 @@ namespace ControleCerto.Models.AppDbContext
         public DbSet<Transference> Transferences { get; set; }
         public DbSet<CategoryDefault> CategoriesDefault { get; set; }
         public DbSet <Notification> Notifications { get; set; }
+        public DbSet <Article> Articles { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -42,6 +43,7 @@ namespace ControleCerto.Models.AppDbContext
             modelBuilder.ApplyConfiguration(new TransferenceConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryDefaultConfiguration());
             modelBuilder.ApplyConfiguration(new NotificationConfiguration());
+            modelBuilder.ApplyConfiguration(new ArticleConfiguration());
         }
 
     }

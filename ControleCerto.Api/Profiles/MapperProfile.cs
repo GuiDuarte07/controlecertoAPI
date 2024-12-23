@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using ControleCerto.DTOs.Account;
+using ControleCerto.DTOs.Article;
 using ControleCerto.DTOs.Category;
 using ControleCerto.DTOs.CreditCard;
 using ControleCerto.DTOs.CreditPurchase;
@@ -115,6 +116,8 @@ namespace ControleCerto.Profiles
 
             CreateMap<CreateNotificationRequest, Notification>();
             CreateMap<Notification, InfoNotificationResponse>();
+
+            CreateMap<Article, InfoArticleResponse>();
         }
     }
 }

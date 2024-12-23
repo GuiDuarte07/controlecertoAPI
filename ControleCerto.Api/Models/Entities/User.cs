@@ -14,5 +14,6 @@
         public ICollection<Account> Accounts { get; set; }
         public ICollection<Category> Categories { get; set; }
         public ICollection<Notification> Notifications { get; set; }
+        public ICollection<Article> Articles { get; set; }
     }
 }
