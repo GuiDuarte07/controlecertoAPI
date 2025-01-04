@@ -9,6 +9,8 @@ namespace ControleCerto.DTOs.Category
         public string Icon { get; set; }
         public BillTypeEnum BillType { get; set; }
         public string Color { get; set; }
+        public double Amount { get; set; }
+        public double? Limit { get; set; }
 
         public IEnumerable<InfoCategoryResponse> SubCategories { get; set; }
     }

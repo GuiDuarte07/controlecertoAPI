@@ -3,9 +3,11 @@ using ControleCerto.DTOs.Category;
 using ControleCerto.Enums;
 using ControleCerto.Errors;
 using ControleCerto.Extensions;
+using ControleCerto.Models.Entities;
 using ControleCerto.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ControleCerto.Controllers
 {
@@ -68,6 +70,26 @@ namespace ControleCerto.Controllers
             return result.HandleReturnResult();
         }
 
+
+        [HttpPatch("UpdateCategoryLimit")]
+        public async Task<IActionResult> UpdateCategoryLimit([FromBody] UpdateCategoryLimitRequest data)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            var result = await _categoryService.UpdateCategoryLimitAsync(data, userId);
+
+            return result.HandleReturnResult();
+        }
+
+        [HttpGet("GetLimitInfo/{categoryId}")]
+        public async Task<IActionResult> GetLimitInfo(long categoryId)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            var result = await _categoryService.GetLimitInfo(categoryId, userId);
+
+            return result.HandleReturnResult();
+        }
 
     }
 }

@@ -10,5 +10,6 @@ namespace ControleCerto.DTOs.Category
         public string Icon { get; set; }
         public BillTypeEnum BillType { get; set; }
         public string Color { get; set; }
+        public double? Limit { get; set; }
     }
 }

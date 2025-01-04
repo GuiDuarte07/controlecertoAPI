@@ -16,6 +16,7 @@ namespace ControleCerto.DTOs.Category
         public BillTypeEnum BillType { get; set; }
         [Required(ErrorMessage = "Campo 'Color' não informado.")]
         public string Color { get; set; }
+        public double? Limit { get; set; }
 
     }
 }
