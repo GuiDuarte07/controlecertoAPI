@@ -248,34 +248,50 @@ namespace ControleCerto.Services
             var now = DateTime.UtcNow;
             var actualMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
-            var category = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryId && c.UserId == userId);
+            var categoryIdSearch = categoryId;
 
-            if (category is null)
+            Category? category = null;
+            var limits = new List<CategoryLimit>();
+
+            for(var i = 0; i <= 1; i++)
             {
-                return new AppError("Categória não encontrada.", ErrorTypeEnum.NotFound);
-            }
+                category = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryIdSearch && c.UserId == userId);
 
-            var limits = await _appDbContext.CategoryLimits
+                if (category is null)
+                {
+                    return new AppError("Categória não encontrada.", ErrorTypeEnum.NotFound);
+                }
+
+                limits = await _appDbContext.CategoryLimits
                 .Where(cl => cl.CategoryId == category.Id)
                 .OrderBy(cl => cl.StartDate)
                 .ToListAsync();
 
-            bool hasActiveLimit = limits.Any(cl => cl.CategoryId == category.Id && cl.EndDate == null);
+                bool hasActiveLimit = limits.Any(cl => cl.CategoryId == category.Id && cl.EndDate == null);
 
-            if (limits.Count == 0 || !hasActiveLimit)
-            {
-                return new InfoLimitResponse
+                if (limits.Count == 0 || !hasActiveLimit)
                 {
-                    AccumulatedLimit = 0,
-                    ActualLimit = 0,
-                    AvailableMonthLimit = 0
-                };
+                    if (category.ParentId.HasValue)
+                    {
+                        categoryIdSearch = category.ParentId.Value;
+                    }
+                    else
+                    {
+                        return new InfoLimitResponse
+                        {
+                            IsParentLimit = i != 0,
+                            AccumulatedLimit = 0,
+                            ActualLimit = 0,
+                            AvailableMonthLimit = 0
+                        };
+                    }
+                }
             }
 
             var firstLimit = limits.OrderBy(cl => cl.StartDate).FirstOrDefault()!;
             var currentLimit = limits.FirstOrDefault(cl => cl.EndDate == null)!;
 
-            var transactions = await _appDbContext.Transactions.Where(t => t.CategoryId == category.Id && t.PurchaseDate >= firstLimit.StartDate).ToListAsync();
+            var transactions = await _appDbContext.Transactions.Where(t => t.CategoryId == category!.Id && t.PurchaseDate >= firstLimit.StartDate).ToListAsync();
 
             double accumulatedLimit = 0;
 
@@ -301,6 +317,7 @@ namespace ControleCerto.Services
 
             var infoLimit = new InfoLimitResponse
             {
+                IsParentLimit = categoryIdSearch != categoryId,
                 ActualLimit = currentLimit.Amount,
                 AvailableMonthLimit = Math.Round(
                     currentLimit.Amount -
