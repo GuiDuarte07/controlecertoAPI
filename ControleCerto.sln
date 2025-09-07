@@ -6,6 +6,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ControleCerto", "ControleCe
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{355E08B6-0353-426F-98C5-DCBD1B6BF665}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ControleCerto.Tests", "ControleCerto.Tests\ControleCerto.Tests.csproj", "{D2CF3AEE-236E-49A0-A434-CAA9F7467C8F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{355E08B6-0353-426F-98C5-DCBD1B6BF665}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{355E08B6-0353-426F-98C5-DCBD1B6BF665}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{355E08B6-0353-426F-98C5-DCBD1B6BF665}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2CF3AEE-236E-49A0-A434-CAA9F7467C8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2CF3AEE-236E-49A0-A434-CAA9F7467C8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2CF3AEE-236E-49A0-A434-CAA9F7467C8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2CF3AEE-236E-49A0-A434-CAA9F7467C8F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
