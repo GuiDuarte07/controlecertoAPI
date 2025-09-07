@@ -42,8 +42,8 @@ namespace ControleCerto.Services
                 return new AppError("E-mail ou senha incorreto.", ErrorTypeEnum.Validation);
             }
 
-            // FAZER O MAP
-            var userResponse = new InfoUserResponse { 
+            var userResponse = new InfoUserResponse 
+            { 
                 Email = user.Email, 
                 EmailConfirmed = user.EmailConfirmed, 
                 Id = user.Id, 
@@ -56,9 +56,10 @@ namespace ControleCerto.Services
             try
             {
                 await _cacheService.SetRefreshTokenAsync(user.Id.ToString(), refreshToken);
-            } catch (Exception ex)
+            } 
+            catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                // TODO: Implementar logging adequado
                 return new AppError("Falha ao registrar o token de acesso, tente fazer o login novamente.", ErrorTypeEnum.InternalError);
             }
 

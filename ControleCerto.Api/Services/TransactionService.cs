@@ -8,6 +8,7 @@ using ControleCerto.Models.AppDbContext;
 using ControleCerto.Models.DTOs;
 using ControleCerto.Models.Entities;
 using ControleCerto.Services.Interfaces;
+using ControleCerto.Validations;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using MassTransit.Initializers;
@@ -18,10 +19,13 @@ namespace ControleCerto.Services
     {
         private readonly AppDbContext _appDbContext;
         private readonly IMapper _mapper;
-        public TransactionService(AppDbContext appDbContext, IMapper mapper)
+        private readonly IBalanceService _balanceService;
+        
+        public TransactionService(AppDbContext appDbContext, IMapper mapper, IBalanceService balanceService)
         {
             _appDbContext = appDbContext;
             _mapper = mapper;
+            _balanceService = balanceService;
         }
 
         /*
@@ -30,46 +34,41 @@ namespace ControleCerto.Services
 
         public async Task<Result<InfoTransactionResponse>> CreateTransactionAsync(CreateTransactionRequest request, int userId)
         {
-            bool justForRecord = request.JustForRecord;
             var transactionToCreate = _mapper.Map<Transaction>(request);
 
             using (var transaction = _appDbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    if (!justForRecord) {
+                    if (!request.JustForRecord) 
+                    {
+                        // 1. Buscar conta
                         var account = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == transactionToCreate.AccountId);
-
                         if (account is null)
                         {
                             return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
                         }
 
-                        if (transactionToCreate.Type == TransactionTypeEnum.EXPENSE)
+                        // 2. Validar saldo usando validação centralizada
+                        var balanceValidation = BusinessValidations.ValidateAccountBalance(account, transactionToCreate.Amount, transactionToCreate.Type);
+                        if (balanceValidation.IsError) 
                         {
-                            /*if (account.Balance < transactionToCreate.Amount)
-                            {
-                                throw new Exception("Valor em conta é menor que o valor da transação.");
-                            }*/
-
-                            account.Balance -= transactionToCreate.Amount;
-                        } else if (transactionToCreate.Type == TransactionTypeEnum.INCOME)
-                        {
-                            account.Balance += transactionToCreate.Amount;
+                            return balanceValidation.Error;
                         }
-                        
 
-                        _appDbContext.Update(account);
-
-                        await _appDbContext.SaveChangesAsync();
+                        // 3. Atualizar saldo usando serviço centralizado (sem commit)
+                        var balanceResult = _balanceService.UpdateAccountBalance(account, transactionToCreate.Amount, transactionToCreate.Type);
+                        if (balanceResult.IsError) 
+                        {
+                            return balanceResult.Error;
+                        }
                     }
 
+                    // 4. Criar transação
                     var createdTransaction = await _appDbContext.Transactions.AddAsync(transactionToCreate);
-
                     await _appDbContext.SaveChangesAsync();
 
                     transaction.Commit();
-
 
                     return _mapper.Map<InfoTransactionResponse>(createdTransaction.Entity);
                 }
@@ -79,7 +78,6 @@ namespace ControleCerto.Services
                     throw;
                 }
             }
-
         }
 
         public async Task<Result<bool>> DeleteTransactionAsync(int expenseId, int userId)
@@ -196,22 +194,14 @@ namespace ControleCerto.Services
 
             if (request.CategoryId is not null)
             {
-                var category = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId);
-
-                if (category is null)
+                // Usar validação centralizada para categoria
+                var categoryValidation = await BusinessValidations.ValidateCategoryTypeAsync(request.CategoryId.Value, transactionToUpdate.Type, _appDbContext);
+                if (categoryValidation.IsError)
                 {
-                    return new AppError("Nova categória não encontrada.", ErrorTypeEnum.Validation);
+                    return categoryValidation.Error;
                 }
 
-                if (category.BillType == BillTypeEnum.EXPENSE && transactionToUpdate.Type == TransactionTypeEnum.EXPENSE ||
-                    category.BillType == BillTypeEnum.INCOME && transactionToUpdate.Type == TransactionTypeEnum.INCOME)
-                {
-                    transactionToUpdate.CategoryId = category.Id;
-                } else
-                {
-                    return new AppError("Nova categória é de um tipo diferente.", ErrorTypeEnum.BusinessRule);
-                }
-
+                transactionToUpdate.CategoryId = request.CategoryId.Value;
             }
 
 
@@ -293,38 +283,39 @@ namespace ControleCerto.Services
         {
             var transferenceToCreate = _mapper.Map<Transference>(request);
 
+            // 1. Buscar contas
             var accountDestiny = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == request.AccountDestinyId);
-
             if (accountDestiny is null)
             {
                 return new AppError("Conta destino não encontrada.", ErrorTypeEnum.NotFound);
             }
 
             var accountOrigin = await _appDbContext.Accounts.FirstOrDefaultAsync(x => x.Id == request.AccountOriginId);
-
             if (accountOrigin is null)
             {
                 return new AppError("Conta origem não encontrada.", ErrorTypeEnum.NotFound);
             }
 
-            if (accountOrigin.Balance < Math.Round(request.Amount, 2))
+            // 2. Validar saldo usando validação centralizada
+            var balanceValidation = BusinessValidations.ValidateTransferAmount(accountOrigin, request.Amount);
+            if (balanceValidation.IsError)
             {
-                return new AppError("Conta origem não possui saldo suficiente para essa transferência.", ErrorTypeEnum.BusinessRule);
+                return balanceValidation.Error;
             }
 
             using (var transaction = _appDbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    accountDestiny.Balance = Math.Round(accountDestiny.Balance, 2) + Math.Round(request.Amount, 2);
-                    accountOrigin.Balance = Math.Round(accountOrigin.Balance, 2) - Math.Round(request.Amount, 2);
+                    // 3. Processar transferência usando serviço centralizado (sem commit)
+                    var transferResult = _balanceService.ProcessTransferBalance(accountOrigin, accountDestiny, request.Amount);
+                    if (transferResult.IsError)
+                    {
+                        return transferResult.Error;
+                    }
 
-                    _appDbContext.Update(accountOrigin);
-                    _appDbContext.Update(accountDestiny);
-
-
+                    // 4. Criar registro de transferência
                     var createdTransference = await _appDbContext.Transferences.AddAsync(transferenceToCreate);
-
                     await _appDbContext.SaveChangesAsync();
 
                     transaction.Commit();

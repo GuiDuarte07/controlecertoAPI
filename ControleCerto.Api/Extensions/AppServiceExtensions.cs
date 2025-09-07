@@ -1,4 +1,6 @@
 ﻿using ControleCerto.Bus;
+using Hangfire;
+using Hangfire.PostgreSql;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 
@@ -37,6 +39,17 @@ namespace ControleCerto.Extensions
                 options.Configuration = configuration.GetSection("Redis:Configuration").Value;
                 options.InstanceName = configuration.GetSection("Redis:InstanceName").Value;
             });
+        }
+
+        public static void AddHangFireService(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddHangfire(config =>
+                config.
+                    SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+                    .UseSimpleAssemblyNameTypeSerializer()
+                    .UseRecommendedSerializerSettings()
+                    .UsePostgreSqlStorage(c =>
+                        c.UseNpgsqlConnection(configuration.GetConnectionString("WebApiDatabase"))));
         }
     }
 }

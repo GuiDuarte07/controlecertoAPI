@@ -1,8 +1,10 @@
+using ControleCerto.CronJobs;
 using ControleCerto.Extensions;
 using ControleCerto.Models.AppDbContext;
 using ControleCerto.Profiles;
 using ControleCerto.Services;
 using ControleCerto.Services.Interfaces;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -125,6 +127,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
+builder.Services.AddScoped<IBalanceService, BalanceService>();
 builder.Services.AddHealthChecks();
 
 // Automapper
@@ -139,6 +142,11 @@ builder.Services.AddRabbitMQService(configuration);
 
 // Redis
 builder.Services.AddRedisCache(configuration);
+
+// HangFire
+builder.Services.AddHangFireService(configuration);
+builder.Services.AddHangfireServer();
+builder.Services.AddHostedService<HangFireJobs>();
 
 // Gerar Certificado
 /*builder.WebHost.ConfigureKestrel(options =>
@@ -162,6 +170,9 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+//HangFire
+app.UseHangfireDashboard();
 
 app.MapHealthChecks("/health");
 
