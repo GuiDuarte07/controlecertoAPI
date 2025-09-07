@@ -9,6 +9,7 @@ using ControleCerto.DTOs.Notification;
 using ControleCerto.DTOs.Transaction;
 using ControleCerto.DTOs.TransferenceDTO;
 using ControleCerto.DTOs.User;
+using ControleCerto.DTOs.RecurringTransaction;
 using ControleCerto.Models.DTOs;
 using ControleCerto.Models.Entities;
 
@@ -118,6 +119,62 @@ namespace ControleCerto.Profiles
             CreateMap<Notification, InfoNotificationResponse>();
 
             CreateMap<Article, InfoArticleResponse>();
+
+            // RecurringTransaction Mappings
+            CreateMap<CreateRecurringTransactionRequest, RecurringTransaction>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.RecurrenceRuleId, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.Ignore())
+                .ForMember(dest => dest.Account, opt => opt.Ignore())
+                .ForMember(dest => dest.Category, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore())
+                .ForMember(dest => dest.RecurrenceRule, opt => opt.Ignore())
+                .ForMember(dest => dest.Instances, opt => opt.Ignore())
+                .AfterMap((src, dest) =>
+                {
+                    dest.CreatedAt = DateTime.UtcNow;
+                    dest.UpdatedAt = DateTime.UtcNow;
+                });
+
+            CreateMap<UpdateRecurringTransactionRequest, RecurringTransaction>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.RecurrenceRuleId, opt => opt.Ignore())
+                .ForMember(dest => dest.Account, opt => opt.Ignore())
+                .ForMember(dest => dest.Category, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore())
+                .ForMember(dest => dest.RecurrenceRule, opt => opt.Ignore())
+                .ForMember(dest => dest.Instances, opt => opt.Ignore())
+                .AfterMap((src, dest) =>
+                {
+                    dest.UpdatedAt = DateTime.UtcNow;
+                });
+
+            CreateMap<RecurringTransaction, InfoRecurringTransactionResponse>()
+                .ForMember(dest => dest.PendingInstancesCount, opt => opt.MapFrom(src => 
+                    src.Instances.Count(i => i.Status == ControleCerto.Enums.InstanceStatusEnum.PENDING)))
+                .ForMember(dest => dest.ConfirmedInstancesCount, opt => opt.MapFrom(src => 
+                    src.Instances.Count(i => i.Status == ControleCerto.Enums.InstanceStatusEnum.CONFIRMED)))
+                .ForMember(dest => dest.RejectedInstancesCount, opt => opt.MapFrom(src => 
+                    src.Instances.Count(i => i.Status == ControleCerto.Enums.InstanceStatusEnum.REJECTED)));
+
+            // RecurrenceRule Mappings
+            CreateMap<CreateRecurrenceRuleRequest, RecurrenceRule>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.RecurringTransactions, opt => opt.Ignore())
+                .AfterMap((src, dest) =>
+                {
+                    dest.CreatedAt = DateTime.UtcNow;
+                });
+
+            CreateMap<RecurrenceRule, InfoRecurrenceRuleResponse>();
+
+            // RecurringTransactionInstance Mappings
+            CreateMap<RecurringTransactionInstance, InfoRecurringTransactionInstanceResponse>()
+                .ForMember(dest => dest.RecurringTransactionDescription, opt => opt.MapFrom(src => src.RecurringTransaction.Description))
+                .ForMember(dest => dest.RecurringTransactionAmount, opt => opt.MapFrom(src => src.RecurringTransaction.Amount))
+                .ForMember(dest => dest.RecurringTransactionType, opt => opt.MapFrom(src => src.RecurringTransaction.Type));
         }
     }
 }

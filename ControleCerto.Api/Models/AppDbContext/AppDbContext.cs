@@ -25,6 +25,9 @@ namespace ControleCerto.Models.AppDbContext
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Article> Articles { get; set; }
         public DbSet<CategoryLimit> CategoryLimits { get; set; }
+        public DbSet<RecurrenceRule> RecurrenceRules { get; set; }
+        public DbSet<RecurringTransaction> RecurringTransactions { get; set; }
+        public DbSet<RecurringTransactionInstance> RecurringTransactionInstances { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -46,6 +49,9 @@ namespace ControleCerto.Models.AppDbContext
             modelBuilder.ApplyConfiguration(new NotificationConfiguration());
             modelBuilder.ApplyConfiguration(new ArticleConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryLimitConfiguration());
+            modelBuilder.ApplyConfiguration(new RecurrenceRuleConfiguration());
+            modelBuilder.ApplyConfiguration(new RecurringTransactionConfiguration());
+            modelBuilder.ApplyConfiguration(new RecurringTransactionInstanceConfiguration());
         }
 
     }
