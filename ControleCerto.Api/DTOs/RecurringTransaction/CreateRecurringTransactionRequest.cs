@@ -13,6 +13,12 @@ namespace ControleCerto.DTOs.RecurringTransaction
         [Range(0.01, double.MaxValue, ErrorMessage = "Valor deve ser maior que zero")]
         public double Amount { get; set; }
 
+        [StringLength(80, ErrorMessage = "Destino deve ter no máximo 80 caracteres")]
+        public string? Destination { get; set; }
+
+        [Required(ErrorMessage = "Altera Saldo Banco é obrigatório")]
+        public bool JustForRecord { get; set; }
+
         [Required(ErrorMessage = "Tipo de transação é obrigatório")]
         public TransactionTypeEnum Type { get; set; }
 

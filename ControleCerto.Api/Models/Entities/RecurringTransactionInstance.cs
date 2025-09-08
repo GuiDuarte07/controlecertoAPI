@@ -9,8 +9,8 @@ namespace ControleCerto.Models.Entities
         public RecurringTransaction RecurringTransaction { get; set; }
         public DateTime ScheduledDate { get; set; }
         public DateTime? ProcessedDate { get; set; }
-        public InstanceStatusEnum Status { get; set; } // PENDING, CONFIRMED, REJECTED, SKIPPED
-        public long? ActualTransactionId { get; set; } // Link para Transaction real se confirmada
+        public InstanceStatusEnum Status { get; set; }
+        public long? ActualTransactionId { get; set; }
         public Transaction? ActualTransaction { get; set; }
         public string? RejectionReason { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

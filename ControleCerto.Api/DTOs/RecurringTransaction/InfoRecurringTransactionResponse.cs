@@ -7,6 +7,8 @@ namespace ControleCerto.DTOs.RecurringTransaction
         public long Id { get; set; }
         public string Description { get; set; }
         public double Amount { get; set; }
+        public bool JustForRecord { get; set; }
+        public string? Destination { get; set; }
         public TransactionTypeEnum Type { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }

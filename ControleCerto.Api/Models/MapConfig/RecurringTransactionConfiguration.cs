@@ -19,6 +19,10 @@ namespace ControleCerto.Models.MapConfig
                 .IsRequired()
                 .HasMaxLength(200);
 
+            builder.Property(rt => rt.Destination)
+                .IsRequired()
+                .HasMaxLength(80);
+
             builder.Property(rt => rt.Amount)
                 .IsRequired()
                 .HasColumnType("decimal(18,2)");
@@ -46,6 +50,8 @@ namespace ControleCerto.Models.MapConfig
 
             builder.Property(rt => rt.UpdatedAt)
                 .IsRequired(false);
+
+            builder.Property(t => t.JustForRecord).HasDefaultValue(false);
 
             // Relacionamentos
             builder.HasOne(rt => rt.Account)

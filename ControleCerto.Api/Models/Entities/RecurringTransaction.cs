@@ -6,6 +6,8 @@ namespace ControleCerto.Models.Entities
     {
         public long Id { get; set; }
         public string Description { get; set; }
+        public string? Destination { get; set; }
+        public bool JustForRecord { get; set; }
         public double Amount { get; set; }
         public TransactionTypeEnum Type { get; set; } // Apenas EXPENSE ou INCOME
         public DateTime StartDate { get; set; }

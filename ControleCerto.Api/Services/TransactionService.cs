@@ -49,7 +49,6 @@ namespace ControleCerto.Services
                             return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
                         }
 
-                        // 2. Validar saldo usando validação centralizada
                         var balanceValidation = BusinessValidations.ValidateAccountBalance(account, transactionToCreate.Amount, transactionToCreate.Type);
                         if (balanceValidation.IsError) 
                         {

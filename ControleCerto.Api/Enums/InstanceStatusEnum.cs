@@ -5,6 +5,7 @@ namespace ControleCerto.Enums
         PENDING,    // Aguardando confirmação do usuário
         CONFIRMED,  // Usuário confirmou, Transaction criada
         REJECTED,   // Usuário rejeitou
-        SKIPPED     // Sistema pulou (ex: fim do período)
+        SKIPPED,    // Sistema pulou (ex: fim do período)
+        ERROR       // Erro na geração da Transaction
     }
 }
