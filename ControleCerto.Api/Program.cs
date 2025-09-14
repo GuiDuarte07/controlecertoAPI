@@ -4,6 +4,7 @@ using ControleCerto.Models.AppDbContext;
 using ControleCerto.Profiles;
 using ControleCerto.Services;
 using ControleCerto.Services.Interfaces;
+using ControleCerto.Utils;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
@@ -77,7 +78,7 @@ builder.Services.AddAutoMapper(typeof(MapperProfile));
 // Swagger bearer authentication configuration
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "FinanTech", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ControleCerto", Version = "v1" });
 
     // Adiciona a defini��o do esquema de seguran�a para o Swagger UI
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -128,6 +129,7 @@ builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<IBalanceService, BalanceService>();
+builder.Services.AddScoped<IRecurringTransactionService, RecurringTransactionService>();
 builder.Services.AddHealthChecks();
 
 // Automapper
@@ -145,7 +147,7 @@ builder.Services.AddRedisCache(configuration);
 
 // HangFire
 builder.Services.AddHangFireService(configuration);
-builder.Services.AddHangfireServer();
+//builder.Services.AddHangfireServer();
 builder.Services.AddHostedService<HangFireJobs>();
 
 // Gerar Certificado
@@ -166,13 +168,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AnotherPolicy");
 app.UseRouting();
+
+//HangFire
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new DevOnlyAuthorizationFilter(app.Environment) }
+});
+
+
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
-//HangFire
-app.UseHangfireDashboard();
 
 app.MapHealthChecks("/health");
 

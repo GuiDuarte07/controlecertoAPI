@@ -5,11 +5,11 @@ namespace ControleCerto.CronJobs
 {
     public class HangFireJobs : IHostedService
     {
-        private readonly IRecurringTransactionService _recurringTransactionService;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public HangFireJobs(IRecurringTransactionService recurringTransactionService)
+        public HangFireJobs(IServiceScopeFactory scopeFactory)
         {
-            _recurringTransactionService = recurringTransactionService;
+            _scopeFactory = scopeFactory;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -17,11 +17,19 @@ namespace ControleCerto.CronJobs
             // Job 1: todo dia às 3h UTC
             RecurringJob.AddOrUpdate(
                 "process-recurring-transactions",
-                () => _recurringTransactionService.ProcessRecurringTransactionsAsync(),
+                () => ProcessRecurringTransactionsAsync(),
                 "0 3 * * *"
             );
 
             return Task.CompletedTask;
+        }
+
+        public async Task ProcessRecurringTransactionsAsync()
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var recurringService = scope.ServiceProvider.GetRequiredService<IRecurringTransactionService>();
+
+            await recurringService.ProcessRecurringTransactionsAsync();
         }
 
         public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
