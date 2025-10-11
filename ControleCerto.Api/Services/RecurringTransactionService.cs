@@ -39,13 +39,48 @@ namespace ControleCerto.Services
                 return new Result<InfoRecurringTransactionResponse>(validationResult.Error);
             }
 
-            var recurringTransactionToCreate = _mapper.Map<RecurringTransaction>(request);
+            using var dbTransaction = _appDbContext.Database.BeginTransaction();
 
-            var createdRecurringTransactio = await _appDbContext.RecurringTransactions.AddAsync(recurringTransactionToCreate);
+            try
+            {
+                var recurringTransactionToCreate = _mapper.Map<RecurringTransaction>(request);
+                var recurrencegRuleToCreate = _mapper.Map<RecurrenceRule>(request.RecurrenceRule);
 
-            await _appDbContext.SaveChangesAsync();
+                var createdRecurrenceRule = await _appDbContext.RecurrenceRules.AddAsync(recurrencegRuleToCreate);
+                await _appDbContext.SaveChangesAsync();
 
-            return _mapper.Map<InfoRecurringTransactionResponse>(createdRecurringTransactio.Entity);
+                recurringTransactionToCreate.RecurrenceRule = createdRecurrenceRule.Entity;
+                recurringTransactionToCreate.UserId = userId;
+
+                var createdRecurringTransaction = await _appDbContext.RecurringTransactions.AddAsync(recurringTransactionToCreate);
+                await _appDbContext.SaveChangesAsync();
+
+                await dbTransaction.CommitAsync();
+
+                return _mapper.Map<InfoRecurringTransactionResponse>(createdRecurringTransaction.Entity);
+            }
+            catch (Exception ex)
+            {
+                await dbTransaction.RollbackAsync();
+
+                return new AppError(ex.Message, ErrorTypeEnum.InternalError);
+            }
+            
+
+
+
+            
+        }
+
+        public async Task<List<InfoRecurringTransactionResponse>> GetRecurringTransactionsAsync(int userId)
+        {
+            var recurringTransactions = await _appDbContext.RecurringTransactions
+                .Include(rt => rt.RecurrenceRule)
+                .Where(rt => rt.UserId == userId)
+                .Select(rt => _mapper.Map<InfoRecurringTransactionResponse>(rt))
+                .ToListAsync();
+
+            return recurringTransactions;
         }
 
         public async Task<List<InfoRecurringTransactionInstanceResponse>> GetRecurringTransactionInstancesAsync(InstanceStatusEnum status, int userId, DateTime? startDate, DateTime? endDate)

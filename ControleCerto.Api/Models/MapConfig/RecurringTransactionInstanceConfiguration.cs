@@ -34,7 +34,7 @@ namespace ControleCerto.Models.MapConfig
                 .IsRequired(false);
 
             builder.Property(rti => rti.RejectionReason)
-                .HasMaxLength(500)
+                .HasMaxLength(300)
                 .IsRequired(false);
 
             builder.Property(rti => rti.CreatedAt)
