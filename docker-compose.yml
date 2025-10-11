@@ -2,38 +2,98 @@ version: '3.4'
 
 services:
   controlecerto:
-    image: ${DOCKER_REGISTRY-}controlecerto
-    build:
-      context: .
-      dockerfile: ControleCerto.Api/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
     ports:
-        - "8080:8080"
-        - "8081:8081"
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
     depends_on:
+      - database.pgs
       - rabbitmq
+      - cache 
+
+  database.pgs:
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
   rabbitmq:
     image: rabbitmq:3.13-management
-    container_name: rabbitmq
     environment:
       - RABBITMQ_DEFAULT_USER=user
       - RABBITMQ_DEFAULT_PASS=12345
     ports:
       - "5672:5672"
       - "15672:15672"
+
   cache:
     image: redis:7.2-alpine
-    container_name: cache
     restart: always
     ports:
-      - '6379:6379'
+      - "6379:6379"
     volumes: 
       - cache:/data
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    depends_on:
+      - controlecerto
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    networks:
+      - default
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot-controlecerto
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew; sleep 12h; done"
+
+     # Servico automatico de backup do PostgreSQL + upload S3
+  pg_backup:
+    build:
+      context: .
+      dockerfile: Dockerfile.pg_backup
+    depends_on:
+      - database.pgs
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    entrypoint: >
+      /bin/sh -c '
+      echo "0 3 * * * PGPASSWORD=$POSTGRES_PASSWORD pg_dump -h database.pgs -U $POSTGRES_USER $POSTGRES_DB > /backups/backup_$(date +\%F_\%H-\%M-\%S).sql &&
+      echo Iniciando upload para S3... &&
+      aws s3 cp /backups/ s3://$AWS_S3_BUCKET/ --recursive --exclude \"*\" --include \"backup_$(date +\%F_\%H-\%M-\%S).sql\" &&
+      echo Limpando backups locais antigos... &&
+      find /backups -type f -mtime +7 -name \"*.sql\" -delete" | crontab -
+      crond -f -L /dev/stdout
+      '
 volumes:
   cache:
-
-networks:
-  default:
-    driver: bridge
-
-
+  postgres_data:

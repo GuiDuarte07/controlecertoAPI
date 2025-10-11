@@ -6,6 +6,9 @@
 #postgree db volume
 postgres-data
 
+.env
+
+
 #app settings
 appsettings*
 
@@ -258,6 +261,16 @@ orleans.codegen.cs
 
 # RIA/Silverlight projects
 Generated_Code/
+
+# Backups do banco
+backups/
+*.sql
+
+# Certificados SSL
+/etc/letsencrypt/
+*.pem
+*.key
+
 
 # Backup & report files from converting an old project file
 # to a newer Visual Studio version. Backup files are not needed,
