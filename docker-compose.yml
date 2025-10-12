@@ -6,9 +6,8 @@ services:
         context: .
         dockerfile: ./ControleCerto.Api/Dockerfile  
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ASPNETCORE_HTTPS_PORTS=8081
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
     ports:
       - "8080:8080"
       - "8081:8081"
@@ -60,8 +59,8 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    networks:
-      - default
+    restart: always
+
 
   certbot:
     image: certbot/certbot
