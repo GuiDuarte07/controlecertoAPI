@@ -20,14 +20,16 @@ namespace ControleCerto.Extensions
                 busConfigurator.UsingRabbitMq((ctx, cfg) =>
                 {
 
-                    
+
                     cfg.Host(new Uri(configuration.GetConnectionString("RabbitMQ")!), host =>
                     {
                         host.Username("user");
                         host.Password("12345");
-
-                        cfg.ConfigureEndpoints(ctx);
                     });
+                    
+                    cfg.UseMessageRetry(r => r.Interval(5, TimeSpan.FromSeconds(5)));
+
+                    cfg.ConfigureEndpoints(ctx);
                 });
             });
         }
