@@ -26,7 +26,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     ports:
       - "5432:5432"
 
@@ -70,32 +70,6 @@ services:
       - ./certbot/www:/var/www/certbot
     entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew; sleep 12h; done"
 
-     # Servico automatico de backup do PostgreSQL + upload S3
-  pg_backup:
-    build:
-      context: .
-      dockerfile: Dockerfile.pg_backup
-    depends_on:
-      - database.pgs
-    environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
-      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    volumes:
-      - ./backups:/backups
-    entrypoint: >
-      /bin/sh -c '
-      echo "0 3 * * * PGPASSWORD=$POSTGRES_PASSWORD pg_dump -h database.pgs -U $POSTGRES_USER $POSTGRES_DB > /backups/backup_$(date +\%F_\%H-\%M-\%S).sql &&
-      echo Iniciando upload para S3... &&
-      aws s3 cp /backups/ s3://$AWS_S3_BUCKET/ --recursive --exclude \"*\" --include \"backup_$(date +\%F_\%H-\%M-\%S).sql\" &&
-      echo Limpando backups locais antigos... &&
-      find /backups -type f -mtime +7 -name \"*.sql\" -delete" | crontab -
-      crond -f -L /dev/stdout
-      '
 volumes:
   cache:
   postgres_data:
