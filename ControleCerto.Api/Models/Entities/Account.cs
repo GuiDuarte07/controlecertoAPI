@@ -14,7 +14,7 @@ namespace ControleCerto.Models.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; }
 
-        public User User { get; set; }
+        public User? User { get; set; }
         public CreditCard? CreditCard { get; set; }
         public ICollection<Transaction> Transactions { get; set; }
         public ICollection<Transference> Transferences { get; set; }

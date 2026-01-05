@@ -53,6 +53,9 @@ namespace ControleCerto.Models.MapConfig
 
             builder.Property(t => t.JustForRecord).HasDefaultValue(false);
 
+            // Global query filter para excluir transações recorrentes de usuários deletados
+            builder.HasQueryFilter(rt => !rt.User!.Deleted);
+
             // Relacionamentos
             builder.HasOne(rt => rt.Account)
                 .WithMany()

@@ -274,5 +274,169 @@ namespace ControleCerto.Services
 
             return _mapper.Map<DetailsUserResponse>(updatedUser.Entity);
         }
+
+        public async Task<Result<bool>> DeleteUserAsync(int userId)
+        {
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user is null)
+            {
+                return new AppError("Usuário não encontrado.", ErrorTypeEnum.NotFound);
+            }
+
+            user.Deleted = true;
+            _appDbContext.Users.Update(user);
+            await _appDbContext.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<Result<ResetUserDataResponse>> ResetUserDataAsync(ResetUserDataRequest request, int userId)
+        {
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user is null)
+            {
+                return new AppError("Usuário não encontrado.", ErrorTypeEnum.NotFound);
+            }
+
+            using (var transaction = _appDbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    var response = new ResetUserDataResponse();
+
+                    if (request.RecurringTransactions)
+                    {
+                        // Delete Recurring Transaction Instances
+                        var recurringTransactionInstances = await _appDbContext.RecurringTransactionInstances
+                            .Where(rti => rti.RecurringTransaction.UserId == userId)
+                            .ToListAsync();
+                        _appDbContext.RecurringTransactionInstances.RemoveRange(recurringTransactionInstances);
+
+                        // Delete Recurring Transactions
+                        var recurringTransactions = await _appDbContext.RecurringTransactions
+                            .Where(rt => rt.UserId == userId)
+                            .ToListAsync();
+                        _appDbContext.RecurringTransactions.RemoveRange(recurringTransactions);
+
+                        // Delete Recurrence Rules
+                        var recurrenceRules = await _appDbContext.RecurrenceRules
+                            .Where(rr => !rr.RecurringTransactions.Any(rt => rt.UserId != userId))
+                            .ToListAsync();
+                        _appDbContext.RecurrenceRules.RemoveRange(recurrenceRules);
+
+                    }
+
+                    if (request.Invoices)
+                    {
+                        // Delete Credit Expense Transactions
+                        var creditTransactions = await _appDbContext.Transactions
+                            .Where(t => t.Account.UserId == userId && t.Type == TransactionTypeEnum.CREDITEXPENSE)
+                            .ToListAsync();
+                        _appDbContext.Transactions.RemoveRange(creditTransactions);
+
+                        // Delete Credit Purchases
+                        var creditPurchases = await _appDbContext.CreditPurchases
+                            .Where(cp => cp.CreditCard.Account.UserId == userId)
+                            .ToListAsync();
+                        response.CreditPurchasesDeleted = creditPurchases.Count;
+                        _appDbContext.CreditPurchases.RemoveRange(creditPurchases);
+
+                        // Delete Invoices
+                        var invoices = await _appDbContext.Invoices
+                            .Where(inv => inv.CreditCard.Account.UserId == userId)
+                            .ToListAsync();
+                        response.InvoicesDeleted = invoices.Count;
+                        _appDbContext.Invoices.RemoveRange(invoices);
+
+                        // Delete Invoice Payments
+                        var invoicePayments = await _appDbContext.InvoicePayments
+                            .Where(ip => ip.Account.UserId == userId)
+                            .ToListAsync();
+                        _appDbContext.InvoicePayments.RemoveRange(invoicePayments);
+
+                    }
+
+                    if (request.Transferences)
+                    {
+                        // Delete Transferences
+                        var transferences = await _appDbContext.Transferences
+                            .Where(t => t.AccountOrigin.UserId == userId || t.AccountDestiny.UserId == userId)
+                            .ToListAsync();
+                        _appDbContext.Transferences.RemoveRange(transferences);
+                    }
+
+
+                    if (request.Transactions)
+                    {
+                        // Delete Transactions
+                        var transactions = await _appDbContext.Transactions
+                            .Where(t => t.Account.UserId == userId && (t.Type == TransactionTypeEnum.EXPENSE || t.Type == TransactionTypeEnum.INCOME))
+                            .ToListAsync();
+                        response.TransactionsDeleted = transactions.Count;
+                        _appDbContext.Transactions.RemoveRange(transactions);
+                    }
+
+
+                    if (request.CreditCards)
+                    {
+                        // Delete Credit Cards
+                        var creditCards = await _appDbContext.CreditCards
+                            .Where(cc => cc.Account.UserId == userId)
+                            .ToListAsync();
+                        response.CreditCardsDeleted = creditCards.Count;
+                        _appDbContext.CreditCards.RemoveRange(creditCards);
+                    }
+
+                    if (request.Categories)
+                    {
+                        // Delete Category Limits
+                        var categoryLimits = await _appDbContext.CategoryLimits
+                            .Where(cl => cl.Category.UserId == userId)
+                            .ToListAsync();
+                        _appDbContext.CategoryLimits.RemoveRange(categoryLimits);
+
+                        // Delete Categories
+                        var categories = await _appDbContext.Categories
+                            .Where(c => c.UserId == userId)
+                            .ToListAsync();
+                        response.CategoriesDeleted = categories.Count;
+                        _appDbContext.Categories.RemoveRange(categories);
+                    }
+
+                    if (request.Accounts)
+                    {
+                        // Delete Accounts
+                        var accounts = await _appDbContext.Accounts
+                            .Where(a => a.UserId == userId)
+                            .ToListAsync();
+                        response.AccountsDeleted = accounts.Count;
+                        _appDbContext.Accounts.RemoveRange(accounts);
+                    }
+
+
+                    if (request.Notifications)
+                    {
+                        // Delete Notifications
+                        var notifications = await _appDbContext.Notifications
+                            .Where(n => n.UserId == userId)
+                            .ToListAsync();
+                        _appDbContext.Notifications.RemoveRange(notifications);
+
+                    }
+
+                    await _appDbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return response;
+                }
+                catch (Exception)
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            }
+        }
     }
 }

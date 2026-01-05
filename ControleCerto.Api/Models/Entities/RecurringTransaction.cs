@@ -22,7 +22,7 @@ namespace ControleCerto.Models.Entities
         public long CategoryId { get; set; }
         public Category Category { get; set; }
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User? User { get; set; }
         
         // Relacionamento com a regra de recorrência
         public long RecurrenceRuleId { get; set; }

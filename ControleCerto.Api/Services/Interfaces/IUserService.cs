@@ -14,5 +14,7 @@ namespace ControleCerto.Services.Interfaces
         public Task<Result<bool>> ForgotPasswordAsync(string token, ForgotPasswordRequest forgotPasswordRequest);
         public Task<Result<bool>> VerifyForgotPasswordTokenAsync(string token);
         public Task<Result<DetailsUserResponse>> UpdateUserAsync(UpdateUserRequest userToUpdate, int userId);
+        public Task<Result<bool>> DeleteUserAsync(int userId);
+        public Task<Result<ResetUserDataResponse>> ResetUserDataAsync(ResetUserDataRequest request, int userId);
     }
 }

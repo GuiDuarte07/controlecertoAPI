@@ -13,8 +13,12 @@ namespace ControleCerto.Models.MapConfig
             builder.Property(u => u.PasswordHash).HasMaxLength(60).IsRequired();
             builder.Property(u => u.EmailConfirmed).HasColumnType("boolean");
             builder.Property(u => u.IsAdmin).HasColumnType("boolean");
+            builder.Property(u => u.Deleted).HasColumnType("boolean");
             //builder.Property(u => u.CreatedAt).HasColumnType("datetime");
             //builder.Property(u => u.UpdatedAt).HasColumnType("datetime");
+
+            // Global query filter para excluir usuários deletados
+            builder.HasQueryFilter(u => !u.Deleted);
 
             builder.HasMany(u => u.Accounts)
                 .WithOne(a => a.User)

@@ -8,6 +8,7 @@
         public string PasswordHash { get; set; }
         public bool EmailConfirmed { get; set; } = false;
         public bool IsAdmin { get; set; } = false;
+        public bool Deleted { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
 

@@ -125,5 +125,29 @@ namespace ControleCerto.Controllers
                 return result.HandleReturnResult();
             }
         }
+
+        [Authorize]
+        [ExtractTokenInfo]
+        [HttpDelete("DeleteUser")]
+        public async Task<IActionResult> DeleteUser()
+        {
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            var result = await _userService.DeleteUserAsync(userId);
+
+            return result.HandleReturnResult();
+        }
+
+        [Authorize]
+        [ExtractTokenInfo]
+        [HttpPost("ResetUserData")]
+        public async Task<IActionResult> ResetUserData([FromBody] ResetUserDataRequest request)
+        {
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            var result = await _userService.ResetUserDataAsync(request, userId);
+
+            return result.HandleReturnResult();
+        }
     }
 }

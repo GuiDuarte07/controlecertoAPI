@@ -24,7 +24,6 @@ namespace ControleCerto.Controllers
         [HttpPost("Authenticate")]
         public async Task<IActionResult> AuthenticateAsync([FromBody] AuthRequest data)
         {
-
             var authInfo = await _authService.AuthenticateAsync(data.Email, data.Password);
 
             return authInfo.HandleReturnResult();

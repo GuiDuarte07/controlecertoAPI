@@ -15,7 +15,7 @@ namespace ControleCerto.Models.Entities
         public DateTime ExpiresAt { get; set; }
 
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User? User { get; set; }
 
         public Notification() { }
 

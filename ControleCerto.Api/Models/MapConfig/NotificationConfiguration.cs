@@ -13,6 +13,9 @@ namespace ControleCerto.Models.MapConfig
             builder.Property(n => n.ActionPath).HasMaxLength(100).IsRequired(false);
             builder.Property(n => n.IsRead).HasColumnType("boolean").IsRequired();
 
+            // Global query filter para excluir notificações de usuários deletados
+            builder.HasQueryFilter(n => !n.User!.Deleted);
+
             builder.HasOne(n => n.User)
                 .WithMany(u => u.Notifications)
                 .HasForeignKey(n => n.UserId);

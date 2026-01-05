@@ -17,6 +17,9 @@ namespace ControleCerto.Models.MapConfig
             //builder.Property(ce => ce.CreatedAt).HasColumnType("datetime");
             //builder.Property(ce => ce.UpdatedAt).HasColumnType("datetime");
 
+            // Global query filter para excluir contas de usuários deletados
+            builder.HasQueryFilter(a => !a.User!.Deleted);
+
             builder.HasOne(a => a.User)
                 .WithMany(u => u.Accounts)
                 .HasForeignKey(a => a.UserId);

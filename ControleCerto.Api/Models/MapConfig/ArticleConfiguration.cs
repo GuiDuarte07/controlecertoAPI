@@ -15,6 +15,9 @@ namespace ControleCerto.Models.MapConfig
             builder.HasIndex(a => a.Title).IsUnique();
             builder.HasIndex(a => a.MdFileName).IsUnique();
 
+            // Global query filter para excluir artigos de usuários deletados
+            builder.HasQueryFilter(a => !a.User!.Deleted);
+
             builder.HasOne(a => a.User)
                 .WithMany(u => u.Articles)
                 .HasForeignKey(a => a.UserId);

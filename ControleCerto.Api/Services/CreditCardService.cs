@@ -150,7 +150,7 @@ namespace ControleCerto.Services
                             Description = request.Description +
                                 (totalInstallment > 1 ? $" {i + 1 + installmentsPaid}/{(totalInstallment - installmentsPaid)}" : ""),
                             Destination = request.Destination,
-                            PurchaseDate = request.PurchaseDate,
+                            PurchaseDate = request.PurchaseDate.AddMonths(i),
                         };
 
                         transactions.Add(newTransaction);
@@ -543,10 +543,10 @@ namespace ControleCerto.Services
                         
                         if (invoice.IsPaid)
                         {
-                            return new AppError("Não é mais possível excluir esse registro pois a fatura já foi paga.", ErrorTypeEnum.BusinessRule);
+                            return new AppError("Não é mais possível excluir/editar esse registro pois a fatura já foi paga.", ErrorTypeEnum.BusinessRule);
                         }
 
-                        if (Math.Round(invoice.TotalAmount - invoice.TotalPaid, 2) < creditPurchaseToDelete.TotalAmount)
+                        if (Math.Round(invoice.TotalAmount - invoice.TotalPaid, 2) < Math.Round(creditPurchaseToDelete.TotalAmount / creditPurchaseToDelete.TotalInstallment, 2))
                         {
                             return new AppError(
                                 $"Essa fatura tem um valor de ${(invoice.TotalAmount - invoice.TotalPaid):F2} a ser pago ainda e essa transação a ser deletada " +
