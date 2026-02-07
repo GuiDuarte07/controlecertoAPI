@@ -21,17 +21,21 @@ namespace ControleCerto.Models.AppDbContext
         public DbSet<InvoicePayment> InvoicePayments { get; set; }
         public DbSet<CreditPurchase> CreditPurchases { get; set; }
         public DbSet<Transference> Transferences { get; set; }
-        public DbSet<CategoryDefault> CategoriesDefault { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Article> Articles { get; set; }
         public DbSet<CategoryLimit> CategoryLimits { get; set; }
         public DbSet<RecurrenceRule> RecurrenceRules { get; set; }
         public DbSet<RecurringTransaction> RecurringTransactions { get; set; }
         public DbSet<RecurringTransactionInstance> RecurringTransactionInstances { get; set; }
+        public DbSet<Investment> Investments { get; set; }
+        public DbSet<InvestmentHistory> InvestmentHistories { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql(_configuration.GetConnectionString("WebApiDatabase"));
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseNpgsql(_configuration.GetConnectionString("WebApiDatabase"));
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -45,13 +49,14 @@ namespace ControleCerto.Models.AppDbContext
             modelBuilder.ApplyConfiguration(new InvoicePaymentConfiguration());
             modelBuilder.ApplyConfiguration(new CreditPurchaseConfiguration());
             modelBuilder.ApplyConfiguration(new TransferenceConfiguration());
-            modelBuilder.ApplyConfiguration(new CategoryDefaultConfiguration());
             modelBuilder.ApplyConfiguration(new NotificationConfiguration());
             modelBuilder.ApplyConfiguration(new ArticleConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryLimitConfiguration());
             modelBuilder.ApplyConfiguration(new RecurrenceRuleConfiguration());
             modelBuilder.ApplyConfiguration(new RecurringTransactionConfiguration());
             modelBuilder.ApplyConfiguration(new RecurringTransactionInstanceConfiguration());
+            modelBuilder.ApplyConfiguration(new InvestmentConfiguration());
+            modelBuilder.ApplyConfiguration(new InvestmentHistoryConfiguration());
         }
 
     }

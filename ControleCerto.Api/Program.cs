@@ -5,6 +5,7 @@ using ControleCerto.Profiles;
 using ControleCerto.Services;
 using ControleCerto.Services.Interfaces;
 using ControleCerto.Utils;
+using FluentValidation;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
@@ -116,6 +117,9 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddControllers();
 
+// FluentValidation
+builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
 // Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHashService, HashService>();
@@ -130,6 +134,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<IBalanceService, BalanceService>();
 builder.Services.AddScoped<IRecurringTransactionService, RecurringTransactionService>();
+builder.Services.AddScoped<IInvestmentService, InvestmentService>();
 builder.Services.AddHealthChecks();
 
 // Automapper
