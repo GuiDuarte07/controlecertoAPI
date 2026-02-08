@@ -29,6 +29,7 @@ namespace ControleCerto.Models.AppDbContext
         public DbSet<RecurringTransactionInstance> RecurringTransactionInstances { get; set; }
         public DbSet<Investment> Investments { get; set; }
         public DbSet<InvestmentHistory> InvestmentHistories { get; set; }
+        public DbSet<Note> Notes { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -57,6 +58,7 @@ namespace ControleCerto.Models.AppDbContext
             modelBuilder.ApplyConfiguration(new RecurringTransactionInstanceConfiguration());
             modelBuilder.ApplyConfiguration(new InvestmentConfiguration());
             modelBuilder.ApplyConfiguration(new InvestmentHistoryConfiguration());
+            modelBuilder.ApplyConfiguration(new NoteConfiguration());
         }
 
     }

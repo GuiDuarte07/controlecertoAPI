@@ -11,6 +11,7 @@ using ControleCerto.DTOs.TransferenceDTO;
 using ControleCerto.DTOs.User;
 using ControleCerto.DTOs.RecurringTransaction;
 using ControleCerto.DTOs.Investment;
+using ControleCerto.DTOs.Note;
 using ControleCerto.Models.DTOs;
 using ControleCerto.Models.Entities;
 
@@ -191,6 +192,17 @@ namespace ControleCerto.Profiles
             CreateMap<InvestmentHistory, InvestmentHistoryResponse>()
                 .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type.ToString()))
                 .ForMember(dest => dest.SourceAccount, opt => opt.MapFrom(src => src.SourceAccount));
+
+            // Note mappings
+            CreateMap<CreateNoteRequest, Note>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .AfterMap((src, dest) =>
+                {
+                    dest.CreatedAt = DateTime.UtcNow;
+                    dest.UpdatedAt = DateTime.UtcNow;
+                });
+            CreateMap<Note, NoteResponse>();
         }
     }
 }
