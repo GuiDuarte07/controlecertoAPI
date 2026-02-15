@@ -1,23 +1,6 @@
 version: '3.4'
 
 services:
-  controlecerto:
-    build:
-        context: .
-        dockerfile: ./ControleCerto.Api/Dockerfile  
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:8080
-    ports:
-      - "8080:8080"
-      - "8081:8081"
-    volumes:
-      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
-      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
-    depends_on:
-      - database.pgs
-      - rabbitmq
-      - cache 
   database.pgs:
     image: postgres:18
     environment:

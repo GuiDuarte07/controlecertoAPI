@@ -64,6 +64,14 @@ namespace ControleCerto.Controllers
             return result.HandleReturnResult();
         }
 
+        [HttpDelete("DeleteInvestment/{investmentId}")]
+        public async Task<IActionResult> DeleteInvestment([FromRoute] long investmentId)
+        {
+            int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            var result = await _investmentService.DeleteInvestmentAsync(investmentId, userId);
+            return result.HandleReturnResult();
+        }
+
         [HttpGet("GetInvestments")]
         public async Task<IActionResult> GetInvestments()
         {

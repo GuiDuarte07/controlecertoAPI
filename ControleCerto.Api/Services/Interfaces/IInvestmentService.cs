@@ -12,6 +12,7 @@ namespace ControleCerto.Services.Interfaces
         Task<Result<InfoInvestmentResponse>> DepositAsync(DepositInvestmentRequest request, int userId);
         Task<Result<InfoInvestmentResponse>> WithdrawAsync(DepositInvestmentRequest request, int userId);
         Task<Result<InfoInvestmentResponse>> AdjustInvestmentAsync(AdjustInvestmentRequest request, int userId);
+        Task<Result<bool>> DeleteInvestmentAsync(long investmentId, int userId);
         Task<Result<IEnumerable<InfoInvestmentResponse>>> GetInvestmentsAsync(int userId);
         Task<Result<InfoInvestmentResponse>> GetInvestmentAsync(long investmentId, int userId);
         Task<Result<IEnumerable<InvestmentHistoryResponse>>> GetInvestmentHistoryAsync(long investmentId, int userId);

@@ -209,6 +209,32 @@ namespace ControleCerto.Services
             return _mapper.Map<InfoInvestmentResponse>(investmentWithHistory);
         }
 
+        public async Task<Result<bool>> DeleteInvestmentAsync(long investmentId, int userId)
+        {
+            var investment = await _appDbContext.Investments
+                .Include(i => i.Histories)
+                .FirstOrDefaultAsync(i => i.Id == investmentId);
+
+            if (investment is null || investment.UserId != userId)
+            {
+                return new AppError("Investimento não encontrado.", ErrorTypeEnum.NotFound);
+            }
+
+            using (var tx = await _appDbContext.Database.BeginTransactionAsync())
+            {
+                if (investment.Histories?.Any() == true)
+                {
+                    _appDbContext.InvestmentHistories.RemoveRange(investment.Histories);
+                }
+
+                _appDbContext.Investments.Remove(investment);
+                await _appDbContext.SaveChangesAsync();
+                await tx.CommitAsync();
+            }
+
+            return true;
+        }
+
         private async Task<Investment?> GetInvestmentWithHistoryAsync(long investmentId)
         {
             var investment = await _appDbContext.Investments
