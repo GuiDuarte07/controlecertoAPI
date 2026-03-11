@@ -20,13 +20,16 @@ namespace ControleCerto.Services
         private readonly IHashService _hashService;
         private readonly IBus _bus;
         private readonly ICacheService _cacheService;
-        public UserService(AppDbContext appDbContext, IMapper mapper, IHashService hashService, IBus bus, ICacheService cacheService)
+        private readonly IS3Service _s3Service;
+
+        public UserService(AppDbContext appDbContext, IMapper mapper, IHashService hashService, IBus bus, ICacheService cacheService, IS3Service s3Service)
         {
             _appDbContext = appDbContext;
             _mapper = mapper;
             _hashService = hashService;
             _bus = bus;
             _cacheService = cacheService;
+            _s3Service = s3Service;
         }
 
         public async Task<Result<DetailsUserResponse>> GetUserDetails(int userId)
@@ -78,7 +81,7 @@ namespace ControleCerto.Services
                         new Category("Transporte", "local_taxi", "#00bfff", BillTypeEnum.EXPENSE, userId),
                         new Category("Vestuário", "checkroom", "#008b8b", BillTypeEnum.EXPENSE, userId),
                         new Category("Viagem", "travel", "#da70d6", BillTypeEnum.EXPENSE, userId),
-                        new Category("Ajustes", "build", "ff5a1f", BillTypeEnum.EXPENSE, userId),
+                        new Category("Ajustes", "build", "#ff5a1f", BillTypeEnum.EXPENSE, userId),
                         new Category("Investimento", "trending_up", "#00cccc",BillTypeEnum.INCOME, userId),
                         new Category("Outros", "more_horiz", "#808080",BillTypeEnum.INCOME, userId),
                         new Category("Presente", "featured_seasonal_and_gifts", "#9dc209",BillTypeEnum.INCOME, userId),
@@ -436,6 +439,81 @@ namespace ControleCerto.Services
                     await transaction.RollbackAsync();
                     throw;
                 }
+            }
+        }
+
+        public async Task<Result<DetailsUserResponse>> UploadAvatarAsync(IFormFile file, int userId)
+        {
+            const long maxFileSize = 10 * 1024 * 1024;
+            string[] allowedContentTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+            if (file is null || file.Length == 0)
+                return new AppError("Nenhum arquivo foi enviado.", ErrorTypeEnum.Validation);
+
+            if (file.Length > maxFileSize)
+                return new AppError("O arquivo deve ter no máximo 10MB.", ErrorTypeEnum.Validation);
+
+            if (!allowedContentTypes.Contains(file.ContentType.ToLower()))
+                return new AppError("Apenas imagens JPEG, PNG, WebP e GIF são permitidas.", ErrorTypeEnum.Validation);
+
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user is null)
+                return new AppError("Usuário não encontrado.", ErrorTypeEnum.NotFound);
+
+            if (!string.IsNullOrEmpty(user.AvatarUrl))
+            {
+                var oldKey = ExtractS3Key(user.AvatarUrl);
+                if (oldKey is not null)
+                {
+                    try { await _s3Service.DeleteFileAsync(oldKey); } catch { }
+                }
+            }
+
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var key = $"avatars/{userId}/{Guid.NewGuid()}{extension}";
+            var url = await _s3Service.UploadFileAsync(file, key);
+
+            user.AvatarUrl = url;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _appDbContext.SaveChangesAsync();
+
+            return _mapper.Map<DetailsUserResponse>(user);
+        }
+
+        public async Task<Result<bool>> DeleteAvatarAsync(int userId)
+        {
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user is null)
+                return new AppError("Usuário não encontrado.", ErrorTypeEnum.NotFound);
+
+            if (!string.IsNullOrEmpty(user.AvatarUrl))
+            {
+                var key = ExtractS3Key(user.AvatarUrl);
+                if (key is not null)
+                {
+                    try { await _s3Service.DeleteFileAsync(key); } catch { }
+                }
+            }
+
+            user.AvatarUrl = null;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _appDbContext.SaveChangesAsync();
+
+            return true;
+        }
+
+        private static string? ExtractS3Key(string url)
+        {
+            try
+            {
+                var uri = new Uri(url);
+                return uri.AbsolutePath.TrimStart('/');
+            }
+            catch
+            {
+                return null;
             }
         }
     }

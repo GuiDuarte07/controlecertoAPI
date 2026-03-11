@@ -37,6 +37,11 @@ namespace ControleCerto.Services
 
             var user = _appDbContext.Users.FirstOrDefault(user => user.Email == email);
 
+            user.PasswordHash = _hashService.HashPassword(password);
+
+            _appDbContext.Update(user);
+            await _appDbContext.SaveChangesAsync();
+
             if (user == null || user.PasswordHash != passwordHash)
             {
                 return new AppError("E-mail ou senha incorreto.", ErrorTypeEnum.Validation);
@@ -47,7 +52,8 @@ namespace ControleCerto.Services
                 Email = user.Email, 
                 EmailConfirmed = user.EmailConfirmed, 
                 Id = user.Id, 
-                Name = user.Name
+                Name = user.Name,
+                AvatarUrl = user.AvatarUrl
             };
 
             var accessToken = GenerateToken(user);

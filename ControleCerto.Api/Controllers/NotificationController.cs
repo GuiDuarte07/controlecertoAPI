@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ControleCerto.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/notifications")]
     [Authorize]
     [ExtractTokenInfo]
     public class NotificationController : ControllerBase
@@ -24,7 +24,7 @@ namespace ControleCerto.Controllers
             _notificationService = notificationService;
         }
 
-        [HttpGet("GetRecentNotifications")]
+        [HttpGet("recent")]
         public async Task<IActionResult> GetRecentNotifications([FromQuery] bool? isRead)
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -34,8 +34,8 @@ namespace ControleCerto.Controllers
             return result.HandleReturnResult();
         }
 
-        [HttpGet("GetAllNotifications")]
-        public async Task<IActionResult> GetAllNotifications([FromQuery] bool? isRead)
+        [HttpGet]
+        public async Task<IActionResult> GetAllNotifications()
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
@@ -44,7 +44,7 @@ namespace ControleCerto.Controllers
             return result.HandleReturnResult();
         }
 
-        [HttpPost("SendUserNotification")]
+        [HttpPost]
         public async Task<IActionResult> SendUserNotification([FromBody] CreateNotificationRequest notification)
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -54,7 +54,7 @@ namespace ControleCerto.Controllers
             return result.HandleReturnResult();
         }
 
-        [HttpPost("SendPublicNotification")]
+        [HttpPost("public")]
         public async Task<IActionResult> SendPublicNotification([FromBody] CreatePublicNotificationRequest notification)
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -65,7 +65,7 @@ namespace ControleCerto.Controllers
         }
 
 
-        [HttpPatch("MarkAsRead")]
+        [HttpPatch("read")]
         public async Task<IActionResult> MarkAsRead([FromBody] ReadNotificationsRequest readNotifications)
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -76,7 +76,7 @@ namespace ControleCerto.Controllers
         }
 
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:long}")]
         public async Task<IActionResult> DeleteNotification([FromRoute] long id)
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;

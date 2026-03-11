@@ -10,7 +10,7 @@ using ControleCerto.Extensions;
 namespace ControleCerto.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/notes")]
     [ExtractTokenInfo]
     public class NoteController : ControllerBase
     {
@@ -28,12 +28,12 @@ namespace ControleCerto.Controllers
             var result = await _notesService.CreateNoteAsync(request, userId);
             
             if (result.IsSuccess)
-                return Created("GetAllNotes", result.Value);
+                return Created($"/api/notes/{result.Value.Id}", result.Value);
             
             return result.HandleReturnResult();
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id:long}")]
         public async Task<IActionResult> UpdateNote(long id, [FromBody] UpdateNoteRequest request)
         {
             var userId = (int)HttpContext.Items["UserId"]!;
@@ -42,7 +42,7 @@ namespace ControleCerto.Controllers
             return result.HandleReturnResult();
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:long}")]
         public async Task<IActionResult> GetNote(long id)
         {
             var userId = (int)HttpContext.Items["UserId"]!;
@@ -74,7 +74,7 @@ namespace ControleCerto.Controllers
             return result.HandleReturnResult();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:long}")]
         public async Task<IActionResult> DeleteNote(long id)
         {
             var userId = (int)HttpContext.Items["UserId"]!;

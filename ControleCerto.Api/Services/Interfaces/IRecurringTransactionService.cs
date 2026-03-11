@@ -13,6 +13,8 @@ namespace ControleCerto.Services.Interfaces
         public Task<Result<List<InfoRecurringTransactionInstanceResponse>>> ProcessPendingRecurringTransactionInstances(List<long> pendingTransactions, InstanceStatusEnum action, int userId, string? rejectReason);
         public Task<List<RecurringTransaction>> GetRecurringTransactionsToProcessAsync(DateTime targetDate);
         public Task<List<InfoRecurringTransactionResponse>> GetRecurringTransactionsAsync(int userId);
+        public Task<Result<InfoRecurringTransactionResponse>> UpdateRecurringTransactionAsync(long recurringId, UpdateRecurringTransactionRequest request, int userId);
+        public Task<Result<bool>> DeleteRecurringTransactionAsync(long recurringId, int userId);
         public Task ProcessRecurringTransactionsAsync();
 
     }

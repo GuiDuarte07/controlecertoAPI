@@ -16,5 +16,7 @@ namespace ControleCerto.Services.Interfaces
         public Task<Result<DetailsUserResponse>> UpdateUserAsync(UpdateUserRequest userToUpdate, int userId);
         public Task<Result<bool>> DeleteUserAsync(int userId);
         public Task<Result<ResetUserDataResponse>> ResetUserDataAsync(ResetUserDataRequest request, int userId);
+        public Task<Result<DetailsUserResponse>> UploadAvatarAsync(IFormFile file, int userId);
+        public Task<Result<bool>> DeleteAvatarAsync(int userId);
     }
 }

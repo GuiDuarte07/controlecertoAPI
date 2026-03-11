@@ -7,12 +7,11 @@ using ControleCerto.Models.Entities;
 using ControleCerto.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ControleCerto.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/categories")]
     [Authorize]
     [ExtractTokenInfo]
     public class CategoryController : ControllerBase
@@ -23,7 +22,7 @@ namespace ControleCerto.Controllers
             _categoryService = categoryService;
         }
 
-        [HttpPost("CreateCategory")]
+        [HttpPost]
         public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -32,7 +31,7 @@ namespace ControleCerto.Controllers
 
             if (result.IsSuccess)
             {
-                return Created("Category/GetAllCategories", result.Value);
+                return Created($"/api/categories/{result.Value.Id}", result.Value);
             }
             else 
             {
@@ -40,8 +39,8 @@ namespace ControleCerto.Controllers
             }
         }
 
-        [HttpGet("GetAllCategories/{type?}")]
-        public async Task<IActionResult> GetAllCategories(BillTypeEnum? type)
+        [HttpGet]
+        public async Task<IActionResult> GetAllCategories([FromQuery] BillTypeEnum? type)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
@@ -50,17 +49,21 @@ namespace ControleCerto.Controllers
             return result.HandleReturnResult();
         }
 
-        [HttpPatch("UpdateCategory")]
-        public async Task<IActionResult> UpdateCategory([FromBody] UpdateCategoryRequest request)
+        [HttpPatch("{categoryId:int}")]
+        public async Task<IActionResult> UpdateCategory([FromRoute] int categoryId, [FromBody] UpdateCategoryRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            request.Id = categoryId;
+            ModelState.Clear();
+            TryValidateModel(request);
 
             var result = await _categoryService.UpdateCategoryAsync(request, userId);
 
             return result.HandleReturnResult();
         }
 
-        [HttpDelete("DeleteCategory/{categoryId}")]
+        [HttpDelete("{categoryId:int}")]
         public async Task<IActionResult> DeleteCategory([FromRoute] int categoryId)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -71,17 +74,19 @@ namespace ControleCerto.Controllers
         }
 
 
-        [HttpPatch("UpdateCategoryLimit")]
-        public async Task<IActionResult> UpdateCategoryLimit([FromBody] UpdateCategoryLimitRequest data)
+        [HttpPatch("{categoryId:long}/limit")]
+        public async Task<IActionResult> UpdateCategoryLimit([FromRoute] long categoryId, [FromBody] UpdateCategoryLimitRequest data)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            data.CategoryId = categoryId;
 
             var result = await _categoryService.UpdateCategoryLimitAsync(data, userId);
 
             return result.HandleReturnResult();
         }
 
-        [HttpGet("GetLimitInfo/{categoryId}")]
+        [HttpGet("{categoryId:long}/limit")]
         public async Task<IActionResult> GetLimitInfo(long categoryId)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;

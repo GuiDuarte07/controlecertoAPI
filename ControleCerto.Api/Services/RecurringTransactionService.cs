@@ -76,17 +76,106 @@ namespace ControleCerto.Services
         {
             var recurringTransactions = await _appDbContext.RecurringTransactions
                 .Include(rt => rt.RecurrenceRule)
+                .Include(rt => rt.Instances)
                 .Where(rt => rt.UserId == userId)
-                .Select(rt => _mapper.Map<InfoRecurringTransactionResponse>(rt))
                 .ToListAsync();
 
-            return recurringTransactions;
+            return _mapper.Map<List<InfoRecurringTransactionResponse>>(recurringTransactions);
+        }
+
+        public async Task<Result<InfoRecurringTransactionResponse>> UpdateRecurringTransactionAsync(long recurringId, UpdateRecurringTransactionRequest request, int userId)
+        {
+            var validationResult = RecurringTransactionValidations.ValidateUpdateRecurringTransactionRequest(request);
+
+            if (validationResult.IsError)
+            {
+                return new Result<InfoRecurringTransactionResponse>(validationResult.Error);
+            }
+
+            var recurringTransaction = await _appDbContext.RecurringTransactions
+                .Include(rt => rt.RecurrenceRule)
+                .FirstOrDefaultAsync(rt => rt.Id == recurringId && rt.UserId == userId);
+
+            if (recurringTransaction is null)
+            {
+                return new AppError("TransaÃ§Ã£o recorrente nÃ£o encontrada.", ErrorTypeEnum.NotFound);
+            }
+
+            recurringTransaction.Description = request.Description;
+            recurringTransaction.Amount = request.Amount;
+            recurringTransaction.Destination = request.Destination ?? recurringTransaction.Destination;
+            recurringTransaction.JustForRecord = request.JustForRecord;
+            recurringTransaction.Type = request.Type;
+            recurringTransaction.StartDate = request.StartDate;
+            recurringTransaction.EndDate = request.EndDate;
+            recurringTransaction.AccountId = request.AccountId;
+            recurringTransaction.CategoryId = request.CategoryId;
+            recurringTransaction.IsActive = request.IsActive;
+            recurringTransaction.UpdatedAt = DateTime.UtcNow;
+
+            var recurrenceRule = recurringTransaction.RecurrenceRule;
+            recurrenceRule.Frequency = request.RecurrenceRule.Frequency;
+            recurrenceRule.IsEveryDay = request.RecurrenceRule.IsEveryDay;
+            recurrenceRule.DaysOfWeek = request.RecurrenceRule.DaysOfWeek;
+            recurrenceRule.DayOfWeek = request.RecurrenceRule.DayOfWeek;
+            recurrenceRule.DayOfMonth = request.RecurrenceRule.DayOfMonth;
+            recurrenceRule.MonthOfYear = request.RecurrenceRule.MonthOfYear;
+            recurrenceRule.DayOfMonthForYearly = request.RecurrenceRule.DayOfMonthForYearly;
+            recurrenceRule.Interval = request.RecurrenceRule.Interval;
+
+            _appDbContext.RecurringTransactions.Update(recurringTransaction);
+            _appDbContext.RecurrenceRules.Update(recurrenceRule);
+
+            await _appDbContext.SaveChangesAsync();
+
+            return _mapper.Map<InfoRecurringTransactionResponse>(recurringTransaction);
+        }
+
+        public async Task<Result<bool>> DeleteRecurringTransactionAsync(long recurringId, int userId)
+        {
+            var recurringTransaction = await _appDbContext.RecurringTransactions
+                .Include(rt => rt.RecurrenceRule)
+                .FirstOrDefaultAsync(rt => rt.Id == recurringId && rt.UserId == userId);
+
+            if (recurringTransaction is null)
+            {
+                return new AppError("TransaÃ§Ã£o recorrente nÃ£o encontrada.", ErrorTypeEnum.NotFound);
+            }
+
+            using var transaction = await _appDbContext.Database.BeginTransactionAsync();
+
+            try
+            {
+                _appDbContext.RecurringTransactions.Remove(recurringTransaction);
+                await _appDbContext.SaveChangesAsync();
+
+                var recurrenceRule = recurringTransaction.RecurrenceRule;
+
+                var ruleInUse = await _appDbContext.RecurringTransactions
+                    .AnyAsync(rt => rt.RecurrenceRuleId == recurrenceRule.Id);
+
+                if (!ruleInUse)
+                {
+                    _appDbContext.RecurrenceRules.Remove(recurrenceRule);
+                    await _appDbContext.SaveChangesAsync();
+                }
+
+                await transaction.CommitAsync();
+
+                return true;
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                return new AppError("Erro ao remover transaÃ§Ã£o recorrente.", ErrorTypeEnum.InternalError);
+            }
         }
 
         public async Task<List<InfoRecurringTransactionInstanceResponse>> GetRecurringTransactionInstancesAsync(InstanceStatusEnum status, int userId, DateTime? startDate, DateTime? endDate)
         {
-
-            var query = _appDbContext.RecurringTransactionInstances.Where(i => i.Status == status);
+            var query = _appDbContext.RecurringTransactionInstances
+                .Include(i => i.RecurringTransaction)
+                .Where(i => i.Status == status && i.RecurringTransaction.UserId == userId);
 
             if (startDate.HasValue)
             {
@@ -107,12 +196,12 @@ namespace ControleCerto.Services
         {
             if (pendingTransactions.Count == 0)
             {
-                return new AppError("Transações não encontradas", ErrorTypeEnum.NotFound);
+                return new AppError("Transaï¿½ï¿½es nï¿½o encontradas", ErrorTypeEnum.NotFound);
             }
 
             if (action == InstanceStatusEnum.PENDING || action == InstanceStatusEnum.ERROR)
             {
-                return new AppError("Transações não podem alterar seu status para 'Pendente' ou 'Erro'", ErrorTypeEnum.BusinessRule);
+                return new AppError("Transaï¿½ï¿½es nï¿½o podem alterar seu status para 'Pendente' ou 'Erro'", ErrorTypeEnum.BusinessRule);
             }
 
             var today = DateTime.UtcNow;
@@ -168,7 +257,7 @@ namespace ControleCerto.Services
                         recurring.Status = InstanceStatusEnum.ERROR;
                         recurring.RejectionReason = ex.Message;
                         //_logger.LogError(ex,
-                        //    "Erro ao processar recorrência {RecurringTransactionId} para {Date}",
+                        //    "Erro ao processar recorrï¿½ncia {RecurringTransactionId} para {Date}",
                         //    recurringTransaction.Id,
                         //    today);
                     }
@@ -183,7 +272,7 @@ namespace ControleCerto.Services
             } catch
             {
                 await transaction.RollbackAsync();
-                return new AppError("Algo ocorreu no processamento das pendências e elas não foram concluídas", ErrorTypeEnum.InternalError);
+                return new AppError("Algo ocorreu no processamento das pendï¿½ncias e elas nï¿½o foram concluï¿½das", ErrorTypeEnum.InternalError);
             }
 
         }
@@ -205,7 +294,7 @@ namespace ControleCerto.Services
                             !rt.Instances.Any(i => i.ScheduledDate.Date == targetDate.Date))
 
                 .Where(rt =>
-                    // DIÁRIAS
+                    // DIï¿½RIAS
                     (rt.RecurrenceRule.Frequency == RecurrenceFrequencyEnum.DAILY &&
                      (rt.RecurrenceRule.IsEveryDay ||
                       (rt.RecurrenceRule.DaysOfWeek != null &&
@@ -276,13 +365,13 @@ namespace ControleCerto.Services
 
                     await _appDbContext.RecurringTransactionInstances.AddAsync(instance);
 
-                    // Enviar notificação para o usuário
+                    // Enviar notificaï¿½ï¿½o para o usuï¿½rio
                     await _notificationService.SendUserNotificationAsync(
                         new CreateNotificationRequest
                         {
-                            Title = "Nova transação recorrente criada!",
+                            Title = "Nova transaï¿½ï¿½o recorrente criada!",
                             Message = $"Nova {(recurringTransaction.Type == TransactionTypeEnum.EXPENSE ? "despesa" : "receita")} " +
-                            $"recorrente foi gerada com título {recurringTransaction.Description}. Clique aqui e aprove a pendência.",
+                            $"recorrente foi gerada com tï¿½tulo {recurringTransaction.Description}. Clique aqui e aprove a pendï¿½ncia.",
                             Type = NotificationTypeEnum.CONFIRMRECURRENCE,
                             ExpiresAt = today.AddDays(15),
                             UserId = recurringTransaction.UserId,
@@ -294,7 +383,7 @@ namespace ControleCerto.Services
                 catch (Exception ex)
                 {
                     //_logger.LogError(ex,
-                    //    "Erro ao processar recorrência {RecurringTransactionId} para {Date}",
+                    //    "Erro ao processar recorrï¿½ncia {RecurringTransactionId} para {Date}",
                     //    recurringTransaction.Id,
                     //    today);
                 }

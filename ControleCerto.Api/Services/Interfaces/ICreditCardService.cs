@@ -21,6 +21,9 @@ namespace ControleCerto.Services.Interfaces
         public Task<Result<InfoInvoicePaymentResponse>> PayInvoiceAsync(CreteInvoicePaymentRequest invoicePaymentRequest, int userId);
         public Task<Result<bool>> DeleteInvoicePaymentAsync(
             long invoicePaymentId, int userId);
+        public Task<Result<SimulatedCreditPurchaseInvoiceResponse>> SimulateCreditPurchaseInvoiceAsync(
+            SimulateCreditPurchaseInvoiceRequest request,
+            int userId);
 
     }
 }

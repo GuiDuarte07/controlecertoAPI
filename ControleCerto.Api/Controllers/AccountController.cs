@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ControleCerto.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/accounts")]
     [Authorize]
     [ExtractTokenInfo]
     public class AccountController : ControllerBase
@@ -22,7 +22,7 @@ namespace ControleCerto.Controllers
             _accountService = accountService; 
         }
 
-        [HttpPost("CreateAccount")]
+        [HttpPost]
         public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest accountRequest)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -31,7 +31,7 @@ namespace ControleCerto.Controllers
 
             if (result.IsSuccess)
             {
-                return Created($"Account/{userId}",result.Value);
+                return Created($"/api/accounts/{result.Value.Id}", result.Value);
             }
             else
             {
@@ -41,7 +41,7 @@ namespace ControleCerto.Controllers
         }
 
         
-        [HttpDelete("DeleteAccount/{accountId}")]
+        [HttpDelete("{accountId:int}")]
         public async Task<IActionResult> DeleteAccount([FromRoute] int accountId)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -74,7 +74,7 @@ namespace ControleCerto.Controllers
             }
         }
 
-        [HttpGet("GetAccountsWithoutCreditCard")]
+        [HttpGet("without-credit-card")]
         public async Task<IActionResult> GetAccountsWithoutCreditCard()
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -91,14 +91,20 @@ namespace ControleCerto.Controllers
             }
         }
 
-        [HttpPatch("UpdateAccount")]
-        public async Task<IActionResult> UpdateAccount(UpdateAccountRequest request)
+        [HttpPatch("{accountId:int}")]
+        public async Task<IActionResult> UpdateAccount([FromRoute] int accountId, [FromBody] UpdateAccountRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
+            request.Id = accountId;
+
+            ModelState.Clear();
+            TryValidateModel(request);
+
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                var errorResponse = ErrorResponse.FromModelState(ModelState);
+                return StatusCode(errorResponse.Code, errorResponse);
             }
 
             var result = await _accountService.UpdateAccountAsync(request, userId);
@@ -114,7 +120,7 @@ namespace ControleCerto.Controllers
         }
 
 
-        [HttpGet("GetBalanceStatement")]
+        [HttpGet("balance-statement")]
         public async Task<IActionResult> GetBalanceStatementAsync()
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -131,7 +137,7 @@ namespace ControleCerto.Controllers
             }
         }
 
-        [HttpGet("GetAccountBalance")]
+        [HttpGet("balance")]
         public async Task<IActionResult> GetAccountBalanceAsync()
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;

@@ -26,16 +26,11 @@ namespace ControleCerto.Services
         public async Task<Result<InfoCreditCardResponse>> CreateCreditCardAsync(CreateCreditCardRequest request, int userId)
         {
             var creditCardToCreate = _mapper.Map<CreditCard>(request);
-            var account = await _appDbContext.Accounts.Include(a => a.CreditCard).FirstOrDefaultAsync(cd => cd.Id == creditCardToCreate.AccountId);
+            var account = await _appDbContext.Accounts.FirstOrDefaultAsync(cd => cd.Id == creditCardToCreate.AccountId);
 
             if (account is null || account.UserId != userId)
             {
                 return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
-            }
-
-            if (account.CreditCard is not null)
-            {
-                return new AppError("Conta já possui um cartão.", ErrorTypeEnum.Validation);
             }
 
             var createdCreditCard = await _appDbContext.CreditCards.AddAsync(creditCardToCreate);
@@ -180,6 +175,131 @@ namespace ControleCerto.Services
                 }
             }
         }
+
+        public async Task<Result<SimulatedCreditPurchaseInvoiceResponse>> SimulateCreditPurchaseInvoiceAsync(
+            SimulateCreditPurchaseInvoiceRequest request,
+            int userId)
+        {
+            var creditCard = await _appDbContext.CreditCards
+                .Include(cc => cc.Account)
+                .FirstOrDefaultAsync(cc => cc.Id == request.CreditCardId && cc.Account.UserId == userId);
+
+            if (creditCard is null)
+            {
+                return new AppError("Cartão de crédito não encontrado.", ErrorTypeEnum.NotFound);
+            }
+
+            var invoiceDateResult = await GetInvoiceDateByPurchaseDateAsync(creditCard, request.PurchaseDate);
+
+            if (invoiceDateResult.IsError)
+            {
+                return invoiceDateResult.Error;
+            }
+
+            var invoiceDate = invoiceDateResult.Value;
+
+            var invoice = await _appDbContext.Invoices
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.CreditCardId == creditCard.Id && i.InvoiceDate == invoiceDate);
+
+            var cycleDates = invoice is null
+                ? BuildInvoiceCycleDates(creditCard, invoiceDate)
+                : new InvoiceCycleDates(invoice.InvoiceDate, invoice.ClosingDate, invoice.DueDate);
+
+            var totalAmount = invoice?.TotalAmount ?? 0;
+
+            return new SimulatedCreditPurchaseInvoiceResponse
+            {
+                CreditCardDescription = creditCard.Description,
+                InvoiceDate = cycleDates.InvoiceDate,
+                ClosingDate = cycleDates.ClosingDate,
+                DueDate = cycleDates.DueDate,
+                TotalAmount = totalAmount,
+            };
+        }
+
+        private async Task<Result<DateTime>> GetInvoiceDateByPurchaseDateAsync(CreditCard creditCard, DateTime purchaseDate)
+        {
+            var adjustedPurchaseDate = purchaseDate;
+            var initialMonthInvoiceDate = new DateTime(
+                adjustedPurchaseDate.Year,
+                adjustedPurchaseDate.Month,
+                1,
+                0,
+                0,
+                0,
+                DateTimeKind.Utc);
+
+            int addMonthCount = 0;
+
+            while (true)
+            {
+                if (addMonthCount > 10)
+                {
+                    return new AppError("Ocorreu um erro ao encontrar a fatura.", ErrorTypeEnum.InternalError);
+                }
+
+                var actualMonthInvoiceDate = initialMonthInvoiceDate.AddMonths(addMonthCount);
+
+                var existingInvoice = await _appDbContext.Invoices
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(i => i.CreditCardId == creditCard.Id && i.InvoiceDate == actualMonthInvoiceDate);
+
+                var cycleDates = existingInvoice is null
+                    ? BuildInvoiceCycleDates(creditCard, actualMonthInvoiceDate)
+                    : new InvoiceCycleDates(existingInvoice.InvoiceDate, existingInvoice.ClosingDate, existingInvoice.DueDate);
+
+                bool isInClosingDate = adjustedPurchaseDate >= cycleDates.ClosingDate && adjustedPurchaseDate <= cycleDates.DueDate;
+                bool isAfterDueDate = adjustedPurchaseDate > cycleDates.DueDate;
+
+                if (isInClosingDate || isAfterDueDate)
+                {
+                    addMonthCount++;
+                    continue;
+                }
+
+                return cycleDates.InvoiceDate;
+            }
+        }
+
+        private static InvoiceCycleDates BuildInvoiceCycleDates(CreditCard creditCard, DateTime invoiceDate)
+        {
+            var monthInvoiceDate = new DateTime(invoiceDate.Year, invoiceDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+            var dueDay = Math.Clamp(
+                creditCard.DueDay,
+                1,
+                DateTime.DaysInMonth(monthInvoiceDate.Year, monthInvoiceDate.Month));
+
+            var monthDueInvoiceDate = new DateTime(
+                monthInvoiceDate.Year,
+                monthInvoiceDate.Month,
+                dueDay,
+                0,
+                0,
+                0,
+                DateTimeKind.Utc);
+
+            var monthClosingInvoiceDate = monthDueInvoiceDate.AddDays(-7);
+
+            if (creditCard.SkipWeekend)
+            {
+                if (monthDueInvoiceDate.DayOfWeek == DayOfWeek.Saturday)
+                {
+                    monthDueInvoiceDate = monthDueInvoiceDate.AddDays(2);
+                    monthClosingInvoiceDate = monthClosingInvoiceDate.AddDays(2);
+                }
+                else if (monthDueInvoiceDate.DayOfWeek == DayOfWeek.Sunday)
+                {
+                    monthDueInvoiceDate = monthDueInvoiceDate.AddDays(1);
+                    monthClosingInvoiceDate = monthClosingInvoiceDate.AddDays(1);
+                }
+            }
+
+            return new InvoiceCycleDates(monthInvoiceDate, monthClosingInvoiceDate, monthDueInvoiceDate);
+        }
+
+        private sealed record InvoiceCycleDates(DateTime InvoiceDate, DateTime ClosingDate, DateTime DueDate);
 
         private async Task<Result<Invoice>> GetOrCreateInvoice(CreditCard creditCard, DateTime invoiceDate) //repository method
         {
@@ -459,8 +579,8 @@ namespace ControleCerto.Services
                 var invoicePaymentToDelete =
                     await _appDbContext.InvoicePayments
                         .Include(ip => ip.Account)
-                            .ThenInclude(a => a.CreditCard)
                         .Include(ip => ip.Invoice)
+                            .ThenInclude(i => i.CreditCard)
                         .FirstOrDefaultAsync(ip =>
                             ip.Id == invoicePaymentId);
 
@@ -473,7 +593,8 @@ namespace ControleCerto.Services
                     invoicePaymentToDelete.Account.Balance +
                     invoicePaymentToDelete.AmountPaid, 2);
 
-                var creditCard = account.CreditCard!;
+                var invoice = invoicePaymentToDelete.Invoice;
+                var creditCard = invoice.CreditCard;
 
                 if (creditCard is null)
                 {
@@ -486,8 +607,8 @@ namespace ControleCerto.Services
                     invoicePaymentToDelete.AmountPaid, 2);
 
                 _appDbContext.Update(account);
+                _appDbContext.Update(creditCard);
 
-                var invoice = invoicePaymentToDelete.Invoice;
                 invoice.IsPaid = false;
                 invoice.TotalPaid =
                     Math.Round(

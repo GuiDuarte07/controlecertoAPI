@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using ControleCerto.DTOs.Common;
 using ControleCerto.DTOs.Invoice;
 using ControleCerto.DTOs.Transaction;
 using ControleCerto.DTOs.TransferenceDTO;
@@ -335,108 +336,321 @@ namespace ControleCerto.Services
          * ========= GET TRANSACTIONS
          */
 
-        public async Task<Result<TransactionList>> GetTransactionsAsync(int userId, DateTime startDate, DateTime endDate, bool? seeInvoices, int? accountId)
+        public async Task<Result<object>> GetTransactionsAsync(
+            int userId, 
+            DateTime startDate, 
+            DateTime endDate, 
+            string mode = "statement",
+            int? accountId = null,
+            long? cardId = null,
+            long? categoryId = null,
+            string? searchText = null,
+            string? sort = null,
+            int pageNumber = 1,
+            int pageSize = 20)
+        {
+            // Validate mode
+            if (!mode.Equals("invoice", StringComparison.OrdinalIgnoreCase) && 
+                !mode.Equals("statement", StringComparison.OrdinalIgnoreCase))
+            {
+                return new AppError("Modo inválido. Use 'invoice' ou 'statement'.", ErrorTypeEnum.Validation);
+            }
+
+            // Validate pagination
+            if (pageNumber < 1)
+            {
+                return new AppError("Parâmetro de paginação inválido. pageNumber deve ser >= 1.", ErrorTypeEnum.Validation);
+            }
+
+            mode = mode.ToLower();
+
+            // === INVOICE MODE ===
+            if (mode == "invoice")
+            {
+                return await GetTransactionsInvoiceMode(userId, startDate, accountId);
+            }
+
+            // === STATEMENT MODE ===
+            return await GetTransactionsStatementMode(userId, startDate, endDate, accountId, cardId, categoryId, searchText, sort, pageNumber, pageSize);
+        }
+
+        /// <summary>
+        /// Invoice mode: Returns monthly invoices with their transactions.
+        /// Only uses month/year from startDate, ignores day.
+        /// </summary>
+        private async Task<Result<object>> GetTransactionsInvoiceMode(int userId, DateTime startDate, int? accountId)
         {
             var startDateInvoiceFilter = new DateTime(startDate.Year, startDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
-            if (seeInvoices is null || seeInvoices is true)
+            var transactions = await _appDbContext.Transactions
+                .Include(i => i.Category)
+                .Include(t => t.Account)
+                .Where(t =>
+                    t.Type != TransactionTypeEnum.CREDITEXPENSE &&
+                    t.Account!.UserId == userId &&
+                    t.PurchaseDate >= startDateInvoiceFilter &&
+                    t.PurchaseDate < startDateInvoiceFilter.AddMonths(1))
+                .OrderByDescending(t => t.PurchaseDate)
+                .ToListAsync();
+
+            var invoicePayments = await _appDbContext.InvoicePayments
+                .Include(ip => ip.Account)
+                .Where(ip =>
+                    ip.Account!.UserId == userId &&
+                    ip.PaymentDate >= startDateInvoiceFilter &&
+                    ip.PaymentDate < startDateInvoiceFilter.AddMonths(1))
+                .OrderByDescending(t => t.PaymentDate)
+                .ToListAsync();
+
+            var invoices = await _appDbContext.Invoices
+                .Include(i => i.Transactions)
+                    .ThenInclude(t => t.Category)
+                .Include(i => i.Transactions)
+                    .ThenInclude(t => t.CreditPurchase)
+                .Include(i => i.Transactions)
+                    .ThenInclude(t => t.Account)
+                .Include(i => i.CreditCard)
+                .Where(i => i.CreditCard.Account!.UserId == userId &&
+                    i.InvoiceDate.Equals(startDateInvoiceFilter))
+                .ToListAsync();
+
+            if (accountId.HasValue)
             {
-                var transactions = await _appDbContext.Transactions
+                var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId);
+                if (account is null)
+                {
+                    return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
+                }
+
+                transactions = transactions.Where(t => t.AccountId == accountId).ToList();
+                invoicePayments = invoicePayments.Where(t => t.AccountId == accountId).ToList();
+                invoices = invoices.Where(t => t.CreditCard.AccountId == accountId).ToList();
+            }
+
+            var allTransactions = _mapper.Map<List<InfoTransactionResponse>>(transactions);
+            allTransactions.AddRange(invoicePayments.Select(ip => new InfoTransactionResponse(ip)));
+
+            return new InvoiceListResponse
+            {
+                Transactions = allTransactions,
+                Invoices = _mapper.Map<List<InfoInvoiceResponse>>(invoices)
+            };
+        }
+
+        /// <summary>
+        /// Statement mode: Returns all transactions as a detailed ledger with advanced filtering and sorting.
+        /// </summary>
+        private async Task<Result<object>> GetTransactionsStatementMode(
+            int userId,
+            DateTime startDate,
+            DateTime endDate,
+            int? accountId,
+            long? cardId,
+            long? categoryId,
+            string? searchText,
+            string? sort,
+            int pageNumber,
+            int pageSize)
+        {
+            // Ensure endDate includes the entire last day
+            var adjustedEndDate = endDate.Date.AddDays(1).AddTicks(-1);
+
+            // Build base queries
+            var transactions = await _appDbContext.Transactions
                 .Include(i => i.Category)
                 .Include(t => t.Account)
                 .Where(t =>
                     t.Type != TransactionTypeEnum.CREDITEXPENSE &&
                     t.Account!.UserId == userId &&
                     t.PurchaseDate >= startDate &&
-                    t.PurchaseDate <= endDate)
-                .OrderByDescending(t => t.PurchaseDate)
+                    t.PurchaseDate <= adjustedEndDate)
                 .ToListAsync();
 
-                var invoicePayments = await _appDbContext.InvoicePayments
-                    .Include(ip => ip.Account)
-                    .Where(ip =>
-                        ip.Account!.UserId == userId &&
-                        ip.PaymentDate >= startDate &&
-                        ip.PaymentDate <= endDate)
-                    .OrderByDescending(t => t.PaymentDate)
-                    .ToListAsync();
+            var invoicePayments = await _appDbContext.InvoicePayments
+                .Include(ip => ip.Account)
+                .Where(ip =>
+                    ip.Account!.UserId == userId &&
+                    ip.PaymentDate >= startDate &&
+                    ip.PaymentDate <= adjustedEndDate)
+                .ToListAsync();
 
-                var invoices = await _appDbContext.Invoices
-                    .Include(i => i.Transactions)
-                        .ThenInclude(t => t.Category)
-                    .Include(i => i.Transactions)
-                        .ThenInclude(t => t.CreditPurchase)
-                   .Include(i => i.Transactions)
-                        .ThenInclude(t => t.Account)
-                    .Include(i => i.CreditCard)
-                    .Where(i => i.CreditCard.Account!.UserId == userId &&
-                        i.InvoiceDate.Equals(startDateInvoiceFilter))
-                    .ToListAsync();
-
-                if (accountId.HasValue)
-                {
-
-                    var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId);
-
-                    if (account is null)
-                    {
-                        return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
-                    }
-
-
-                    transactions = transactions.Where(t => t.AccountId == accountId).ToList();
-                    invoicePayments = invoicePayments.Where(t => t.AccountId == accountId).ToList();
-                    invoices = invoices.Where(t => t.CreditCard.AccountId == accountId).ToList();
-                }
-
-                var allTransactions =
-                    _mapper.Map<List<InfoTransactionResponse>>(transactions);
-
-                allTransactions.AddRange(invoicePayments
-                    .Select(ip => new InfoTransactionResponse(ip)));
-
-                return
-                    new TransactionList
-                    {
-                        Transactions = allTransactions,
-                        Invoices = _mapper.Map<List<InfoInvoiceResponse>>(invoices)
-                    };
-            } else
-            {
-                var transactions = await _appDbContext.Transactions
-                .Include(i => i.Category)
+            var creditPurchases = await _appDbContext.Transactions
+                .Include(t => t.Category)
                 .Include(t => t.Account)
+                .Include(t => t.CreditPurchase)
                 .Where(t =>
+                    t.Type == TransactionTypeEnum.CREDITEXPENSE &&
                     t.Account!.UserId == userId &&
                     t.PurchaseDate >= startDate &&
-                    t.PurchaseDate <= endDate)
-                .OrderByDescending(t => t.PurchaseDate)
+                    t.PurchaseDate <= adjustedEndDate)
                 .ToListAsync();
 
-                if (accountId.HasValue)
+            // Apply resource filters
+            if (accountId.HasValue)
+            {
+                var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId);
+                if (account is null)
                 {
-
-                    var account = await _appDbContext.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId);
-
-                    if (account is null)
-                    {
-                        return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
-                    }
-
-
-                    transactions = transactions.Where(t => t.AccountId == accountId).ToList();
+                    return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
                 }
 
-                var allTransactions =
-                    _mapper.Map<List<InfoTransactionResponse>>(transactions);
-
-                return
-                    new TransactionList
-                    {
-                        Transactions = allTransactions,
-                        Invoices = []
-                    };
+                transactions = transactions.Where(t => t.AccountId == accountId).ToList();
+                invoicePayments = invoicePayments.Where(t => t.AccountId == accountId).ToList();
+                creditPurchases = creditPurchases.Where(t => t.AccountId == accountId).ToList();
             }
+
+            if (cardId.HasValue)
+            {
+                creditPurchases = creditPurchases
+                    .Where(t => t.CreditPurchase?.CreditCardId == cardId)
+                    .ToList();
+            }
+
+            if (categoryId.HasValue)
+            {
+                transactions = transactions.Where(t => t.CategoryId == categoryId).ToList();
+                creditPurchases = creditPurchases.Where(t => t.CategoryId == categoryId).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                var searchLower = searchText.ToLower();
+                transactions = transactions
+                    .Where(t => t.Description.ToLower().Contains(searchLower) || 
+                               (t.Destination?.ToLower().Contains(searchLower) ?? false) ||
+                               (t.Observations?.ToLower().Contains(searchLower) ?? false))
+                    .ToList();
+
+                invoicePayments = invoicePayments
+                    .Where(ip => ip.Description.ToLower().Contains(searchLower))
+                    .ToList();
+
+                creditPurchases = creditPurchases
+                    .Where(t => t.Description.ToLower().Contains(searchLower) ||
+                               (t.Destination?.ToLower().Contains(searchLower) ?? false))
+                    .ToList();
+            }
+
+            // Merge all transaction types into unified view
+            var allTransactions = new List<InfoTransactionResponse>();
+            allTransactions.AddRange(_mapper.Map<List<InfoTransactionResponse>>(transactions));
+            allTransactions.AddRange(invoicePayments.Select(ip => new InfoTransactionResponse(ip)));
+            allTransactions.AddRange(_mapper.Map<List<InfoTransactionResponse>>(creditPurchases));
+
+            // Apply sorting
+            allTransactions = ApplySorting(allTransactions, sort);
+
+            // Calculate summary
+            var summary = new StatementSummary
+            {
+                TotalItems = allTransactions.Count,
+                TotalIncome = allTransactions
+                    .Where(t => t.Type == TransactionTypeEnum.INCOME)
+                    .Sum(t => t.Amount),
+                TotalExpense = allTransactions
+                    .Where(t => t.Type == TransactionTypeEnum.EXPENSE)
+                    .Sum(t => t.Amount),
+                TotalCreditCharges = allTransactions
+                    .Where(t => t.Type == TransactionTypeEnum.CREDITEXPENSE)
+                    .Sum(t => t.Amount),
+                TotalInvoicePayments = allTransactions
+                    .Where(t => t.Type == TransactionTypeEnum.INVOICEPAYMENT)
+                    .Sum(t => t.Amount),
+            };
+
+            summary.NetBalance = summary.TotalIncome - summary.TotalExpense - summary.TotalCreditCharges;
+
+            // Apply pagination AFTER calculating summary over complete filtered set
+            int totalItems = allTransactions.Count;
+            var paginatedTransactions = allTransactions
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var pagination = new PaginationMetadata(pageNumber, pageSize, totalItems);
+
+            return new StatementResponsePaginated
+            {
+                StartDate = startDate,
+                EndDate = adjustedEndDate,
+                Transactions = new PaginatedResponse<InfoTransactionResponse>
+                {
+                    Data = paginatedTransactions,
+                    Pagination = pagination
+                },
+                Summary = summary
+            };
+        }
+
+        /// <summary>
+        /// Applies dynamic sorting to transaction list.
+        /// Sort format: "field asc|desc,field asc|desc"
+        /// Valid fields: date, amount, account, category
+        /// </summary>
+        private List<InfoTransactionResponse> ApplySorting(List<InfoTransactionResponse> transactions, string? sort)
+        {
+            if (string.IsNullOrWhiteSpace(sort))
+            {
+                // Default: most recent first
+                return transactions.OrderByDescending(t => t.PurchaseDate).ToList();
+            }
+
+            var sortParts = sort.Split(',');
+            IOrderedEnumerable<InfoTransactionResponse> orderedQuery = null;
+
+            foreach (var part in sortParts)
+            {
+                var trimmedPart = part.Trim();
+                var components = trimmedPart.Split(' ');
+                
+                if (components.Length != 2)
+                    continue;
+
+                var field = components[0].ToLower();
+                var direction = components[1].ToLower();
+                var isAscending = direction == "asc";
+
+                if (orderedQuery == null)
+                {
+                    orderedQuery = field switch
+                    {
+                        "date" => isAscending 
+                            ? transactions.OrderBy(t => t.PurchaseDate)
+                            : transactions.OrderByDescending(t => t.PurchaseDate),
+                        "amount" => isAscending
+                            ? transactions.OrderBy(t => t.Amount)
+                            : transactions.OrderByDescending(t => t.Amount),
+                        "account" => isAscending
+                            ? transactions.OrderBy(t => t.Account?.Description ?? "")
+                            : transactions.OrderByDescending(t => t.Account?.Description ?? ""),
+                        "category" => isAscending
+                            ? transactions.OrderBy(t => t.Category?.Name ?? "")
+                            : transactions.OrderByDescending(t => t.Category?.Name ?? ""),
+                        _ => transactions.OrderByDescending(t => t.PurchaseDate)
+                    };
+                }
+                else
+                {
+                    orderedQuery = field switch
+                    {
+                        "date" => isAscending
+                            ? orderedQuery.ThenBy(t => t.PurchaseDate)
+                            : orderedQuery.ThenByDescending(t => t.PurchaseDate),
+                        "amount" => isAscending
+                            ? orderedQuery.ThenBy(t => t.Amount)
+                            : orderedQuery.ThenByDescending(t => t.Amount),
+                        "account" => isAscending
+                            ? orderedQuery.ThenBy(t => t.Account?.Description ?? "")
+                            : orderedQuery.ThenByDescending(t => t.Account?.Description ?? ""),
+                        "category" => isAscending
+                            ? orderedQuery.ThenBy(t => t.Category?.Name ?? "")
+                            : orderedQuery.ThenByDescending(t => t.Category?.Name ?? ""),
+                        _ => orderedQuery
+                    };
+                }
+            }
+
+            return orderedQuery?.ToList() ?? transactions.OrderByDescending(t => t.PurchaseDate).ToList();
         }
         
     }

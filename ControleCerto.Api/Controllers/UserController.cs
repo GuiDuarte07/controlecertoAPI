@@ -1,6 +1,7 @@
 ﻿using ControleCerto.Decorators;
 using ControleCerto.DTOs.Events;
 using ControleCerto.DTOs.User;
+using ControleCerto.Errors;
 using ControleCerto.Extensions;
 using ControleCerto.Services.Interfaces;
 using ControleCerto.Utils;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.Caching.Distributed;
 namespace ControleCerto.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/users")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -23,7 +24,7 @@ namespace ControleCerto.Controllers
         
         [Authorize]
         [ExtractTokenInfo]
-        [HttpGet("GetUser")]
+        [HttpGet("me")]
         public async Task<IActionResult> GetUser()
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -34,16 +35,16 @@ namespace ControleCerto.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("CreateUser")]
+        [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest data)
         {
             var result = await _userService.CreateUserAync(data);
 
-            return result.IsSuccess ? Created("Auth/Authenticate", result.Value) : result.HandleReturnResult();
+            return result.IsSuccess ? Created($"/api/users/{result.Value.Id}", result.Value) : result.HandleReturnResult();
         }
 
         [AllowAnonymous]
-        [HttpGet("ConfirmEmail/{token}")]
+        [HttpGet("confirm-email/{token}")]
         public async Task<IActionResult> ConfirmEmail(string token)
         {
             var result = await _userService.ConfirmEmailAsync(token);
@@ -53,7 +54,7 @@ namespace ControleCerto.Controllers
 
         [Authorize]
         [ExtractTokenInfo]
-        [HttpGet("SendConfirmEmail")]
+        [HttpPost("me/confirm-email")]
         public async Task<IActionResult> GenerateConfirmEmailToken()
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -65,7 +66,7 @@ namespace ControleCerto.Controllers
 
         [Authorize]
         [ExtractTokenInfo]
-        [HttpPost("ChangePassword")]
+        [HttpPost("me/password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest changePasswordRequest)
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -76,7 +77,7 @@ namespace ControleCerto.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("SendForgotPasswordEmail")]
+        [HttpPost("password/forgot")]
         public async Task<IActionResult> SendForgotPasswordEmail([FromBody] ForgotPasswordEvent forgotPasswordEmail)
         {
             var result = await _userService.GenerateForgotPasswordTokenAsync(forgotPasswordEmail.Email);
@@ -85,7 +86,7 @@ namespace ControleCerto.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("VerifyForgotPasswordToken/{token}")]
+        [HttpGet("password/forgot/{token}")]
         public async Task<IActionResult> VerifyForgotPasswordToken([FromRoute] string token)
         {
             var result = await _userService.VerifyForgotPasswordTokenAsync(token);
@@ -94,7 +95,7 @@ namespace ControleCerto.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("ForgotPassword/{token}")]
+        [HttpPost("password/forgot/{token}")]
         public async Task<IActionResult> ForgotPassword([FromRoute] string token, [FromBody] ForgotPasswordRequest forgotPasswordRequest)
         {
             var result = await _userService.ForgotPasswordAsync(token, forgotPasswordRequest);
@@ -104,14 +105,15 @@ namespace ControleCerto.Controllers
 
         [Authorize]
         [ExtractTokenInfo]
-        [HttpPatch("Update")]
+        [HttpPatch("me")]
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
         {
         int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                var errorResponse = ErrorResponse.FromModelState(ModelState);
+                return StatusCode(errorResponse.Code, errorResponse);
             }
 
             var result = await _userService.UpdateUserAsync(request, userId);
@@ -128,7 +130,7 @@ namespace ControleCerto.Controllers
 
         [Authorize]
         [ExtractTokenInfo]
-        [HttpDelete("DeleteUser")]
+        [HttpDelete("me")]
         public async Task<IActionResult> DeleteUser()
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -140,12 +142,37 @@ namespace ControleCerto.Controllers
 
         [Authorize]
         [ExtractTokenInfo]
-        [HttpPost("ResetUserData")]
+        [HttpPost("me/reset")]
         public async Task<IActionResult> ResetUserData([FromBody] ResetUserDataRequest request)
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             var result = await _userService.ResetUserDataAsync(request, userId);
+
+            return result.HandleReturnResult();
+        }
+
+        [Authorize]
+        [ExtractTokenInfo]
+        [HttpPost("me/avatar")]
+        [RequestSizeLimit(10 * 1024 * 1024)]
+        public async Task<IActionResult> UploadAvatar([FromForm] IFormFile file)
+        {
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            var result = await _userService.UploadAvatarAsync(file, userId);
+
+            return result.HandleReturnResult();
+        }
+
+        [Authorize]
+        [ExtractTokenInfo]
+        [HttpDelete("me/avatar")]
+        public async Task<IActionResult> DeleteAvatar()
+        {
+            var userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            var result = await _userService.DeleteAvatarAsync(userId);
 
             return result.HandleReturnResult();
         }

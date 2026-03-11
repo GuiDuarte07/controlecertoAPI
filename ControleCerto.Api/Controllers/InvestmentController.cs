@@ -1,5 +1,6 @@
 using ControleCerto.Decorators;
 using ControleCerto.DTOs.Investment;
+using ControleCerto.Errors;
 using ControleCerto.Extensions;
 using ControleCerto.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ControleCerto.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/investments")]
     [Authorize]
     [ExtractTokenInfo]
     public class InvestmentController : ControllerBase
@@ -20,51 +21,65 @@ namespace ControleCerto.Controllers
             _investmentService = investmentService;
         }
 
-        [HttpPost("CreateInvestment")]
+        [HttpPost]
         public async Task<IActionResult> CreateInvestment([FromBody] CreateInvestmentRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
             var result = await _investmentService.CreateInvestmentAsync(request, userId);
-            if (result.IsSuccess) return Created("GetInvestments", result.Value);
+            if (result.IsSuccess) return Created($"/api/investments/{result.Value.Id}", result.Value);
             return result.HandleReturnResult();
         }
 
-        [HttpPatch("UpdateInvestment")]
-        public async Task<IActionResult> UpdateInvestment([FromBody] UpdateInvestmentRequest request)
+        [HttpPatch("{investmentId:long}")]
+        public async Task<IActionResult> UpdateInvestment([FromRoute] long investmentId, [FromBody] UpdateInvestmentRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+
+            request.Id = investmentId;
+            ModelState.Clear();
+            TryValidateModel(request);
+
+            if (!ModelState.IsValid)
+            {
+                var errorResponse = ErrorResponse.FromModelState(ModelState);
+                return StatusCode(errorResponse.Code, errorResponse);
+            }
+
             var result = await _investmentService.UpdateInvestmentAsync(request, userId);
             return result.HandleReturnResult();
         }
 
-        [HttpPost("Deposit")]
-        public async Task<IActionResult> Deposit([FromBody] DepositInvestmentRequest request)
+        [HttpPost("{investmentId:long}/deposit")]
+        public async Task<IActionResult> Deposit([FromRoute] long investmentId, [FromBody] DepositInvestmentRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            request.InvestmentId = investmentId;
             var result = await _investmentService.DepositAsync(request, userId);
-            if (result.IsSuccess) return Created("GetInvestments", result.Value);
+            if (result.IsSuccess) return Created($"/api/investments/{result.Value.Id}", result.Value);
             return result.HandleReturnResult();
         }
 
-        [HttpPost("Withdraw")]
-        public async Task<IActionResult> Withdraw([FromBody] DepositInvestmentRequest request)
+        [HttpPost("{investmentId:long}/withdraw")]
+        public async Task<IActionResult> Withdraw([FromRoute] long investmentId, [FromBody] DepositInvestmentRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            request.InvestmentId = investmentId;
             var result = await _investmentService.WithdrawAsync(request, userId);
-            if (result.IsSuccess) return Created("GetInvestments", result.Value);
+            if (result.IsSuccess) return Created($"/api/investments/{result.Value.Id}", result.Value);
             return result.HandleReturnResult();
         }
 
-        [HttpPost("AdjustValue")]
-        public async Task<IActionResult> AdjustValue([FromBody] AdjustInvestmentRequest request)
+        [HttpPost("{investmentId:long}/adjust")]
+        public async Task<IActionResult> AdjustValue([FromRoute] long investmentId, [FromBody] AdjustInvestmentRequest request)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
+            request.InvestmentId = investmentId;
             var result = await _investmentService.AdjustInvestmentAsync(request, userId);
-            if (result.IsSuccess) return Created("GetInvestments", result.Value);
+            if (result.IsSuccess) return Created($"/api/investments/{result.Value.Id}", result.Value);
             return result.HandleReturnResult();
         }
 
-        [HttpDelete("DeleteInvestment/{investmentId}")]
+        [HttpDelete("{investmentId:long}")]
         public async Task<IActionResult> DeleteInvestment([FromRoute] long investmentId)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -72,7 +87,7 @@ namespace ControleCerto.Controllers
             return result.HandleReturnResult();
         }
 
-        [HttpGet("GetInvestments")]
+        [HttpGet]
         public async Task<IActionResult> GetInvestments()
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -80,7 +95,7 @@ namespace ControleCerto.Controllers
             return result.HandleReturnResult();
         }
 
-        [HttpGet("GetInvestment/{investmentId}")]
+        [HttpGet("{investmentId:long}")]
         public async Task<IActionResult> GetInvestment([FromRoute] long investmentId)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
@@ -88,7 +103,7 @@ namespace ControleCerto.Controllers
             return result.HandleReturnResult();
         }
 
-        [HttpGet("GetInvestmentHistory/{investmentId}")]
+        [HttpGet("{investmentId:long}/history")]
         public async Task<IActionResult> GetInvestmentHistory([FromRoute] long investmentId)
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;

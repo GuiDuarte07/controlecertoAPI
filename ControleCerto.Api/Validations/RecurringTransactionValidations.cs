@@ -65,6 +65,37 @@ namespace ControleCerto.Validations
             };
         }
 
+        public static Result<bool> ValidateUpdateRecurringTransactionRequest(UpdateRecurringTransactionRequest request)
+        {
+            var ruleValidation = ValidateRecurrenceRuleRequest(request.RecurrenceRule);
+            if (!ruleValidation.IsSuccess)
+                return ruleValidation;
+
+            if (request.Type != TransactionTypeEnum.EXPENSE &&
+                request.Type != TransactionTypeEnum.INCOME)
+            {
+                return new AppError("Transações recorrentes só podem ser do tipo EXPENSE ou INCOME.", ErrorTypeEnum.BusinessRule);
+            }
+
+            if (request.Amount <= 0)
+            {
+                return new AppError("Valor deve ser maior que zero.", ErrorTypeEnum.BusinessRule);
+            }
+
+            if (request.EndDate.HasValue &&
+                request.EndDate.Value <= request.StartDate)
+            {
+                return new AppError("Data de fim deve ser posterior à data de início.", ErrorTypeEnum.BusinessRule);
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Description))
+            {
+                return new AppError("Descrição é obrigatória.", ErrorTypeEnum.BusinessRule);
+            }
+
+            return true;
+        }
+
         private static Result<bool> ValidateDailyRule(CreateRecurrenceRuleRequest request)
         {
             if (!request.IsEveryDay && string.IsNullOrEmpty(request.DaysOfWeek))

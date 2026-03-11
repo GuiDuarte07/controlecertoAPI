@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ControleCerto.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -21,7 +21,7 @@ namespace ControleCerto.Controllers
 
 
         [AllowAnonymous]
-        [HttpPost("Authenticate")]
+        [HttpPost("token")]
         public async Task<IActionResult> AuthenticateAsync([FromBody] AuthRequest data)
         {
             var authInfo = await _authService.AuthenticateAsync(data.Email, data.Password);
@@ -30,7 +30,7 @@ namespace ControleCerto.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("GenerateAccessToken/{refreshToken}")]
+        [HttpPost("token/refresh/{refreshToken}")]
         public async Task<IActionResult> GenerateAccessToken(string refreshToken)
         {
             var authResult = await _authService.GenerateAccessTokenAsync(refreshToken);
@@ -40,7 +40,7 @@ namespace ControleCerto.Controllers
 
         [Authorize]
         [ExtractTokenInfo]
-        [HttpGet("Logout/{refreshToken}")]
+        [HttpPost("logout/{refreshToken}")]
         public async Task<IActionResult> Logout(string refreshToken)
         {
             await _authService.Logout(refreshToken);

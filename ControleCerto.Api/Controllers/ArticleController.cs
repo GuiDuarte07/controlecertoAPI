@@ -1,5 +1,4 @@
 ﻿using ControleCerto.Extensions;
-using ControleCerto.Services;
 using ControleCerto.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ControleCerto.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/articles")]
     public class ArticleController : ControllerBase
     {
         private readonly IArticleService _articleService;
@@ -18,8 +17,8 @@ namespace ControleCerto.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("GetArticleByTitle/{title}")]
-        public async Task<IActionResult> GetArticleByTitle([FromRoute] string title)
+        [HttpGet]
+        public async Task<IActionResult> GetArticleByTitle([FromQuery] string title)
         {
             var article = await _articleService.GetArticleByTitleAsync(title);
 

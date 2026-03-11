@@ -1,5 +1,9 @@
+using Amazon;
+using Amazon.Runtime;
+using Amazon.S3;
 using ControleCerto.CronJobs;
 using ControleCerto.Extensions;
+using ControleCerto.Middleware;
 using ControleCerto.Models.AppDbContext;
 using ControleCerto.Profiles;
 using ControleCerto.Services;
@@ -8,6 +12,7 @@ using ControleCerto.Utils;
 using FluentValidation;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -15,6 +20,8 @@ using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+const long MaxUploadSizeBytes = 10 * 1024 * 1024;
 
 
 /*
@@ -117,6 +124,16 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddControllers();
 
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = MaxUploadSizeBytes;
+});
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = MaxUploadSizeBytes;
+});
+
 // FluentValidation
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
@@ -136,6 +153,21 @@ builder.Services.AddScoped<IBalanceService, BalanceService>();
 builder.Services.AddScoped<IRecurringTransactionService, RecurringTransactionService>();
 builder.Services.AddScoped<IInvestmentService, InvestmentService>();
 builder.Services.AddScoped<INotesService, NotesService>();
+builder.Services.AddScoped<ControleCerto.Modules.Dashboard.Services.IDashboardService, ControleCerto.Modules.Dashboard.Services.DashboardService>();
+
+builder.Services.AddSingleton<IAmazonS3>(_ =>
+{
+    var credentials = new BasicAWSCredentials(
+        builder.Configuration["AWS:AccessKey"],
+        builder.Configuration["AWS:SecretKey"]
+    );
+    var s3Config = new AmazonS3Config
+    {
+        RegionEndpoint = RegionEndpoint.GetBySystemName(builder.Configuration["AWS:Region"] ?? "us-east-1")
+    };
+    return new AmazonS3Client(credentials, s3Config);
+});
+builder.Services.AddScoped<IS3Service, S3Service>();
 builder.Services.AddHealthChecks();
 
 // Automapper
@@ -163,6 +195,8 @@ builder.Services.AddHostedService<HangFireJobs>();
 });*/
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
