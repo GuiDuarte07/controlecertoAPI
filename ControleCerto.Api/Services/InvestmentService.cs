@@ -41,7 +41,7 @@ namespace ControleCerto.Services
                     Investment = entity,
                     ChangeAmount = request.InitialAmount.Value,
                     TotalValue = entity.CurrentValue,
-                    Type = InvestmentHistoryTypeEnum.INVEST,
+                    Type = InvestmentHistoryTypeEnum.INITIAL_BALANCE,
                     OccurredAt = request.StartDate ?? entity.StartDate
                 };
                 await _appDbContext.AddAsync(hist);

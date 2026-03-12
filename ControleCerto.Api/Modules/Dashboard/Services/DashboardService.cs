@@ -283,11 +283,16 @@ namespace ControleCerto.Modules.Dashboard.Services
                 .Where(h => h.Type == InvestmentHistoryTypeEnum.INVEST)
                 .Sum(h => Math.Abs(h.ChangeAmount));
 
+            var totalInitialBalances = histories
+                .Where(h => h.Type == InvestmentHistoryTypeEnum.INITIAL_BALANCE)
+                .Sum(h => Math.Abs(h.ChangeAmount));
+
             var totalWithdrawals = histories
                 .Where(h => h.Type == InvestmentHistoryTypeEnum.WITHDRAW)
                 .Sum(h => Math.Abs(h.ChangeAmount));
 
-            var netProfit = totalValue - totalDeposits + totalWithdrawals;
+            var investedCapital = totalDeposits + totalInitialBalances;
+            var netProfit = totalValue - investedCapital + totalWithdrawals;
 
             var investmentDetails = investments.Select(i =>
             {

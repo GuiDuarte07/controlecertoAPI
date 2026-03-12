@@ -5,6 +5,7 @@ namespace ControleCerto.Enums
         INVEST,
         WITHDRAW,
         ADJUSTMENT,
-        YIELD
+        YIELD,
+        INITIAL_BALANCE
     }
 }
