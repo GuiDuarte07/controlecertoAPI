@@ -13,6 +13,9 @@ namespace ControleCerto.Models.MapConfig
             builder.Property(n => n.ActionPath).HasMaxLength(100).IsRequired(false);
             builder.Property(n => n.IsRead).HasColumnType("boolean").IsRequired();
 
+            builder.HasIndex(n => new { n.UserId, n.IsRead, n.CreatedAt });
+            builder.HasIndex(n => new { n.UserId, n.ExpiresAt });
+
             // Global query filter para excluir notificações de usuários deletados
             builder.HasQueryFilter(n => !n.User!.Deleted);
 

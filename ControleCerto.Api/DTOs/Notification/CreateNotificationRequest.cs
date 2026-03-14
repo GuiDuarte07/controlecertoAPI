@@ -19,7 +19,8 @@ namespace ControleCerto.DTOs.Notification
         public string? ActionPath { get; set; }
         public DateTime? ExpiresAt { get; set; }
 
-        [Required(ErrorMessage = "Campo 'UserId' não informado.")]
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
+
+        public ICollection<int>? UserIds { get; set; }
     }
 }

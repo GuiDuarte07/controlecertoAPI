@@ -25,21 +25,26 @@ namespace ControleCerto.Controllers
         }
 
         [HttpGet("recent")]
-        public async Task<IActionResult> GetRecentNotifications([FromQuery] bool? isRead)
+        public async Task<IActionResult> GetRecentNotifications(
+            [FromQuery] bool? isRead,
+            [FromQuery] int maxNotifications = 5)
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            var result = await _notificationService.GetRecentNotificationsAsync(userId, isRead);
+            var result = await _notificationService.GetRecentNotificationsAsync(userId, isRead, maxNotifications);
 
             return result.HandleReturnResult();
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllNotifications()
+        public async Task<IActionResult> GetAllNotifications(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 50,
+            [FromQuery] bool includeExpired = false)
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            var result = await _notificationService.GetAllNotificationsAsync(userId);
+            var result = await _notificationService.GetAllNotificationsAsync(userId, page, pageSize, includeExpired);
 
             return result.HandleReturnResult();
         }
@@ -70,7 +75,7 @@ namespace ControleCerto.Controllers
         {
             var userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            var result = await _notificationService.MarkAsReadAsync(readNotifications.notificationIds, userId);
+            var result = await _notificationService.MarkAsReadAsync(readNotifications.NotificationIds, userId);
 
             return result.HandleReturnResult();
         }
