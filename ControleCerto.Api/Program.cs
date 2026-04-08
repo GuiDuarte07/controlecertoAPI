@@ -217,7 +217,6 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 });
 
 
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
