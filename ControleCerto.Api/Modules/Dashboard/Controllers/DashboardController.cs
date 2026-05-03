@@ -73,12 +73,9 @@ namespace ControleCerto.Modules.Dashboard.Controllers
             [FromQuery] DateTime startDate,
             [FromQuery] DateTime endDate)
         {
-            DateTime utcStartDate = startDate.ToUniversalTime();
-            DateTime utcEndDate = endDate.ToUniversalTime();
-
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            var result = await _dashboardService.GetHomeDashboardAsync(userId, utcStartDate, utcEndDate);
+            var result = await _dashboardService.GetHomeDashboardAsync(userId, startDate, endDate);
 
             return result.HandleReturnResult();
         }

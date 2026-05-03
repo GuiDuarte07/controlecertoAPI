@@ -1,5 +1,7 @@
-﻿namespace ControleCerto.Models.Entities
+﻿﻿﻿﻿namespace ControleCerto.Models.Entities
 {
+    using ControleCerto.Enums;
+
     public class User
     {
         public int Id { get; set; }
@@ -8,6 +10,7 @@
         public string PasswordHash { get; set; }
         public bool EmailConfirmed { get; set; } = false;
         public bool IsAdmin { get; set; } = false;
+        public UserTypeEnum UserType { get; set; } = UserTypeEnum.USER;
         public bool Deleted { get; set; } = false;
         public string? AvatarUrl { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -17,5 +20,6 @@
         public ICollection<Category> Categories { get; set; }
         public ICollection<Notification> Notifications { get; set; }
         public ICollection<Article> Articles { get; set; }
+        public ICollection<Ticket> Tickets { get; set; }
     }
 }

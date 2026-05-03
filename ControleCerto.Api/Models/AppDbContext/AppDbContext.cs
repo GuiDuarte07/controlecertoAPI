@@ -1,4 +1,4 @@
-﻿using ControleCerto.Models.Entities;
+﻿﻿﻿﻿using ControleCerto.Models.Entities;
 using ControleCerto.Models.MapConfig;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +30,9 @@ namespace ControleCerto.Models.AppDbContext
         public DbSet<Investment> Investments { get; set; }
         public DbSet<InvestmentHistory> InvestmentHistories { get; set; }
         public DbSet<Note> Notes { get; set; }
+        public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<TicketMessage> TicketMessages { get; set; }
+        public DbSet<TicketAttachment> TicketAttachments { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -59,6 +62,9 @@ namespace ControleCerto.Models.AppDbContext
             modelBuilder.ApplyConfiguration(new InvestmentConfiguration());
             modelBuilder.ApplyConfiguration(new InvestmentHistoryConfiguration());
             modelBuilder.ApplyConfiguration(new NoteConfiguration());
+            modelBuilder.ApplyConfiguration(new TicketConfiguration());
+            modelBuilder.ApplyConfiguration(new TicketMessageConfiguration());
+            modelBuilder.ApplyConfiguration(new TicketAttachmentConfiguration());
         }
 
     }

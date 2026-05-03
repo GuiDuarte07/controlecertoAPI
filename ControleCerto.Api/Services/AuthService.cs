@@ -1,4 +1,4 @@
-﻿using ControleCerto.DTOs.Auth;
+using ControleCerto.DTOs.Auth;
 using ControleCerto.DTOs.User;
 using ControleCerto.Enums;
 using ControleCerto.Errors;
@@ -35,12 +35,7 @@ namespace ControleCerto.Services
         {
             string passwordHash = _hashService.HashPassword(password);
 
-            var user = _appDbContext.Users.FirstOrDefault(user => user.Email == email);
-
-            user.PasswordHash = _hashService.HashPassword(password);
-
-            _appDbContext.Update(user);
-            await _appDbContext.SaveChangesAsync();
+            var user = await _appDbContext.Users.FirstOrDefaultAsync(user => user.Email == email);
 
             if (user == null || user.PasswordHash != passwordHash)
             {
@@ -53,7 +48,9 @@ namespace ControleCerto.Services
                 EmailConfirmed = user.EmailConfirmed, 
                 Id = user.Id, 
                 Name = user.Name,
-                AvatarUrl = user.AvatarUrl
+                AvatarUrl = user.AvatarUrl,
+                IsAdmin = user.IsAdmin,
+                UserType = user.UserType
             };
 
             var accessToken = GenerateToken(user);

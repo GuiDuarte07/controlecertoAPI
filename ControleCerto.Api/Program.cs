@@ -154,6 +154,7 @@ builder.Services.AddScoped<IRecurringTransactionService, RecurringTransactionSer
 builder.Services.AddScoped<IInvestmentService, InvestmentService>();
 builder.Services.AddScoped<INotesService, NotesService>();
 builder.Services.AddScoped<ControleCerto.Modules.Dashboard.Services.IDashboardService, ControleCerto.Modules.Dashboard.Services.DashboardService>();
+builder.Services.AddScoped<ControleCerto.Modules.Tickets.Services.ITicketsService, ControleCerto.Modules.Tickets.Services.TicketsService>();
 
 builder.Services.AddSingleton<IAmazonS3>(_ =>
 {

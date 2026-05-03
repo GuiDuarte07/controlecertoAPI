@@ -1,4 +1,4 @@
-﻿namespace ControleCerto.Enums
+﻿﻿﻿﻿namespace ControleCerto.Enums
 {
     public enum NotificationTypeEnum
     {
@@ -7,5 +7,6 @@
         INVOICEPENDING = 2,
         CONFIRMRECURRENCE = 3,
         CATEGORYSPENDINGLIMIT = 4,
+        TICKETUPDATE = 5,
     }
 }

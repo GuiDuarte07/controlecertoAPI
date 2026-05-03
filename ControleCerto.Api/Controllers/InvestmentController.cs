@@ -36,15 +36,6 @@ namespace ControleCerto.Controllers
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
             request.Id = investmentId;
-            ModelState.Clear();
-            TryValidateModel(request);
-
-            if (!ModelState.IsValid)
-            {
-                var errorResponse = ErrorResponse.FromModelState(ModelState);
-                return StatusCode(errorResponse.Code, errorResponse);
-            }
-
             var result = await _investmentService.UpdateInvestmentAsync(request, userId);
             return result.HandleReturnResult();
         }

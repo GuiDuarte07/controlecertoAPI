@@ -82,7 +82,8 @@ namespace ControleCerto.Tests
             var result = await _controller.CreateInvestment(request);
 
             // Assert
-            result.Should().BeOfType<BadRequestObjectResult>();
+            var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+            objectResult.StatusCode.Should().Be(400);
         }
 
         [Fact]
@@ -110,7 +111,7 @@ namespace ControleCerto.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var result = await _controller.UpdateInvestment(request);
+            var result = await _controller.UpdateInvestment(1, request);
 
             // Assert
             var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
@@ -134,10 +135,11 @@ namespace ControleCerto.Tests
                 .ReturnsAsync(error);
 
             // Act
-            var result = await _controller.UpdateInvestment(request);
+            var result = await _controller.UpdateInvestment(999, request);
 
             // Assert
-            result.Should().BeOfType<NotFoundObjectResult>();
+            var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+            objectResult.StatusCode.Should().Be(404);
         }
 
         [Fact]
@@ -164,7 +166,7 @@ namespace ControleCerto.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var result = await _controller.Deposit(request);
+            var result = await _controller.Deposit(1, request);
 
             // Assert
             var createdResult = result.Should().BeOfType<CreatedResult>().Subject;
@@ -188,10 +190,11 @@ namespace ControleCerto.Tests
                 .ReturnsAsync(error);
 
             // Act
-            var result = await _controller.Deposit(request);
+            var result = await _controller.Deposit(1, request);
 
             // Assert
-            result.Should().BeOfType<UnprocessableEntityObjectResult>();
+            var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+            objectResult.StatusCode.Should().Be(422);
         }
 
         [Fact]
@@ -218,7 +221,7 @@ namespace ControleCerto.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var result = await _controller.Withdraw(request);
+            var result = await _controller.Withdraw(1, request);
 
             // Assert
             var createdResult = result.Should().BeOfType<CreatedResult>().Subject;
@@ -251,7 +254,7 @@ namespace ControleCerto.Tests
                 .ReturnsAsync(response);
 
             // Act
-            var result = await _controller.AdjustValue(request);
+            var result = await _controller.AdjustValue(1, request);
 
             // Assert
             var createdResult = result.Should().BeOfType<CreatedResult>().Subject;
@@ -275,10 +278,11 @@ namespace ControleCerto.Tests
                 .ReturnsAsync(error);
 
             // Act
-            var result = await _controller.AdjustValue(request);
+            var result = await _controller.AdjustValue(1, request);
 
             // Assert
-            result.Should().BeOfType<UnprocessableEntityObjectResult>();
+            var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+            objectResult.StatusCode.Should().Be(422);
         }
 
         [Fact]
@@ -342,7 +346,8 @@ namespace ControleCerto.Tests
             var result = await _controller.GetInvestmentHistory(999);
 
             // Assert
-            result.Should().BeOfType<NotFoundObjectResult>();
+            var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+            objectResult.StatusCode.Should().Be(404);
         }
 
         [Fact]
@@ -419,8 +424,8 @@ namespace ControleCerto.Tests
                 .ReturnsAsync(new InfoInvestmentResponse { Id = 1, CurrentValue = 106000 });
 
             // Act
-            await _controller.Deposit(depositRequest);
-            await _controller.AdjustValue(adjustRequest);
+            await _controller.Deposit(1, depositRequest);
+            await _controller.AdjustValue(1, adjustRequest);
 
             // Assert
             _serviceMock.Verify(s => s.DepositAsync(It.IsAny<DepositInvestmentRequest>(), 1), Times.Once);

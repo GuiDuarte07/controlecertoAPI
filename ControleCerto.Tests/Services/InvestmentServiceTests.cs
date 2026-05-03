@@ -3,6 +3,7 @@ using Moq;
 using AutoMapper;
 using FluentAssertions;
 using ControleCerto.Services;
+using ControleCerto.Services.Interfaces;
 using ControleCerto.DTOs.Investment;
 using ControleCerto.Models.AppDbContext;
 using ControleCerto.Models.Entities;
@@ -16,12 +17,14 @@ namespace ControleCerto.Tests
     public class InvestmentServiceTests
     {
         private readonly Mock<IMapper> _mapperMock;
+        private readonly Mock<IBalanceService> _balanceServiceMock;
         private readonly AppDbContext _dbContext;
         private readonly InvestmentService _investmentService;
 
         public InvestmentServiceTests()
         {
             _mapperMock = new Mock<IMapper>();
+            _balanceServiceMock = new Mock<IBalanceService>();
             
             var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: "InvestmentTestDb")
@@ -31,7 +34,7 @@ namespace ControleCerto.Tests
             _dbContext = new AppDbContext(options, GetMockConfiguration());
             _dbContext.Database.EnsureDeleted();
             _dbContext.Database.EnsureCreated();
-            _investmentService = new InvestmentService(_dbContext, _mapperMock.Object);
+            _investmentService = new InvestmentService(_dbContext, _mapperMock.Object, _balanceServiceMock.Object);
         }
 
         private IConfiguration GetMockConfiguration()

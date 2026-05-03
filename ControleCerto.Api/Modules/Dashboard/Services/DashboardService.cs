@@ -23,8 +23,7 @@ namespace ControleCerto.Modules.Dashboard.Services
 
         public async Task<Result<HomeDashboardResponse>> GetHomeDashboardAsync(int userId, DateTime startDate, DateTime endDate)
         {
-            startDate = startDate.ToUniversalTime();
-            var adjustedEndDate = endDate.ToUniversalTime().Date.AddDays(1).AddTicks(-1);
+            var adjustedEndDate = endDate.Date.AddDays(1).AddTicks(-1);
 
             if (startDate > adjustedEndDate)
             {
