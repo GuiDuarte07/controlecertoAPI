@@ -1,4 +1,4 @@
-﻿﻿﻿﻿namespace ControleCerto.Models.Entities
+﻿namespace ControleCerto.Models.Entities
 {
     using ControleCerto.Enums;
 

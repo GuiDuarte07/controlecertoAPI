@@ -1,4 +1,4 @@
-﻿﻿﻿﻿using ControleCerto.DTOs.Account;
+using ControleCerto.DTOs.Account;
 using ControleCerto.Enums;
 
 namespace ControleCerto.DTOs.User

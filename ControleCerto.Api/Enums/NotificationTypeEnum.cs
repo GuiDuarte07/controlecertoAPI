@@ -1,4 +1,4 @@
-﻿﻿﻿﻿namespace ControleCerto.Enums
+﻿namespace ControleCerto.Enums
 {
     public enum NotificationTypeEnum
     {

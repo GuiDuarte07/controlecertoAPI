@@ -1,4 +1,4 @@
-﻿﻿﻿﻿using ControleCerto.Models.Entities;
+using ControleCerto.Models.Entities;
 using ControleCerto.Models.MapConfig;
 using Microsoft.EntityFrameworkCore;
 
