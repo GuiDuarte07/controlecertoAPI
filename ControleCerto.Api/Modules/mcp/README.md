@@ -96,6 +96,19 @@ O módulo será organizado em:
 - chama o serviço de domínio apropriado (por exemplo, `ITransactionService`)
 - retorna resultado padronizado ao controller
 
+### 5.1. Delegação para services do domínio
+
+- Cada tool do MCP deve delegar a execução ao service responsável pela ação.
+- Não implementar regras de negócio de transação, conta, categoria ou cartão diretamente no MCP.
+- Todos os services do sistema estão em `ControleCerto.Api\Services\Interfaces`, e o MCP deve consultar essas interfaces para saber quais métodos existem.
+- A LLM que implementar o MCP deve inspecionar as interfaces desses services antes de montar a chamada de comando. Isso reduz consumo de token, evita adivinhações e preserva a camada de domínio existente.
+- Exemplos de delegação:
+  - `list_transactions` -> `ITransactionService` / método de listagem de transações
+  - `create_transaction` -> `ITransactionService` / método de criação de transação
+  - `list_accounts` -> `IAccountService` / método de listagem de contas
+  - `list_categories` -> `ICategoryService` / método de listagem de categorias
+  - `list_credit_cards` -> `ICreditCardService` / método de listagem de cartões de crédito
+
 ### 6. Criar a ferramenta de listagem de transações
 
 - é uma tool read-only, usada para buscar transações do usuário
@@ -157,6 +170,332 @@ O módulo será organizado em:
 - chama o serviço de transação existente para buscar dados
 - retorna o resultado em `McpCommandResponse`
 
+## Ferramentas planejadas
+
+Essas tools iniciais contemplam as necessidades iniciais para criar transações, desde que o fluxo de descoberta de IDs seja usado corretamente. A tool `create_transaction` é a principal para criação de lançamentos, enquanto `list_accounts` e `list_categories` dão suporte para obter IDs válidos antes de enviar o comando. `list_transactions` é útil para inspecionar o contexto atual do usuário e confirmar resultados.
+
+### 1. list_transactions
+- `name`: `list_transactions`
+- `resource`: `transaction`
+- `action`: `list`
+- `description`: `Retorna as transações do usuário atual para auxiliar a construção de comandos.`
+- `requiredPermissions`: `["transactions.read"]`
+- `parameters`:
+  - `startDate`: `string` (YYYY-MM-DD)
+  - `endDate`: `string` (YYYY-MM-DD)
+  - `mode`: `string` (`"invoice"` | `"statement"`)
+- `response.data`: lista de transações com campos como `id`, `amount`, `date`, `destination`, `categoryId`, `type` (ControleCerto.Api\DTOs\Transaction\InfoTransactionResponse.cs)
+
+### 2. create_transaction
+```json
+{
+  "name": "create_transaction",
+  "description": "Cria uma nova transação financeira para o usuário.",
+  "resource": "transaction",
+  "action": "create",
+  "requiredPermissions": ["transactions.create"],
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "accountId": {
+        "type": "integer",
+        "description": "ID da conta onde a transação será registrada. Se necessário, use list_accounts para buscar o ID correto."
+      },
+      "amount": {
+        "type": "number",
+        "description": "Valor da transação com duas casas decimais. Deve ser positivo."
+      },
+      "purchaseDate": {
+        "type": "string",
+        "format": "date",
+        "description": "Data da transação no formato YYYY-MM-DD."
+      },
+      "destination": {
+        "type": "string",
+        "description": "Descrição ou estabelecimento da transação."
+      },
+      "description": {
+        "type": "string",
+        "description": "Título da transação.",
+        "maxLength": 100,
+      },
+      "observations": {
+        "type": "string",
+        "description": "Observações internas da transação.",
+        "maxLength": 300,
+        "nullable": true
+      },
+      "categoryId": {
+        "type": "integer",
+        "description": "ID da categoria associada. Se necessário, use list_categories para buscar o ID correto."
+      },
+      "type": {
+        "type": "string",
+        "enum": ["EXPENSE", "INCOME"],
+        "description": "Tipo de transação. Use EXPENSE para despesas e INCOME para receitas." 
+      },
+      "justForRecord": {
+        "type": "boolean",
+        "description": "Indica se a transação é apenas para registro. Considerar sempre false desde que o usuário não indique o contrário."
+      }
+    },
+    "required": [
+      "accountId",
+      "amount",
+      "purchaseDate",
+      "destination",
+      "categoryId",
+      "type",
+      "justForRecord"
+    ]
+  }
+}
+```
+
+#### Request exemplo para `create_transaction`
+
+```json
+{
+  "resource": "transaction",
+  "action": "create",
+  "payload": {
+    "accountId": 12,
+    "amount": 1200.50,
+    "purchaseDate": "2026-05-31",
+    "destination": "Mercado Central",
+    "description": "Compra de supermercado",
+    "observations": "Feira do mês, carnes, produtos de limpeza e higiene e alimentos.",
+    "categoryId": 5,
+    "type": "EXPENSE",
+    "justForRecord": false
+  }
+}
+```
+
+### 3. create_credit_purchase
+```json
+{
+  "name": "create_credit_purchase",
+  "description": "Cria uma compra no crédito para o usuário.",
+  "resource": "credit_purchase",
+  "action": "create",
+  "requiredPermissions": ["transactions.create"],
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "creditCardId": {
+        "type": "integer",
+        "description": "ID do cartão de crédito usado na compra. Use list_credit_cards para obter IDs válidos."
+      },
+      "totalAmount": {
+        "type": "number",
+        "description": "Valor total da compra no crédito. Deve ser positivo."
+      },
+      "totalInstallment": {
+        "type": "integer",
+        "description": "Número total de parcelas da compra no crédito.",
+        "minimum": 1
+      },
+      "installmentsPaid": {
+        "type": "integer",
+        "description": "Número de parcelas já pagas. Deve ser 0 na criação.",
+        "enum": [0]
+      },
+      "purchaseDate": {
+        "type": "string",
+        "format": "date",
+        "description": "Data da compra no formato YYYY-MM-DD."
+      },
+      "destination": {
+        "type": "string",
+        "description": "Descrição ou estabelecimento da compra."
+      },
+      "description": {
+        "type": "string",
+        "description": "Título da compra no crédito.",
+        "maxLength": 100,
+        "nullable": true
+      },
+      "categoryId": {
+        "type": "integer",
+        "description": "ID da categoria associada. Se necessário, use list_categories para buscar o ID correto."
+      }
+    },
+    "required": [
+      "creditCardId",
+      "totalAmount",
+      "totalInstallment",
+      "installmentsPaid",
+      "purchaseDate",
+      "destination",
+      "categoryId"
+    ]
+  }
+}
+```
+
+### 4. update_transaction
+```json
+{
+  "name": "update_transaction",
+  "description": "Atualiza uma transação existente do usuário.",
+  "resource": "transaction",
+  "action": "update",
+  "requiredPermissions": ["transactions.update"],
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "transactionId": {
+        "type": "integer",
+        "description": "ID da transação que será atualizada."
+      },
+      "amount": {
+        "type": "number",
+        "description": "Novo valor da transação. Deve ser positivo se informado.",
+        "nullable": true
+      },
+      "purchaseDate": {
+        "type": "string",
+        "format": "date",
+        "description": "Nova data da transação, no formato YYYY-MM-DD.",
+        "nullable": true
+      },
+      "destination": {
+        "type": "string",
+        "description": "Novo estabelecimento ou destino da transação.",
+        "maxLength": 80,
+        "nullable": true
+      },
+      "description": {
+        "type": "string",
+        "description": "Nova descrição da transação.",
+        "maxLength": 100,
+        "nullable": true
+      },
+      "observations": {
+        "type": "string",
+        "description": "Observações internas atualizadas da transação.",
+        "maxLength": 300,
+        "nullable": true
+      },
+      "justForRecord": {
+        "type": "boolean",
+        "description": "Indica se a transação deve ser marcada apenas para registro.",
+        "nullable": true
+      },
+      "categoryId": {
+        "type": "integer",
+        "description": "Novo ID da categoria associada. Se necessário, use list_categories para buscar o ID correto.",
+        "nullable": true
+      }
+    },
+    "required": ["transactionId"]
+  }
+}
+```
+
+### 5. delete_transaction
+```json
+{
+  "name": "delete_transaction",
+  "description": "Remove uma transação do usuário.",
+  "resource": "transaction",
+  "action": "delete",
+  "requiredPermissions": ["transactions.delete"],
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "transactionId": {
+        "type": "integer",
+        "description": "ID da transação que será excluída."
+      }
+    },
+    "required": ["transactionId"]
+  }
+}
+```
+
+### 6. list_accounts
+```json
+{
+  "name": "list_accounts",
+  "description": "Retorna as contas do usuário para permitir seleção por ID em outras tools.",
+  "resource": "account",
+  "action": "list",
+  "requiredPermissions": ["accounts.read"],
+  "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
+```
+
+### 7. list_categories
+```json
+{
+  "name": "list_categories",
+  "description": "Retorna as categorias disponíveis para o usuário.",
+  "resource": "category",
+  "action": "list",
+  "requiredPermissions": ["categories.read"],
+  "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
+```
+
+### 8. list_credit_cards
+```json
+{
+  "name": "list_credit_cards",
+  "description": "Retorna os cartões de crédito do usuário para permitir seleção por ID ou uso em outras operações.",
+  "resource": "credit_card",
+  "action": "list",
+  "requiredPermissions": ["credit_cards.read"],
+  "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
+```
+
+## Contratos genéricos de ferramenta
+
+Todas as ferramentas expostas pelo MCP seguem o mesmo envelope de request:
+
+```json
+{
+  "resource": "<resource>",
+  "action": "<action>",
+  "payload": { ... }
+}
+```
+
+Internamente, o MCP pode mapear o comando recebido por `resource` + `action` para a tool registrada. O campo `name` no registro é a chave de metadata usada para descoberta e documentação, mas a execução segue o contrato genérico `resource/action/payload`.
+
+E retornam um envelope uniforme:
+
+```json
+{
+  "success": true,
+  "data": { ... },
+  "errors": []
+}
+```
+
+Erros de validação ou autorização ficam em `errors` com objetos do tipo:
+
+```json
+{
+  "field": "<campo>",
+  "message": "<mensagem>"
+}
+```
+
 ## Autorização com token especial
 
 ### Token MCP versus token de login
@@ -174,7 +513,6 @@ O módulo será organizado em:
 - `exp`
 - `iat`
 - `permissions`: `["transactions.read", "transactions.create", ...]`
-- `tenantId` / `accountId` (se houver suporte multi-tenant)
 
 ### Fluxo de uso do token MCP
 
@@ -184,6 +522,18 @@ O módulo será organizado em:
 4. servidor devolve as tools permitidas
 5. cliente usa token MCP para chamar `POST /api/mcp/commands`
 6. servidor valida token MCP e executa a tool
+
+### Rota de geração do token MCP
+
+- rota: `POST /api/mcp/token`
+- módulo: `ControleCerto.Api\Modules\mcp`
+- responsabilidade: gerar e retornar um bearer token MCP para o usuário autenticado
+- entrada: nenhum dado necessário
+- saída: `{ "accessToken": "Bearer ...", "expiresAt": "2026-06-30T..." }`
+- o serviço de geração deve preencher o claim `permissions` com os privilégios MCP disponíveis para o usuário no momento da emissão
+- garanti que o token contenha `type: "mcp"`, `sub/userId`, `iat`, `exp` e `permissions`
+- atenção: se novas tools forem adicionadas, pode ser necessário renovar o token para refletir o novo conjunto de permissões, a menos que o backend trate permissões dinamicamente em tempo de execução
+
 
 ### Regras de segurança
 

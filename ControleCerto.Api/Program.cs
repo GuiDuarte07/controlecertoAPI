@@ -5,6 +5,8 @@ using ControleCerto.CronJobs;
 using ControleCerto.Extensions;
 using ControleCerto.Middleware;
 using ControleCerto.Models.AppDbContext;
+using ControleCerto.Modules.Mcp.Services;
+using ControleCerto.Modules.Mcp.Services.Interfaces;
 using ControleCerto.Profiles;
 using ControleCerto.Services;
 using ControleCerto.Services.Interfaces;
@@ -155,6 +157,9 @@ builder.Services.AddScoped<IInvestmentService, InvestmentService>();
 builder.Services.AddScoped<INotesService, NotesService>();
 builder.Services.AddScoped<ControleCerto.Modules.Dashboard.Services.IDashboardService, ControleCerto.Modules.Dashboard.Services.DashboardService>();
 builder.Services.AddScoped<ControleCerto.Modules.Tickets.Services.ITicketsService, ControleCerto.Modules.Tickets.Services.TicketsService>();
+builder.Services.AddScoped<IMcpAuthorizationService, McpAuthorizationService>();
+builder.Services.AddScoped<IMcpCommandService, McpCommandService>();
+builder.Services.AddScoped<IToolRegistryService, ToolRegistryService>();
 
 builder.Services.AddSingleton<IAmazonS3>(_ =>
 {
