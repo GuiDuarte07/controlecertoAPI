@@ -211,6 +211,12 @@ namespace ControleCerto.Modules.Mcp.Services
                               "nullable": true,
                               "description": "Título da compra no crédito."
                             },
+                            "observations": {
+                              "type": "string",
+                              "maxLength": 300,
+                              "nullable": true,
+                              "description": "Observações adicionais sobre a compra."
+                            },
                             "categoryId": {
                               "type": "integer",
                               "description": "ID da categoria associada."

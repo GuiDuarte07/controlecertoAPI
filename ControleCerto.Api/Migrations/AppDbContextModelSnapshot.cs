@@ -255,6 +255,10 @@ namespace ControleCerto.Migrations
                     b.Property<int>("InstallmentsPaid")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Observations")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<bool>("Paid")
                         .HasColumnType("boolean");
 
@@ -712,7 +716,8 @@ namespace ControleCerto.Migrations
 
                     b.HasIndex("Status");
 
-                    b.HasIndex("RecurringTransactionId", "ScheduledDate");
+                    b.HasIndex("RecurringTransactionId", "ScheduledDate")
+                        .IsUnique();
 
                     b.HasIndex("Status", "ScheduledDate");
 

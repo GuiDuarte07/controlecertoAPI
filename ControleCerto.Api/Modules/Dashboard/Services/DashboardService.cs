@@ -7,6 +7,7 @@ using ControleCerto.Models.Entities;
 using ControleCerto.Modules.Dashboard.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using ControleCerto.Modules.CreditCards.Services;
 
 namespace ControleCerto.Modules.Dashboard.Services
 {
@@ -28,6 +29,12 @@ namespace ControleCerto.Modules.Dashboard.Services
             if (startDate > adjustedEndDate)
             {
                 return new AppError("Data inicial não pode ser maior que data final.", ErrorTypeEnum.BusinessRule);
+            }
+
+            using (var balanceTransaction = await CreditCardBalanceService.BeginTransactionAsync(_appDbContext, userId))
+            {
+                await CreditCardBalanceService.ReconcileAsync(_appDbContext, userId);
+                await balanceTransaction.CommitAsync();
             }
 
             // Buscar contas do usuário

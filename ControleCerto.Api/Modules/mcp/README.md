@@ -316,6 +316,12 @@ Essas tools iniciais contemplam as necessidades iniciais para criar transações
         "maxLength": 100,
         "nullable": true
       },
+      "observations": {
+        "type": "string",
+        "description": "Observações adicionais sobre a compra.",
+        "maxLength": 300,
+        "nullable": true
+      },
       "categoryId": {
         "type": "integer",
         "description": "ID da categoria associada. Se necessário, use list_categories para buscar o ID correto."

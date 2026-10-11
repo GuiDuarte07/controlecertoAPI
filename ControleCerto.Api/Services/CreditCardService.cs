@@ -9,7 +9,7 @@ using ControleCerto.Models.DTOs;
 using ControleCerto.Models.Entities;
 using ControleCerto.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Principal;
+using ControleCerto.Modules.CreditCards.Services;
 
 namespace ControleCerto.Services
 {
@@ -41,6 +41,8 @@ namespace ControleCerto.Services
 
         public async Task<Result<InfoCreditCardResponse>> UpdateCreditCardAsync(UpdateCreditCardRequest request, int userId)
         {
+            using var balanceTransaction = await CreditCardBalanceService.BeginTransactionAsync(_appDbContext, userId);
+            await CreditCardBalanceService.ReconcileAsync(_appDbContext, userId);
             var creditCardToUpdate = await _appDbContext
                 .CreditCards.Include(cd => cd.Account)
                 .FirstOrDefaultAsync(cd => cd.Id == request.Id);
@@ -74,11 +76,14 @@ namespace ControleCerto.Services
             var updatedCreditCard = _appDbContext.CreditCards.Update(creditCardToUpdate);
             await _appDbContext.SaveChangesAsync();
 
+            await balanceTransaction.CommitAsync();
             return _mapper.Map<InfoCreditCardResponse>(updatedCreditCard.Entity);
         }
 
         public async Task<Result<InfoCreditPurchaseResponse>> CreateCreditPurchaseAsync(CreateCreditPurchaseRequest request, int userId)
         {
+            using var balanceTransaction = await CreditCardBalanceService.BeginTransactionAsync(_appDbContext, userId);
+            await CreditCardBalanceService.ReconcileAsync(_appDbContext, userId);
             var creditPurchaseToCreate = _mapper.Map<CreditPurchase>(request);
 
             var creditCard = await _appDbContext.CreditCards.Include(cc => cc.Account).FirstOrDefaultAsync(cc => cc.Id == request.CreditCardId && cc.Account.UserId == userId);
@@ -88,7 +93,11 @@ namespace ControleCerto.Services
                 return new AppError("Cartão de crédito não encontrada.", ErrorTypeEnum.NotFound);
             }
 
-            if (creditCard.TotalLimit - creditCard.UsedLimit < request.TotalAmount)
+            if (!double.IsFinite(request.TotalAmount) || request.TotalAmount <= 0 ||
+                request.TotalInstallment <= request.InstallmentsPaid || request.InstallmentsPaid < 0)
+                return new AppError("Valor ou quantidade de parcelas inválidos.", ErrorTypeEnum.Validation);
+
+            if (Math.Round(creditCard.TotalLimit - creditCard.UsedLimit, 2) < request.TotalAmount)
                 return new AppError("Limite inferior ao valor da compra.", ErrorTypeEnum.Validation);
 
             var category = await _appDbContext.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId && c.UserId == userId);
@@ -107,14 +116,17 @@ namespace ControleCerto.Services
              * ===== VALIDAR O FUNCIONAMENTO PARA REGISTRO DE COMPRAS ANTIGAS ======
              */
 
-            using (var transaction = _appDbContext.Database.BeginTransaction())
+            using (var transaction = balanceTransaction)
             {
                 try
                 {
                     double TotalAmount = request.TotalAmount;
                     int totalInstallment = request.TotalInstallment;
                     int installmentsPaid = request.InstallmentsPaid;
-                    double installmentAmount = Math.Round(TotalAmount / (request.TotalInstallment - installmentsPaid), 2);
+                    var remainingInstallments = totalInstallment - installmentsPaid;
+                    var totalCents = (long)Math.Round(TotalAmount * 100, MidpointRounding.AwayFromZero);
+                    var installmentCents = totalCents / remainingInstallments;
+                    var extraCents = totalCents % remainingInstallments;
 
                     var createdCreditPurchase = await _appDbContext.CreditPurchases.AddAsync(creditPurchaseToCreate);
                     await _appDbContext.SaveChangesAsync(); 
@@ -123,8 +135,9 @@ namespace ControleCerto.Services
 
                     Invoice? actualMonthInvoice = null;
 
-                    for (var i = 0; i < totalInstallment - installmentsPaid; i++)
+                    for (var i = 0; i < remainingInstallments; i++)
                     {
+                        var installmentAmount = (installmentCents + (i < extraCents ? 1 : 0)) / 100d;
                         var actualMonthInvoiceResult = await GetInvoiceByPurchaseDateAndInstallment(creditCard, request.PurchaseDate, actualMonthInvoice?.InvoiceDate ?? null);
                         if (actualMonthInvoiceResult.IsError)
                         {
@@ -144,12 +157,13 @@ namespace ControleCerto.Services
                             InvoiceId = actualMonthInvoice.Id,
                             Description = request.Description +
                                 (totalInstallment > 1 ? $" {i + 1 + installmentsPaid}/{(totalInstallment - installmentsPaid)}" : ""),
+                            Observations = request.Observations,
                             Destination = request.Destination,
                             PurchaseDate = request.PurchaseDate.AddMonths(i),
                         };
 
                         transactions.Add(newTransaction);
-                        actualMonthInvoice.TotalAmount += installmentAmount;
+                        actualMonthInvoice.TotalAmount = Math.Round(actualMonthInvoice.TotalAmount + installmentAmount, 2);
                         if (actualMonthInvoice.IsPaid)
                         {
                             actualMonthInvoice.IsPaid = false;
@@ -158,13 +172,13 @@ namespace ControleCerto.Services
                     }
 
 
-                    creditCard.UsedLimit += request.TotalAmount;
                     await _appDbContext.Transactions.AddRangeAsync(transactions);
                     _appDbContext.CreditCards.Update(creditCard);
 
                     await _appDbContext.SaveChangesAsync();
 
-                    transaction.Commit();
+                    await CreditCardBalanceService.ReconcileAsync(_appDbContext, userId);
+                    await transaction.CommitAsync();
 
                     return _mapper.Map<InfoCreditPurchaseResponse>(createdCreditPurchase.Entity);
                 }
@@ -495,6 +509,8 @@ namespace ControleCerto.Services
 
         public async Task<Result<InfoInvoicePaymentResponse>> PayInvoiceAsync(CreteInvoicePaymentRequest invoicePaymentRequest, int userId)
         {
+            using var balanceTransaction = await CreditCardBalanceService.BeginTransactionAsync(_appDbContext, userId);
+            await CreditCardBalanceService.ReconcileAsync(_appDbContext, userId);
             var invoicePayment = _mapper.Map<InvoicePayment>(invoicePaymentRequest);
 
             var invoice = await _appDbContext.Invoices.Include(i => i.CreditCard).FirstOrDefaultAsync(
@@ -521,6 +537,10 @@ namespace ControleCerto.Services
 
             var amountRemainder = Math.Round(invoice.TotalAmount - invoice.TotalPaid, 2);
 
+            if (!double.IsFinite(invoicePayment.AmountPaid) || invoicePayment.AmountPaid <= 0 ||
+                Math.Round(invoicePayment.AmountPaid, 2) != invoicePayment.AmountPaid)
+                return new AppError("Valor do pagamento deve ser positivo e ter no máximo duas casas decimais.", ErrorTypeEnum.Validation);
+
             if (invoicePayment.AmountPaid > amountRemainder)
             {
                 return new AppError(
@@ -530,7 +550,6 @@ namespace ControleCerto.Services
             }
 
             invoice.TotalPaid =  Math.Round(invoice.TotalPaid + invoicePayment.AmountPaid, 2);
-            invoice.CreditCard.UsedLimit -= invoicePayment.AmountPaid;
 
             const double lowerDiff = 1e-4;
             
@@ -539,7 +558,7 @@ namespace ControleCerto.Services
                 invoice.IsPaid = true;
             }
 
-            using (var transaction = _appDbContext.Database.BeginTransaction())
+            using (var transaction = balanceTransaction)
             {
                 try
                 {
@@ -557,7 +576,8 @@ namespace ControleCerto.Services
 
                     await _appDbContext.SaveChangesAsync();
 
-                    transaction.Commit();
+                    await CreditCardBalanceService.ReconcileAsync(_appDbContext, userId);
+                    await transaction.CommitAsync();
                     return _mapper.Map<InfoInvoicePaymentResponse>(createdInvoicePayment.Entity);
                 }
                 catch (Exception)
@@ -572,7 +592,8 @@ namespace ControleCerto.Services
 
         public async Task<Result<bool>> DeleteInvoicePaymentAsync(long invoicePaymentId, int userId)
         {
-            using var transaction = await _appDbContext.Database.BeginTransactionAsync();
+            using var transaction = await CreditCardBalanceService.BeginTransactionAsync(_appDbContext, userId);
+            await CreditCardBalanceService.ReconcileAsync(_appDbContext, userId);
 
             try
             {
@@ -582,16 +603,15 @@ namespace ControleCerto.Services
                         .Include(ip => ip.Invoice)
                             .ThenInclude(i => i.CreditCard)
                         .FirstOrDefaultAsync(ip =>
-                            ip.Id == invoicePaymentId);
+                            ip.Id == invoicePaymentId && ip.Invoice.CreditCard.Account.UserId == userId);
 
                 if (invoicePaymentToDelete is null)
                     return new AppError("Pagamento de fatura não encontrado.",
                         ErrorTypeEnum.NotFound);
 
                 var account = invoicePaymentToDelete.Account;
-                account.Balance = Math.Round(
-                    invoicePaymentToDelete.Account.Balance +
-                    invoicePaymentToDelete.AmountPaid, 2);
+                if (!invoicePaymentToDelete.JustForRecord)
+                    account.Balance = Math.Round(account.Balance + invoicePaymentToDelete.AmountPaid, 2);
 
                 var invoice = invoicePaymentToDelete.Invoice;
                 var creditCard = invoice.CreditCard;
@@ -602,9 +622,6 @@ namespace ControleCerto.Services
                         ErrorTypeEnum.NotFound);
                 }
 
-                creditCard.UsedLimit = Math.Round(
-                    creditCard.UsedLimit +
-                    invoicePaymentToDelete.AmountPaid, 2);
 
                 _appDbContext.Update(account);
                 _appDbContext.Update(creditCard);
@@ -620,6 +637,7 @@ namespace ControleCerto.Services
 
                 await _appDbContext.SaveChangesAsync();
                 
+                await CreditCardBalanceService.ReconcileAsync(_appDbContext, userId);
                 await transaction.CommitAsync();
 
                 return true;
@@ -633,6 +651,8 @@ namespace ControleCerto.Services
 
         public async Task<Result<bool>> DeleteCreditPurchaseAsync(long purchaseId, int userId)
         {
+            using var balanceTransaction = await CreditCardBalanceService.BeginTransactionAsync(_appDbContext, userId);
+            await CreditCardBalanceService.ReconcileAsync(_appDbContext, userId);
             var creditPurchaseToDelete = await _appDbContext.CreditPurchases.Include(cp => cp.Transactions).FirstOrDefaultAsync(cp => cp.Id == purchaseId && cp.CreditCard.Account.UserId == userId);
 
             if (creditPurchaseToDelete is null)
@@ -649,7 +669,7 @@ namespace ControleCerto.Services
 
             var creditExpenses = creditPurchaseToDelete.Transactions;
 
-            using (var transaction = _appDbContext.Database.BeginTransaction())
+            using (var transaction = balanceTransaction)
             {
                 try
                 {
@@ -667,7 +687,7 @@ namespace ControleCerto.Services
                             return new AppError("Não é mais possível excluir/editar esse registro pois a fatura já foi paga.", ErrorTypeEnum.BusinessRule);
                         }
 
-                        if (Math.Round(invoice.TotalAmount - invoice.TotalPaid, 2) < Math.Round(creditPurchaseToDelete.TotalAmount / creditPurchaseToDelete.TotalInstallment, 2))
+                        if (Math.Round(invoice.TotalAmount - invoice.TotalPaid, 2) < Math.Round(expense.Amount, 2))
                         {
                             return new AppError(
                                 $"Essa fatura tem um valor de ${(invoice.TotalAmount - invoice.TotalPaid):F2} a ser pago ainda e essa transação a ser deletada " +
@@ -688,14 +708,14 @@ namespace ControleCerto.Services
                         _appDbContext.Update(invoice);
                     }
 
-                    creditCard.UsedLimit -= creditPurchaseToDelete.TotalAmount;
 
                     _appDbContext.Transactions.RemoveRange(creditExpenses);
                     _appDbContext.CreditPurchases.Remove(creditPurchaseToDelete);
 
                     await _appDbContext.SaveChangesAsync();
 
-                    transaction.Commit();
+                    await CreditCardBalanceService.ReconcileAsync(_appDbContext, userId);
+                    await transaction.CommitAsync();
 
                     return true;
                 }
@@ -729,6 +749,8 @@ namespace ControleCerto.Services
                                    creditPurchaseToUpdate.PurchaseDate,
                     Description = request.Description ??
                                   creditPurchaseToUpdate.Description,
+                    Observations = request.Observations ??
+                                   creditPurchaseToUpdate.Observations,
                     TotalInstallment = request.TotalInstallment ?? creditPurchaseToUpdate.TotalInstallment,
                     Destination = request.Destination ??
                                   creditPurchaseToUpdate.Destination,
@@ -771,8 +793,11 @@ namespace ControleCerto.Services
 
         public async Task<Result<InfoCreditCardResponse[]>> GetCreditCardInfo(int userId)
         {
+            using var balanceTransaction = await CreditCardBalanceService.BeginTransactionAsync(_appDbContext, userId);
+            await CreditCardBalanceService.ReconcileAsync(_appDbContext, userId);
             var creditCards = await _appDbContext.CreditCards.Include(cc => cc.Account).Where(cc => cc.Account.UserId == userId).ToListAsync();
 
+            await balanceTransaction.CommitAsync();
             return _mapper.Map<InfoCreditCardResponse[]>(creditCards);
         }
     }

@@ -263,6 +263,7 @@ namespace ControleCerto.Modules.Mcp.Services
                 PurchaseDate = ToUtc(model.PurchaseDate),
                 Destination = model.Destination,
                 Description = model.Description,
+                Observations = model.Observations,
                 CategoryId = model.CategoryId
             };
 

@@ -29,7 +29,7 @@ namespace ControleCerto.Controllers
         {
             int userId = (int)(HttpContext.Items["UserId"] as int?)!;
 
-            var result = await _recurringService.CreateReccuringTransactionAsync(request, userId);
+            var result = await _recurringService.CreateRecurringTransactionAsync(request, userId);
 
             if (result.IsSuccess)
             {

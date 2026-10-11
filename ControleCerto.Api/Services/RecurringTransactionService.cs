@@ -1,6 +1,6 @@
 using AutoMapper;
 using ControleCerto.DTOs.RecurringTransaction;
-using ControleCerto.DTOs.Notification;
+using ControleCerto.DTOs.Transaction;
 using ControleCerto.Enums;
 using ControleCerto.Errors;
 using ControleCerto.Models.AppDbContext;
@@ -9,388 +9,298 @@ using ControleCerto.Services.Interfaces;
 using ControleCerto.Validations;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
-using ControleCerto.DTOs.Transaction;
-using Microsoft.IdentityModel.Tokens;
-
 
 namespace ControleCerto.Services
 {
     public class RecurringTransactionService : IRecurringTransactionService
     {
-        private readonly AppDbContext _appDbContext;
+        private readonly AppDbContext _context;
         private readonly IMapper _mapper;
-        private readonly INotificationService _notificationService;
         private readonly ITransactionService _transactionService;
 
-        public RecurringTransactionService(AppDbContext appDbContext, IMapper mapper, INotificationService notificationService, ITransactionService transactionService)
+        public RecurringTransactionService(AppDbContext context, IMapper mapper, ITransactionService transactionService)
         {
-            _appDbContext = appDbContext;
+            _context = context;
             _mapper = mapper;
-            _notificationService = notificationService;
             _transactionService = transactionService;
         }
 
-        public async Task<Result<InfoRecurringTransactionResponse>> CreateReccuringTransactionAsync(CreateRecurringTransactionRequest request, int userId)
+        public async Task<Result<InfoRecurringTransactionResponse>> CreateRecurringTransactionAsync(CreateRecurringTransactionRequest request, int userId)
         {
-            var validationResult = RecurringTransactionValidations.ValidateCreateRecurringTransactionRequest(request);
+            var validation = await ValidateRequestAsync(request, userId);
+            if (validation.IsError) return validation.Error;
 
-            if (validationResult.IsError)
-            {
-                return new Result<InfoRecurringTransactionResponse>(validationResult.Error);
-            }
-
-            using var dbTransaction = _appDbContext.Database.BeginTransaction();
-
+            await using var databaseTransaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var recurringTransactionToCreate = _mapper.Map<RecurringTransaction>(request);
-                var recurrencegRuleToCreate = _mapper.Map<RecurrenceRule>(request.RecurrenceRule);
+                var recurringTransaction = _mapper.Map<RecurringTransaction>(request);
+                recurringTransaction.UserId = userId;
+                recurringTransaction.StartDate = request.StartDate.Date;
+                recurringTransaction.EndDate = request.EndDate?.Date;
+                recurringTransaction.Description = request.Description.Trim();
+                recurringTransaction.Destination = request.Destination?.Trim() ?? string.Empty;
+                recurringTransaction.RecurrenceRule = CreateRule(request.RecurrenceRule);
 
-                var createdRecurrenceRule = await _appDbContext.RecurrenceRules.AddAsync(recurrencegRuleToCreate);
-                await _appDbContext.SaveChangesAsync();
-
-                recurringTransactionToCreate.RecurrenceRule = createdRecurrenceRule.Entity;
-                recurringTransactionToCreate.UserId = userId;
-
-                var createdRecurringTransaction = await _appDbContext.RecurringTransactions.AddAsync(recurringTransactionToCreate);
-                await _appDbContext.SaveChangesAsync();
-
-                await dbTransaction.CommitAsync();
-
-                return _mapper.Map<InfoRecurringTransactionResponse>(createdRecurringTransaction.Entity);
+                await _context.RecurringTransactions.AddAsync(recurringTransaction);
+                await _context.SaveChangesAsync();
+                await databaseTransaction.CommitAsync();
+                return _mapper.Map<InfoRecurringTransactionResponse>(recurringTransaction);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                await dbTransaction.RollbackAsync();
-
-                return new AppError(ex.Message, ErrorTypeEnum.InternalError);
+                await databaseTransaction.RollbackAsync();
+                return new AppError("Não foi possível criar a transação recorrente.", ErrorTypeEnum.InternalError);
             }
-            
-
-
-
-            
         }
 
         public async Task<List<InfoRecurringTransactionResponse>> GetRecurringTransactionsAsync(int userId)
         {
-            var recurringTransactions = await _appDbContext.RecurringTransactions
-                .Include(rt => rt.RecurrenceRule)
-                .Include(rt => rt.Instances)
-                .Where(rt => rt.UserId == userId)
+            var transactions = await _context.RecurringTransactions.AsNoTracking()
+                .Include(transaction => transaction.RecurrenceRule)
+                .Include(transaction => transaction.Instances)
+                .Where(transaction => transaction.UserId == userId)
+                .OrderByDescending(transaction => transaction.IsActive)
+                .ThenBy(transaction => transaction.Description)
                 .ToListAsync();
-
-            return _mapper.Map<List<InfoRecurringTransactionResponse>>(recurringTransactions);
+            return _mapper.Map<List<InfoRecurringTransactionResponse>>(transactions);
         }
 
         public async Task<Result<InfoRecurringTransactionResponse>> UpdateRecurringTransactionAsync(long recurringId, UpdateRecurringTransactionRequest request, int userId)
         {
-            var validationResult = RecurringTransactionValidations.ValidateUpdateRecurringTransactionRequest(request);
+            var validation = await ValidateUpdateRequestAsync(request, userId);
+            if (validation.IsError) return validation.Error;
 
-            if (validationResult.IsError)
-            {
-                return new Result<InfoRecurringTransactionResponse>(validationResult.Error);
-            }
+            var recurringTransaction = await _context.RecurringTransactions
+                .Include(transaction => transaction.RecurrenceRule)
+                .Include(transaction => transaction.Instances)
+                .FirstOrDefaultAsync(transaction => transaction.Id == recurringId && transaction.UserId == userId);
+            if (recurringTransaction is null) return new AppError("Transação recorrente não encontrada.", ErrorTypeEnum.NotFound);
 
-            var recurringTransaction = await _appDbContext.RecurringTransactions
-                .Include(rt => rt.RecurrenceRule)
-                .FirstOrDefaultAsync(rt => rt.Id == recurringId && rt.UserId == userId);
-
-            if (recurringTransaction is null)
-            {
-                return new AppError("Transação recorrente não encontrada.", ErrorTypeEnum.NotFound);
-            }
-
-            recurringTransaction.Description = request.Description;
+            recurringTransaction.Description = request.Description.Trim();
             recurringTransaction.Amount = request.Amount;
-            recurringTransaction.Destination = request.Destination ?? recurringTransaction.Destination;
+            recurringTransaction.Destination = request.Destination?.Trim() ?? string.Empty;
             recurringTransaction.JustForRecord = request.JustForRecord;
             recurringTransaction.Type = request.Type;
-            recurringTransaction.StartDate = request.StartDate;
-            recurringTransaction.EndDate = request.EndDate;
+            recurringTransaction.StartDate = request.StartDate.Date;
+            recurringTransaction.EndDate = request.EndDate?.Date;
             recurringTransaction.AccountId = request.AccountId;
             recurringTransaction.CategoryId = request.CategoryId;
             recurringTransaction.IsActive = request.IsActive;
             recurringTransaction.UpdatedAt = DateTime.UtcNow;
+            ApplyRule(recurringTransaction.RecurrenceRule, request.RecurrenceRule);
 
-            var recurrenceRule = recurringTransaction.RecurrenceRule;
-            recurrenceRule.Frequency = request.RecurrenceRule.Frequency;
-            recurrenceRule.IsEveryDay = request.RecurrenceRule.IsEveryDay;
-            recurrenceRule.DaysOfWeek = request.RecurrenceRule.DaysOfWeek;
-            recurrenceRule.DayOfWeek = request.RecurrenceRule.DayOfWeek;
-            recurrenceRule.DayOfMonth = request.RecurrenceRule.DayOfMonth;
-            recurrenceRule.MonthOfYear = request.RecurrenceRule.MonthOfYear;
-            recurrenceRule.DayOfMonthForYearly = request.RecurrenceRule.DayOfMonthForYearly;
-            recurrenceRule.Interval = request.RecurrenceRule.Interval;
-
-            _appDbContext.RecurringTransactions.Update(recurringTransaction);
-            _appDbContext.RecurrenceRules.Update(recurrenceRule);
-
-            await _appDbContext.SaveChangesAsync();
-
+            await _context.SaveChangesAsync();
             return _mapper.Map<InfoRecurringTransactionResponse>(recurringTransaction);
         }
 
         public async Task<Result<bool>> DeleteRecurringTransactionAsync(long recurringId, int userId)
         {
-            var recurringTransaction = await _appDbContext.RecurringTransactions
-                .Include(rt => rt.RecurrenceRule)
-                .FirstOrDefaultAsync(rt => rt.Id == recurringId && rt.UserId == userId);
+            var recurringTransaction = await _context.RecurringTransactions.Include(transaction => transaction.RecurrenceRule)
+                .FirstOrDefaultAsync(transaction => transaction.Id == recurringId && transaction.UserId == userId);
+            if (recurringTransaction is null) return new AppError("Transação recorrente não encontrada.", ErrorTypeEnum.NotFound);
 
-            if (recurringTransaction is null)
-            {
-                return new AppError("Transação recorrente não encontrada.", ErrorTypeEnum.NotFound);
-            }
-
-            using var transaction = await _appDbContext.Database.BeginTransactionAsync();
-
+            await using var databaseTransaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                _appDbContext.RecurringTransactions.Remove(recurringTransaction);
-                await _appDbContext.SaveChangesAsync();
-
                 var recurrenceRule = recurringTransaction.RecurrenceRule;
-
-                var ruleInUse = await _appDbContext.RecurringTransactions
-                    .AnyAsync(rt => rt.RecurrenceRuleId == recurrenceRule.Id);
-
-                if (!ruleInUse)
+                _context.RecurringTransactions.Remove(recurringTransaction);
+                await _context.SaveChangesAsync();
+                if (!await _context.RecurringTransactions.AnyAsync(transaction => transaction.RecurrenceRuleId == recurrenceRule.Id))
                 {
-                    _appDbContext.RecurrenceRules.Remove(recurrenceRule);
-                    await _appDbContext.SaveChangesAsync();
+                    _context.RecurrenceRules.Remove(recurrenceRule);
+                    await _context.SaveChangesAsync();
                 }
-
-                await transaction.CommitAsync();
-
+                await databaseTransaction.CommitAsync();
                 return true;
             }
             catch (Exception)
             {
-                await transaction.RollbackAsync();
-                return new AppError("Erro ao remover transação recorrente.", ErrorTypeEnum.InternalError);
+                await databaseTransaction.RollbackAsync();
+                return new AppError("Não foi possível remover a transação recorrente.", ErrorTypeEnum.InternalError);
             }
         }
 
         public async Task<List<InfoRecurringTransactionInstanceResponse>> GetRecurringTransactionInstancesAsync(InstanceStatusEnum status, int userId, DateTime? startDate, DateTime? endDate)
         {
-            var query = _appDbContext.RecurringTransactionInstances
-                .Include(i => i.RecurringTransaction)
-                .Where(i => i.Status == status && i.RecurringTransaction.UserId == userId);
-
-            if (startDate.HasValue)
-            {
-                query = query.Where(i => i.ProcessedDate >= startDate.Value);
-            }
-
-            if (endDate.HasValue)
-            {
-                query = query.Where(i => i.ProcessedDate <= endDate.Value);
-            }
-
-            var instanceList = await query.Select(i => _mapper.Map<InfoRecurringTransactionInstanceResponse>(i)).ToListAsync();
-
-            return instanceList;
+            var query = _context.RecurringTransactionInstances.AsNoTracking()
+                .Include(instance => instance.RecurringTransaction)
+                .Where(instance => instance.Status == status && instance.RecurringTransaction.UserId == userId);
+            if (startDate.HasValue) query = query.Where(instance => instance.ScheduledDate >= startDate.Value.Date);
+            if (endDate.HasValue) query = query.Where(instance => instance.ScheduledDate <= endDate.Value.Date);
+            var instances = await query.OrderByDescending(instance => instance.ScheduledDate).ToListAsync();
+            return _mapper.Map<List<InfoRecurringTransactionInstanceResponse>>(instances);
         }
 
         public async Task<Result<List<InfoRecurringTransactionInstanceResponse>>> ProcessPendingRecurringTransactionInstances(List<long> pendingTransactions, InstanceStatusEnum action, int userId, string? rejectReason)
         {
-            if (pendingTransactions.Count == 0)
-            {
-                return new AppError("Transa��es n�o encontradas", ErrorTypeEnum.NotFound);
-            }
+            if (pendingTransactions is null || pendingTransactions.Count == 0) return new AppError("Informe ao menos uma pendência.", ErrorTypeEnum.Validation);
+            if (action is not InstanceStatusEnum.CONFIRMED and not InstanceStatusEnum.REJECTED) return new AppError("A pendência só pode ser confirmada ou recusada.", ErrorTypeEnum.BusinessRule);
 
-            if (action == InstanceStatusEnum.PENDING || action == InstanceStatusEnum.ERROR)
-            {
-                return new AppError("Transa��es n�o podem alterar seu status para 'Pendente' ou 'Erro'", ErrorTypeEnum.BusinessRule);
-            }
+            var ids = pendingTransactions.Distinct().ToList();
+            var instances = await _context.RecurringTransactionInstances.Include(instance => instance.RecurringTransaction)
+                .Where(instance => ids.Contains(instance.Id) && instance.Status == InstanceStatusEnum.PENDING && instance.RecurringTransaction.UserId == userId)
+                .ToListAsync();
+            if (instances.Count != ids.Count) return new AppError("Uma ou mais pendências não foram encontradas ou já foram processadas.", ErrorTypeEnum.NotFound);
 
-            var today = DateTime.UtcNow;
-
-            var resolvedPendingRecurring = new List<InfoRecurringTransactionInstanceResponse>();
-
-            var recurringIntances = _appDbContext.RecurringTransactionInstances
-                .Where(i => i.RecurringTransaction.UserId == userId && pendingTransactions.Contains(i.Id) && !i.ActualTransactionId.HasValue)
-                .Include(i => i.RecurringTransaction);
-
-            using var transaction = _appDbContext.Database.BeginTransaction();
-
+            await using var databaseTransaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                foreach (var recurring in recurringIntances)
+                foreach (var instance in instances)
                 {
-                    try
+                    instance.ProcessedDate = DateTime.UtcNow;
+                    instance.UpdatedAt = DateTime.UtcNow;
+                    if (action == InstanceStatusEnum.REJECTED)
                     {
-                        recurring.Status = action;
-
-                        if (action == InstanceStatusEnum.REJECTED && !rejectReason.IsNullOrEmpty())
-                        {
-                            recurring.RejectionReason = rejectReason;
-                        }
-
-                        if (action == InstanceStatusEnum.CONFIRMED)
-                        {
-                            var transactionToCreate = new CreateTransactionRequest
-                            {
-                                AccountId = recurring.RecurringTransaction.AccountId,
-                                Amount = recurring.RecurringTransaction.Amount,
-                                CategoryId = recurring.RecurringTransaction.CategoryId,
-                                Description = recurring.RecurringTransaction.Description,
-                                Destination = recurring.RecurringTransaction.Destination ?? "",
-                                JustForRecord = recurring.RecurringTransaction.JustForRecord,
-                                PurchaseDate = today,
-                                Type = recurring.RecurringTransaction.Type
-                            };
-
-                            var resultTransaction = await _transactionService.CreateTransactionAsync(transactionToCreate, userId);
-
-                            if (resultTransaction.IsError)
-                            {
-                                recurring.Status = InstanceStatusEnum.ERROR;
-                                recurring.RejectionReason = resultTransaction.Error.ErrorMessage;
-                            }
-                        }
-
-                        resolvedPendingRecurring.Add(_mapper.Map<InfoRecurringTransactionInstanceResponse>(recurring));
+                        instance.Status = InstanceStatusEnum.REJECTED;
+                        instance.RejectionReason = string.IsNullOrWhiteSpace(rejectReason) ? null : rejectReason.Trim();
+                        continue;
                     }
-                    catch (Exception ex)
+
+                    var request = new CreateTransactionRequest
                     {
-                        recurring.Status = InstanceStatusEnum.ERROR;
-                        recurring.RejectionReason = ex.Message;
-                        //_logger.LogError(ex,
-                        //    "Erro ao processar recorr�ncia {RecurringTransactionId} para {Date}",
-                        //    recurringTransaction.Id,
-                        //    today);
+                        AccountId = instance.RecurringTransaction.AccountId,
+                        Amount = instance.RecurringTransaction.Amount,
+                        CategoryId = instance.RecurringTransaction.CategoryId,
+                        Description = instance.RecurringTransaction.Description,
+                        Destination = instance.RecurringTransaction.Destination ?? string.Empty,
+                        JustForRecord = instance.RecurringTransaction.JustForRecord,
+                        PurchaseDate = instance.ScheduledDate,
+                        Type = instance.RecurringTransaction.Type,
+                    };
+                    var result = await _transactionService.CreateTransactionAsync(request, userId);
+                    if (result.IsError)
+                    {
+                        instance.Status = InstanceStatusEnum.ERROR;
+                        instance.RejectionReason = result.Error.ErrorMessage;
+                        continue;
                     }
+                    instance.Status = InstanceStatusEnum.CONFIRMED;
+                    instance.ActualTransactionId = result.Value.Id;
+                    instance.RejectionReason = null;
                 }
-
-                _appDbContext.UpdateRange(recurringIntances);
-
-                await _appDbContext.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return resolvedPendingRecurring;
-            } catch
-            {
-                await transaction.RollbackAsync();
-                return new AppError("Algo ocorreu no processamento das pend�ncias e elas n�o foram conclu�das", ErrorTypeEnum.InternalError);
+                await _context.SaveChangesAsync();
+                await databaseTransaction.CommitAsync();
+                return _mapper.Map<List<InfoRecurringTransactionInstanceResponse>>(instances);
             }
-
+            catch (Exception)
+            {
+                await databaseTransaction.RollbackAsync();
+                return new AppError("Não foi possível processar as pendências.", ErrorTypeEnum.InternalError);
+            }
         }
 
-        public async Task<List<RecurringTransaction>> GetRecurringTransactionsToProcessAsync(DateTime targetDate)
+        public Task<List<RecurringTransaction>> GetRecurringTransactionsToProcessAsync(DateTime targetDate)
         {
-            var dayOfWeek = (int)targetDate.DayOfWeek;
-            var dayOfMonth = targetDate.Day;
-            var monthOfYear = targetDate.Month;
-            var isLastDayOfMonth = targetDate.Date == new DateTime(targetDate.Year, monthOfYear, 1).AddMonths(1).AddDays(-1).Date;
-
-            return await _appDbContext.RecurringTransactions
-                .Include(rt => rt.RecurrenceRule)
-                .Include(rt => rt.Account)
-                .Include(rt => rt.Category)
-                .Where(rt => rt.IsActive &&
-                            rt.StartDate <= targetDate &&
-                            (rt.EndDate == null || rt.EndDate >= targetDate) &&
-                            !rt.Instances.Any(i => i.ScheduledDate.Date == targetDate.Date))
-
-                .Where(rt =>
-                    // DI�RIAS
-                    (rt.RecurrenceRule.Frequency == RecurrenceFrequencyEnum.DAILY &&
-                     (rt.RecurrenceRule.IsEveryDay ||
-                      (rt.RecurrenceRule.DaysOfWeek != null &&
-                       rt.RecurrenceRule.DaysOfWeek.Contains($"{dayOfWeek}")))) ||
-
-                    // SEMANAIS
-                    (rt.RecurrenceRule.Frequency == RecurrenceFrequencyEnum.WEEKLY &&
-                     rt.RecurrenceRule.DayOfWeek == dayOfWeek &&
-                     ShouldProcessWeekly(rt.RecurrenceRule, rt.StartDate, targetDate)) ||
-
-                    // MENSALES
-                    (rt.RecurrenceRule.Frequency == RecurrenceFrequencyEnum.MONTHLY &&
-                     ((rt.RecurrenceRule.DayOfMonth == dayOfMonth) ||
-                      (rt.RecurrenceRule.DayOfMonth == -1 && isLastDayOfMonth)) &&
-                     ShouldProcessMonthly(rt.RecurrenceRule, rt.StartDate, targetDate)) ||
-
-                    // ANUAIS
-                    (rt.RecurrenceRule.Frequency == RecurrenceFrequencyEnum.YEARLY &&
-                     rt.RecurrenceRule.MonthOfYear == monthOfYear &&
-                     rt.RecurrenceRule.DayOfMonthForYearly == dayOfMonth &&
-                     ShouldProcessYearly(rt.RecurrenceRule, rt.StartDate, targetDate))
-                )
+            var date = targetDate.Date;
+            var dayOfWeek = (int)date.DayOfWeek;
+            var isLastDayOfMonth = date.Day == DateTime.DaysInMonth(date.Year, date.Month);
+            return _context.RecurringTransactions.Include(transaction => transaction.RecurrenceRule)
+                .Where(transaction => transaction.IsActive && transaction.StartDate <= date && (transaction.EndDate == null || transaction.EndDate >= date) && !transaction.Instances.Any(instance => instance.ScheduledDate == date))
+                .Where(transaction =>
+                    (transaction.RecurrenceRule.Frequency == RecurrenceFrequencyEnum.DAILY && (transaction.RecurrenceRule.IsEveryDay || (transaction.RecurrenceRule.DaysOfWeek != null && transaction.RecurrenceRule.DaysOfWeek.Contains(dayOfWeek.ToString()))))
+                    || (transaction.RecurrenceRule.Frequency == RecurrenceFrequencyEnum.WEEKLY && transaction.RecurrenceRule.DayOfWeek == dayOfWeek && IsEveryWeeks(transaction.RecurrenceRule, transaction.StartDate, date))
+                    || (transaction.RecurrenceRule.Frequency == RecurrenceFrequencyEnum.MONTHLY && (transaction.RecurrenceRule.DayOfMonth == date.Day || (transaction.RecurrenceRule.DayOfMonth == -1 && isLastDayOfMonth)) && IsEveryMonths(transaction.RecurrenceRule, transaction.StartDate, date))
+                    || (transaction.RecurrenceRule.Frequency == RecurrenceFrequencyEnum.YEARLY && transaction.RecurrenceRule.MonthOfYear == date.Month && transaction.RecurrenceRule.DayOfMonthForYearly == date.Day && IsEveryYears(transaction.RecurrenceRule, transaction.StartDate, date)))
                 .ToListAsync();
         }
 
-        private bool ShouldProcessWeekly(RecurrenceRule rule, DateTime startDate, DateTime targetDate)
-        {
-            if (rule.Interval == 1) return true;
-
-            var weeksSinceStart = (int)((targetDate - startDate).TotalDays / 7);
-            return weeksSinceStart % rule.Interval == 0;
-        }
-
-        private bool ShouldProcessMonthly(RecurrenceRule rule, DateTime startDate, DateTime targetDate)
-        {
-            if (rule.Interval == 1) return true;
-
-            var monthsSinceStart = ((targetDate.Year - startDate.Year) * 12) +
-                                  (targetDate.Month - startDate.Month);
-            return monthsSinceStart % rule.Interval == 0;
-        }
-
-        private bool ShouldProcessYearly(RecurrenceRule rule, DateTime startDate, DateTime targetDate)
-        {
-            if (rule.Interval == 1) return true;
-
-            var yearsSinceStart = targetDate.Year - startDate.Year;
-            return yearsSinceStart % rule.Interval == 0;
-        }
-
         [AutomaticRetry(Attempts = 3)]
+        [DisableConcurrentExecution(timeoutInSeconds: 3600)]
         public async Task ProcessRecurringTransactionsAsync()
         {
             var today = DateTime.UtcNow.Date;
-            var recurringTransactions = await GetRecurringTransactionsToProcessAsync(today);
-
-            foreach (var recurringTransaction in recurringTransactions)
+            foreach (var transaction in await GetRecurringTransactionsToProcessAsync(today))
             {
                 try
                 {
-                    var instance = new RecurringTransactionInstance
-                    {
-                        RecurringTransactionId = recurringTransaction.Id,
-                        ScheduledDate = today,
-                        Status = InstanceStatusEnum.PENDING,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                    await _appDbContext.RecurringTransactionInstances.AddAsync(instance);
-
-                    // Enviar notifica��o para o usu�rio
-                    await _notificationService.SendUserNotificationAsync(
-                        new CreateNotificationRequest
-                        {
-                            Title = "Nova transa��o recorrente criada!",
-                            Message = $"Nova {(recurringTransaction.Type == TransactionTypeEnum.EXPENSE ? "despesa" : "receita")} " +
-                            $"recorrente foi gerada com t�tulo {recurringTransaction.Description}. Clique aqui e aprove a pend�ncia.",
-                            Type = NotificationTypeEnum.CONFIRMRECURRENCE,
-                            ExpiresAt = today.AddDays(15),
-                            UserId = recurringTransaction.UserId,
-                            //ActionPath = "NOT IMPLEMENTED YET"
-                        },
-                        recurringTransaction.UserId);
-
+                    await _context.RecurringTransactionInstances.AddAsync(new RecurringTransactionInstance { RecurringTransactionId = transaction.Id, ScheduledDate = today, Status = InstanceStatusEnum.PENDING, CreatedAt = DateTime.UtcNow });
+                    await _context.SaveChangesAsync();
                 }
-                catch (Exception ex)
+                catch (DbUpdateException)
                 {
-                    //_logger.LogError(ex,
-                    //    "Erro ao processar recorr�ncia {RecurringTransactionId} para {Date}",
-                    //    recurringTransaction.Id,
-                    //    today);
+                    _context.ChangeTracker.Clear();
                 }
             }
-
-            await _appDbContext.SaveChangesAsync();
         }
 
+        private async Task<Result<bool>> ValidateRequestAsync(CreateRecurringTransactionRequest request, int userId)
+        {
+            var validation = RecurringTransactionValidations.ValidateCreateRecurringTransactionRequest(request);
+            if (validation.IsError) return validation;
+            if (!await _context.Accounts.AnyAsync(account => account.Id == request.AccountId && account.UserId == userId && !account.Deleted)) return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
+            var category = await _context.Categories.FirstOrDefaultAsync(item => item.Id == request.CategoryId && item.UserId == userId);
+            if (category is null) return new AppError("Categoria não encontrada.", ErrorTypeEnum.NotFound);
+            var expectedBillType = request.Type == TransactionTypeEnum.EXPENSE ? BillTypeEnum.EXPENSE : BillTypeEnum.INCOME;
+            return category.BillType == expectedBillType ? true : new AppError("Categoria incompatível com o tipo da transação.", ErrorTypeEnum.BusinessRule);
+        }
+
+        private async Task<Result<bool>> ValidateUpdateRequestAsync(UpdateRecurringTransactionRequest request, int userId)
+        {
+            var validation = RecurringTransactionValidations.ValidateUpdateRecurringTransactionRequest(request);
+            if (validation.IsError) return validation;
+
+            if (!await _context.Accounts.AnyAsync(account => account.Id == request.AccountId && account.UserId == userId && !account.Deleted))
+            {
+                return new AppError("Conta não encontrada.", ErrorTypeEnum.NotFound);
+            }
+
+            var category = await _context.Categories.FirstOrDefaultAsync(item => item.Id == request.CategoryId && item.UserId == userId);
+            if (category is null)
+            {
+                return new AppError("Categoria não encontrada.", ErrorTypeEnum.NotFound);
+            }
+
+            var expectedBillType = request.Type == TransactionTypeEnum.EXPENSE ? BillTypeEnum.EXPENSE : BillTypeEnum.INCOME;
+            return category.BillType == expectedBillType
+                ? true
+                : new AppError("Categoria incompatível com o tipo da transação.", ErrorTypeEnum.BusinessRule);
+        }
+
+        private static RecurrenceRule CreateRule(CreateRecurrenceRuleRequest source)
+        {
+            var rule = new RecurrenceRule { CreatedAt = DateTime.UtcNow };
+            ApplyRule(rule, source);
+            return rule;
+        }
+
+        private static void ApplyRule(RecurrenceRule target, CreateRecurrenceRuleRequest source)
+        {
+            target.Frequency = source.Frequency;
+            target.Interval = source.Interval;
+            target.IsEveryDay = source.Frequency == RecurrenceFrequencyEnum.DAILY && source.IsEveryDay;
+            target.DaysOfWeek = source.Frequency == RecurrenceFrequencyEnum.DAILY && !source.IsEveryDay ? source.DaysOfWeek : null;
+            target.DayOfWeek = source.Frequency == RecurrenceFrequencyEnum.WEEKLY ? source.DayOfWeek : null;
+            target.DayOfMonth = source.Frequency == RecurrenceFrequencyEnum.MONTHLY ? source.DayOfMonth : null;
+            target.MonthOfYear = source.Frequency == RecurrenceFrequencyEnum.YEARLY ? source.MonthOfYear : null;
+            target.DayOfMonthForYearly = source.Frequency == RecurrenceFrequencyEnum.YEARLY ? source.DayOfMonthForYearly : null;
+        }
+
+        private static bool IsEveryWeeks(RecurrenceRule rule, DateTime start, DateTime target) => ((target.Date - start.Date).Days / 7) % rule.Interval == 0;
+        private static bool IsEveryMonths(RecurrenceRule rule, DateTime start, DateTime target)
+        {
+            var firstOccurrenceMonth = start.Date;
+            var occurrenceDay = rule.DayOfMonth == -1
+                ? DateTime.DaysInMonth(start.Year, start.Month)
+                : rule.DayOfMonth!.Value;
+            if (start.Day > occurrenceDay)
+            {
+                firstOccurrenceMonth = firstOccurrenceMonth.AddMonths(1);
+            }
+
+            var elapsedMonths = (target.Year - firstOccurrenceMonth.Year) * 12 + target.Month - firstOccurrenceMonth.Month;
+            return elapsedMonths % rule.Interval == 0;
+        }
+
+        private static bool IsEveryYears(RecurrenceRule rule, DateTime start, DateTime target)
+        {
+            var firstOccurrenceYear = start.Year;
+            var occurrence = new DateTime(firstOccurrenceYear, rule.MonthOfYear!.Value, rule.DayOfMonthForYearly!.Value);
+            if (occurrence < start.Date)
+            {
+                firstOccurrenceYear++;
+            }
+
+            return (target.Year - firstOccurrenceYear) % rule.Interval == 0;
+        }
     }
 }

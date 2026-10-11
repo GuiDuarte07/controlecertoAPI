@@ -8,7 +8,7 @@ namespace ControleCerto.Services.Interfaces
 {
     public interface IRecurringTransactionService
     {
-        public Task<Result<InfoRecurringTransactionResponse>> CreateReccuringTransactionAsync(CreateRecurringTransactionRequest request, int userId);
+        public Task<Result<InfoRecurringTransactionResponse>> CreateRecurringTransactionAsync(CreateRecurringTransactionRequest request, int userId);
         public Task<List<InfoRecurringTransactionInstanceResponse>> GetRecurringTransactionInstancesAsync(InstanceStatusEnum status, int userId, DateTime? startDate, DateTime? endDate);
         public Task<Result<List<InfoRecurringTransactionInstanceResponse>>> ProcessPendingRecurringTransactionInstances(List<long> pendingTransactions, InstanceStatusEnum action, int userId, string? rejectReason);
         public Task<List<RecurringTransaction>> GetRecurringTransactionsToProcessAsync(DateTime targetDate);

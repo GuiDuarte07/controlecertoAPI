@@ -29,6 +29,9 @@ namespace ControleCerto.Modules.Mcp.DTOs
         [MaxLength(100, ErrorMessage = "Campo 'description' pode conter até 100 caracteres.")]
         public string? Description { get; set; }
 
+        [MaxLength(300, ErrorMessage = "Campo 'observations' pode conter até 300 caracteres.")]
+        public string? Observations { get; set; }
+
         [Range(1, long.MaxValue, ErrorMessage = "Campo 'categoryId' deve ser maior que zero.")]
         public long CategoryId { get; set; }
     }

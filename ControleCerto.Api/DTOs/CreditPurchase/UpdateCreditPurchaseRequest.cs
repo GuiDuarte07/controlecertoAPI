@@ -17,6 +17,9 @@ namespace ControleCerto.DTOs.CreditPurchase
         [MaxLength(100, ErrorMessage = "Campo 'Description' pode conter até 100 caracteres")]
         public string? Description { get; set; }
 
+        [MaxLength(300, ErrorMessage = "Campo 'Observations' pode conter até 300 caracteres")]
+        public string? Observations { get; set; }
+
         public long? CreditCardId { get; set; }
         public long CategoryId { get; set; }
     }

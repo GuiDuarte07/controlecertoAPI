@@ -83,7 +83,7 @@ builder.Services.AddAuthentication(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddAutoMapper(typeof(MapperProfile));
+builder.Services.AddAutoMapper(config => config.AddProfile<MapperProfile>());
 
 // Swagger bearer authentication configuration
 builder.Services.AddSwaggerGen(c =>
@@ -145,6 +145,7 @@ builder.Services.AddScoped<IHashService, HashService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<ControleCerto.Modules.TransactionAnalytics.Services.ITransactionAnalyticsService, ControleCerto.Modules.TransactionAnalytics.Services.TransactionAnalyticsService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICreditCardService, CreditCardService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -154,6 +155,7 @@ builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<IBalanceService, BalanceService>();
 builder.Services.AddScoped<IRecurringTransactionService, RecurringTransactionService>();
 builder.Services.AddScoped<IInvestmentService, InvestmentService>();
+builder.Services.AddScoped<ControleCerto.Modules.InvestmentAnalytics.Services.IInvestmentAnalyticsService, ControleCerto.Modules.InvestmentAnalytics.Services.InvestmentAnalyticsService>();
 builder.Services.AddScoped<INotesService, NotesService>();
 builder.Services.AddScoped<ControleCerto.Modules.Dashboard.Services.IDashboardService, ControleCerto.Modules.Dashboard.Services.DashboardService>();
 builder.Services.AddScoped<ControleCerto.Modules.Tickets.Services.ITicketsService, ControleCerto.Modules.Tickets.Services.TicketsService>();
@@ -175,9 +177,6 @@ builder.Services.AddSingleton<IAmazonS3>(_ =>
 });
 builder.Services.AddScoped<IS3Service, S3Service>();
 builder.Services.AddHealthChecks();
-
-// Automapper
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // DbContext
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);

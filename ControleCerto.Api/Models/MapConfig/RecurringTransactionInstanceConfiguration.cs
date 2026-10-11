@@ -60,7 +60,8 @@ namespace ControleCerto.Models.MapConfig
             builder.HasIndex(rti => rti.ScheduledDate);
             builder.HasIndex(rti => rti.Status);
             builder.HasIndex(rti => rti.ProcessedDate);
-            builder.HasIndex(rti => new { rti.RecurringTransactionId, rti.ScheduledDate });
+            builder.HasIndex(rti => new { rti.RecurringTransactionId, rti.ScheduledDate })
+                .IsUnique();
             builder.HasIndex(rti => new { rti.Status, rti.ScheduledDate });
         }
     }

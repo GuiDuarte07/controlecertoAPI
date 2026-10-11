@@ -13,6 +13,7 @@ namespace ControleCerto.Models.MapConfig
             builder.Property(cp => cp.Paid).HasColumnType("boolean");
             builder.Property(cp => cp.Destination).HasMaxLength(80).IsRequired(false);
             builder.Property(cp => cp.Description).HasMaxLength(100).IsRequired();
+            builder.Property(cp => cp.Observations).HasMaxLength(300).IsRequired(false);
             //builder.Property(cp => cp.CreatedAt).HasColumnType("datetime");
             //builder.Property(cp => cp.UpdatedAt).HasColumnType("datetime");
 

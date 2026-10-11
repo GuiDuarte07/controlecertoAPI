@@ -37,7 +37,8 @@ namespace ControleCerto.Services
         {
             var transactionToCreate = _mapper.Map<Transaction>(request);
 
-            using (var transaction = _appDbContext.Database.BeginTransaction())
+            var ownsTransaction = _appDbContext.Database.CurrentTransaction is null;
+            using (var transaction = ownsTransaction ? _appDbContext.Database.BeginTransaction() : null)
             {
                 try
                 {
@@ -68,13 +69,19 @@ namespace ControleCerto.Services
                     var createdTransaction = await _appDbContext.Transactions.AddAsync(transactionToCreate);
                     await _appDbContext.SaveChangesAsync();
 
-                    transaction.Commit();
+                    if (ownsTransaction)
+                    {
+                        transaction!.Commit();
+                    }
 
                     return _mapper.Map<InfoTransactionResponse>(createdTransaction.Entity);
                 }
                 catch (Exception)
                 {
-                    transaction.Rollback();
+                    if (ownsTransaction)
+                    {
+                        transaction!.Rollback();
+                    }
                     throw;
                 }
             }
