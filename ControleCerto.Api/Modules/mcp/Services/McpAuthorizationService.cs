@@ -43,6 +43,8 @@ namespace ControleCerto.Modules.Mcp.Services
                 return new AppError("Token MCP não informado.", ErrorTypeEnum.Validation);
             }
 
+            LogTokenDiagnostics(token);
+
             var secretKey = ResolveSecretKey();
             if (string.IsNullOrWhiteSpace(secretKey))
             {
@@ -110,6 +112,50 @@ namespace ControleCerto.Modules.Mcp.Services
             httpContext.Items[McpHttpContextKeys.Claims] = claims;
 
             return claims;
+        }
+
+        private void LogTokenDiagnostics(string token)
+        {
+            var segments = token.Split('.');
+            var hasExpiration = false;
+            var expirationKind = "missing";
+            var payloadIsValidJson = false;
+
+            if (segments.Length == 3)
+            {
+                try
+                {
+                    var payload = segments[1].Replace('-', '+').Replace('_', '/');
+                    payload = payload.PadRight((payload.Length + 3) / 4 * 4, '=');
+
+                    using var document = JsonDocument.Parse(Convert.FromBase64String(payload));
+                    if (document.RootElement.ValueKind == JsonValueKind.Object)
+                    {
+                        payloadIsValidJson = true;
+                        if (document.RootElement.TryGetProperty("exp", out var expiration))
+                        {
+                            hasExpiration = true;
+                            expirationKind = expiration.ValueKind.ToString();
+                        }
+                    }
+                }
+                catch (FormatException)
+                {
+                    // The payload is not valid Base64Url.
+                }
+                catch (JsonException)
+                {
+                    // The payload is not valid JSON.
+                }
+            }
+
+            _logger.LogInformation(
+                "MCP JWT diagnostic: segmentCount={SegmentCount}, payloadIsValidJson={PayloadIsValidJson}, hasExp={HasExpiration}, expJsonKind={ExpirationKind}, tokenLength={TokenLength}",
+                segments.Length,
+                payloadIsValidJson,
+                hasExpiration,
+                expirationKind,
+                token.Length);
         }
 
         public async Task<Result<McpTokenResponse>> GenerateTokenAsync(
