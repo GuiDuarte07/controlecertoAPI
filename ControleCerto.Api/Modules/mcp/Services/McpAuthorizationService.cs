@@ -9,6 +9,7 @@ using ControleCerto.Modules.Mcp.DTOs;
 using ControleCerto.Modules.Mcp.Models;
 using ControleCerto.Modules.Mcp.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using JsonWebTokenHandler = Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler;
 using Microsoft.IdentityModel.Tokens;
 
 namespace ControleCerto.Modules.Mcp.Services
@@ -43,8 +44,6 @@ namespace ControleCerto.Modules.Mcp.Services
                 return new AppError("Token MCP não informado.", ErrorTypeEnum.Validation);
             }
 
-            LogTokenDiagnostics(token);
-
             var secretKey = ResolveSecretKey();
             if (string.IsNullOrWhiteSpace(secretKey))
             {
@@ -53,7 +52,8 @@ namespace ControleCerto.Modules.Mcp.Services
             }
 
             ClaimsPrincipal principal;
-            JwtSecurityToken jwtToken;
+            DateTime issuedAtUtc;
+            DateTime expiresAtUtc;
 
             try
             {
@@ -67,9 +67,24 @@ namespace ControleCerto.Modules.Mcp.Services
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
                 };
 
-                var tokenHandler = new JwtSecurityTokenHandler();
-                principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
-                jwtToken = (JwtSecurityToken)validatedToken;
+                var tokenHandler = new JsonWebTokenHandler();
+                var validationResult = await tokenHandler.ValidateTokenAsync(token, tokenValidationParameters);
+                if (!validationResult.IsValid)
+                {
+                    throw validationResult.Exception ?? new SecurityTokenException("Token MCP inválido.");
+                }
+
+                var validatedIdentity = validationResult.ClaimsIdentity
+                    ?? throw new SecurityTokenException("Token MCP sem identidade válida.");
+                principal = new ClaimsPrincipal(validatedIdentity);
+
+                if (validationResult.SecurityToken is not Microsoft.IdentityModel.JsonWebTokens.JsonWebToken validatedToken)
+                {
+                    throw new SecurityTokenException("Tipo de token MCP não suportado.");
+                }
+
+                issuedAtUtc = validatedToken.ValidFrom;
+                expiresAtUtc = validatedToken.ValidTo;
             }
             catch (Exception ex) when (ex is SecurityTokenException or ArgumentException)
             {
@@ -103,8 +118,8 @@ namespace ControleCerto.Modules.Mcp.Services
             {
                 UserId = userId,
                 TokenType = tokenType ?? McpTokenType,
-                IssuedAtUtc = ExtractIssuedAtUtc(principal, jwtToken),
-                ExpiresAtUtc = jwtToken.ValidTo,
+                IssuedAtUtc = issuedAtUtc,
+                ExpiresAtUtc = expiresAtUtc,
                 Permissions = permissions
             };
 
@@ -113,51 +128,6 @@ namespace ControleCerto.Modules.Mcp.Services
 
             return claims;
         }
-
-        private void LogTokenDiagnostics(string token)
-        {
-            var segments = token.Split('.');
-            var hasExpiration = false;
-            var expirationKind = "missing";
-            var payloadIsValidJson = false;
-
-            if (segments.Length == 3)
-            {
-                try
-                {
-                    var payload = segments[1].Replace('-', '+').Replace('_', '/');
-                    payload = payload.PadRight((payload.Length + 3) / 4 * 4, '=');
-
-                    using var document = JsonDocument.Parse(Convert.FromBase64String(payload));
-                    if (document.RootElement.ValueKind == JsonValueKind.Object)
-                    {
-                        payloadIsValidJson = true;
-                        if (document.RootElement.TryGetProperty("exp", out var expiration))
-                        {
-                            hasExpiration = true;
-                            expirationKind = expiration.ValueKind.ToString();
-                        }
-                    }
-                }
-                catch (FormatException)
-                {
-                    // The payload is not valid Base64Url.
-                }
-                catch (JsonException)
-                {
-                    // The payload is not valid JSON.
-                }
-            }
-
-            _logger.LogInformation(
-                "MCP JWT diagnostic: segmentCount={SegmentCount}, payloadIsValidJson={PayloadIsValidJson}, hasExp={HasExpiration}, expJsonKind={ExpirationKind}, tokenLength={TokenLength}",
-                segments.Length,
-                payloadIsValidJson,
-                hasExpiration,
-                expirationKind,
-                token.Length);
-        }
-
         public async Task<Result<McpTokenResponse>> GenerateTokenAsync(
             int userId,
             CancellationToken cancellationToken = default)
